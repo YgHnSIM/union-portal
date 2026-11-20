@@ -409,8 +409,8 @@ function buildPortalHomeHtml(
     <h1 id="hero-title">조합 활동과 회계·조직 현황을 한곳에서 확인하세요</h1>
     <p class="portal-hero-lead">성명서·소식지·회의록·지식 자료와 회계 원장, 조합 현황을 열람할 수 있습니다.</p>
     <div class="portal-actions">
-      <a class="btn" href="archive/index.html">자료실 전체 보기 (${sortedPublic.length}건)</a>
-      <a class="btn secondary" href="accounting/index.html">회계 대시보드 열기</a>
+      <a class="btn" href="archive/index.html">자료실</a>
+      <a class="btn secondary" href="accounting/index.html">회계 대시보드</a>
       <a class="btn secondary" href="union/index.html">조직·임원 현황</a>
     </div>
   </section>

@@ -4917,6 +4917,24 @@
       display: none;
     }
   }
+
+  @container main-panel (inline-size < 560px) {
+    .portal-hero {
+      padding: 1.05rem 0.95rem;
+    }
+
+    .portal-hero .portal-actions {
+      gap: 0.4rem;
+    }
+
+    .portal-hero .portal-actions .btn {
+      flex: 1 0 auto;
+      padding-block: 0.46rem;
+      padding-inline: 0.55rem;
+      font-size: clamp(0.75rem, 3.3vw, 0.85rem);
+      white-space: nowrap;
+    }
+  }
 }
 
 @layer print {
