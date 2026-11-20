@@ -63,15 +63,17 @@ function fmtManVal(won: number): string {
 function palette(opts?: SvgChartOptions) {
   const st = Boolean(opts?.standalone);
   return {
-    ink: st ? '#0b051a' : 'var(--color-ink, #0b051a)',
-    tick: st ? '#4d5160' : 'var(--chart-tick, #4d5160)',
-    grid: st ? '#d1d5e0' : 'var(--chart-grid, rgba(104, 112, 134, 0.24))',
+    ink: st ? '#0d1b2a' : 'var(--color-ink, #0d1b2a)',
+    tick: st ? '#52657a' : 'var(--chart-tick, #52657a)',
+    grid: st ? '#c8d6e2' : 'var(--chart-grid, rgba(105, 128, 150, 0.22))',
     sheet: st ? '#ffffff' : 'var(--color-sheet, #ffffff)',
-    inc: st ? '#10b981' : 'var(--chart-income, #10b981)',
-    exp: st ? '#f43f5e' : 'var(--chart-expense, #f43f5e)',
-    bal: st ? '#002fa7' : 'var(--chart-blue, #002fa7)',
-    cobalt: st ? '#3b82f6' : 'var(--chart-cobalt, #3b82f6)',
-    grant: st ? '#f59e0b' : 'var(--chart-grant, #f59e0b)',
+    inc: st ? '#39793c' : 'var(--chart-income, #39793c)',
+    exp: st ? '#b3392b' : 'var(--chart-expense, #b3392b)',
+    bal: st ? '#12354e' : 'var(--chart-blue, #12354e)',
+    cobalt: st ? '#516db2' : 'var(--chart-cobalt, #516db2)',
+    grant: st ? '#c48823' : 'var(--chart-grant, #c48823)',
+    teal: st ? '#2e7573' : 'var(--chart-teal, #2e7573)',
+    plum: st ? '#6e66a6' : 'var(--chart-plum, #6e66a6)',
   };
 }
 
@@ -200,7 +202,15 @@ export function renderActivityBarsSvg(
   const mr = 138;
   const pw = w - ml - mr;
   const maxVal = niceMax(Math.max(...items.map((it) => it.value), 0));
-  const defaultPalette = [pal.cobalt, pal.bal, pal.inc, pal.grant, pal.exp];
+  const defaultPalette = [
+    pal.cobalt,
+    pal.bal,
+    pal.inc,
+    pal.grant,
+    pal.exp,
+    pal.teal,
+    pal.plum,
+  ];
 
   const rows = items.map((it, idx) => {
     const y = mt + idx * rowH;

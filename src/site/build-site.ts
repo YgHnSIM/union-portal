@@ -338,7 +338,7 @@ function renderDocCard(
   return `<article class="doc-card" data-category="${escapeAttr(doc.category)}" data-topics="${escapeAttr(topicLabels.join('|'))}" data-search="${escapeAttr(searchBlob)}">
       <div>
         <div class="doc-meta">
-          <span class="doc-cat-badge">${escapeHtml(catMeta?.label ?? doc.category)}</span>
+          <span class="doc-cat-badge" data-cat="${escapeAttr(doc.category)}">${escapeHtml(catMeta?.label ?? doc.category)}</span>
           <time>${escapeHtml(dateText)}</time>
           ${doc.financePeriod ? `<span>· 재정 기준월 ${escapeHtml(doc.financePeriod)}</span>` : ''}
         </div>
@@ -381,7 +381,7 @@ function buildPortalHomeHtml(
       const badge = lCount > 0 ? `<span class="doc-topic-pill">거래 ${lCount}건</span>` : '';
       return `<li class="portal-latest-item">
         <div>
-          <span class="doc-cat-badge">${escapeHtml(catLabel)}</span>
+          <span class="doc-cat-badge" data-cat="${escapeAttr(doc.category)}">${escapeHtml(catLabel)}</span>
           <a href="${escapeAttr(doc.route)}">${escapeHtml(doc.title)}</a>
         </div>
         <span class="portal-latest-meta">${badge}<time>${escapeHtml(dateTxt)}</time></span>
@@ -899,7 +899,7 @@ function buildArchiveDetailPages(
       <a href="${escapeAttr(`${prefix}archive/newsletter/index.html`)}">소식지 목록</a>
       <a href="${escapeAttr(`${prefix}accounting/index.html`)}">회계 포털</a>
     </div>
-    <button type="button" onclick="window.print()" style="min-height:36px;padding:4px 12px;border:1px solid #002fa7;background:#002fa7;color:#fff;font-weight:700;cursor:pointer;">인쇄 / A3 PDF</button>
+    <button type="button" onclick="window.print()" style="min-height:36px;padding:4px 12px;border:1px solid #12354e;background:#12354e;color:#fff;font-weight:700;cursor:pointer;">인쇄 / A3 PDF</button>
   </nav>`;
       rawHtml = rawHtml.replace(/<body[^>]*>/i, returnBar);
 
@@ -1701,14 +1701,14 @@ function buildAccountingPages(
     const mokItems = [...mokMap.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
-      .map(([label, value]) => ({ label, value, color: 'var(--chart-cobalt, #3b82f6)' }));
+      .map(([label, value]) => ({ label, value, color: 'var(--chart-cobalt, #516db2)' }));
     const etItems = [...etMap.entries()]
       .sort((a, b) => b[1] - a[1])
       .map(([label, value]) => ({
         label,
         value,
         pct: (value / totExpDenom) * 100,
-        color: 'var(--chart-blue, #002fa7)',
+        color: 'var(--chart-blue, #12354e)',
       }));
 
     const svgMonthly = renderMonthlyFlowSvg(
@@ -2131,17 +2131,17 @@ function buildUnionPage(
           {
             name: '공무직',
             value: u.byEmployment['공무직'] ?? 0,
-            color: 'var(--chart-cobalt, #3b82f6)',
+            color: 'var(--chart-cobalt, #516db2)',
           },
           {
             name: '기간제',
             value: u.byEmployment['기간제'] ?? 0,
-            color: 'var(--chart-income, #10b981)',
+            color: 'var(--chart-income, #39793c)',
           },
           {
             name: '활동 조합원 합계',
             value: u.activeCount,
-            color: 'var(--chart-blue, #002fa7)',
+            color: 'var(--chart-blue, #12354e)',
           },
         ],
       })),

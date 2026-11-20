@@ -39,75 +39,79 @@
     --heading-scale: min(var(--font-scale), 1.2);
     --color-knowledge: var(--color-accent);
 
-    /* Option B: Klein Blue (IKB #002FA7 · workplace unified) + Union Logo (#516DB2 + #0B051A) */
-    --stone-canvas-light: #f7f8fa;
+    /* Modern Civic Palette: Sanzo Wada Dark Tyrian (#12354E) + Salvia (#97ACC8) + Union Logo (#516DB2 · #0B051A) */
+    --stone-canvas-light: #f2f6f9;
     --stone-sheet-light: #ffffff;
-    --stone-well-light: #eef2fc;
-    --stone-hover-light: #e1e8fa;
-    --ink-strong-light: #0b051a;
-    --ink-body-light: #1d2130;
-    --ink-muted-light: #4d5160;
-    --rule-hair-light: #d1d5e0;
-    --rule-ui-light: #687086;
-    --rule-bar-light: #0b051a;
+    --stone-well-light: #e3ecf3;
+    --stone-hover-light: #d7e4ef;
+    --ink-strong-light: #0d1b2a;
+    --ink-body-light: #1e2d3d;
+    --ink-muted-light: #52657a;
+    --rule-hair-light: #c8d6e2;
+    --rule-ui-light: #698096;
+    --rule-bar-light: #12354e;
     --header-bg-light: rgba(255, 255, 255, 0.94);
-    --thead-bg-light: #0b051a;
-    --thead-ink-light: #ffffff;
+    --thead-bg-light: #e3ecf3;
+    --thead-ink-light: #0d1b2a;
 
-    --stone-canvas-dark: #0b0e17;
-    --stone-sheet-dark: #121726;
-    --stone-well-dark: #192138;
-    --stone-hover-dark: #222c4a;
-    --ink-strong-dark: #f5f7fc;
-    --ink-body-dark: #d6def0;
-    --ink-muted-dark: #9ba5c4;
-    --rule-hair-dark: #293350;
-    --rule-ui-dark: #7b86a8;
-    --rule-bar-dark: #dce2f5;
-    --header-bg-dark: rgba(18, 23, 38, 0.94);
-    --thead-bg-dark: #1b243e;
-    --thead-ink-dark: #f5f7fc;
+    --stone-canvas-dark: #09131c;
+    --stone-sheet-dark: #101f2e;
+    --stone-well-dark: #172c40;
+    --stone-hover-dark: #1e374f;
+    --ink-strong-dark: #f0f5f9;
+    --ink-body-dark: #cfe0ee;
+    --ink-muted-dark: #8ca6be;
+    --rule-hair-dark: #27435c;
+    --rule-ui-dark: #7492ad;
+    --rule-bar-dark: #c5d9eb;
+    --header-bg-dark: rgba(16, 31, 46, 0.94);
+    --thead-bg-dark: #163047;
+    --thead-ink-dark: #f0f5f9;
 
     /* Brand & Civic Signals (Light / Dark paired for >= 4.5:1 contrast) */
     --sig-logo-light: #516db2;
+    --sig-logo-soft-light: #e8eef9;
+    --sig-logo-soft-ink-light: #2b4480;
     --sig-logo-dark: #7994de;
+    --sig-logo-soft-dark: #1b2747;
+    --sig-logo-soft-ink-dark: #c9d8f8;
 
-    --sig-cobalt-light: #002fa7;
+    --sig-cobalt-light: #12354e;
     --sig-cobalt-ink-light: #ffffff;
-    --sig-cobalt-soft-light: #eef2fc;
-    --sig-cobalt-soft-ink-light: #00237d;
+    --sig-cobalt-soft-light: #dce8f2;
+    --sig-cobalt-soft-ink-light: #0d283d;
 
-    --sig-cobalt-dark: #7fa2ff;
-    --sig-cobalt-ink-dark: #07112b;
-    --sig-cobalt-soft-dark: #17254d;
-    --sig-cobalt-soft-ink-dark: #d2e0ff;
+    --sig-cobalt-dark: #7eb2dd;
+    --sig-cobalt-ink-dark: #07131e;
+    --sig-cobalt-soft-dark: #19354d;
+    --sig-cobalt-soft-ink-dark: #d5e7f7;
 
-    --sig-income-light: #146c53;
-    --sig-income-soft-light: #e5f4ef;
-    --sig-income-dark: #54d1a9;
-    --sig-income-soft-dark: #122e26;
+    --sig-income-light: #39793c;
+    --sig-income-soft-light: #e5f2e5;
+    --sig-income-dark: #74c678;
+    --sig-income-soft-dark: #152f17;
 
-    --sig-expense-light: #c24127;
-    --sig-expense-soft-light: #fcece8;
-    --sig-expense-dark: #f7907a;
-    --sig-expense-soft-dark: #341d18;
+    --sig-expense-light: #b3392b;
+    --sig-expense-soft-light: #fbeae8;
+    --sig-expense-dark: #f28b7e;
+    --sig-expense-soft-dark: #381b18;
 
-    --sig-grant-light: #8c5a00;
-    --sig-grant-soft-light: #faf2df;
-    --sig-grant-dark: #f0c265;
-    --sig-grant-soft-dark: #2f2513;
+    --sig-grant-light: #9c5e0e;
+    --sig-grant-soft-light: #faf0e1;
+    --sig-grant-dark: #f3b457;
+    --sig-grant-soft-dark: #332410;
 
-    --sig-adj-bg-light: #f7f2e7;
-    --sig-adj-bg-dark: #232019;
-    --sig-subtot-bg-light: #eef2fc;
-    --sig-subtot-bg-dark: #1b243e;
-    --sig-tot-bg-light: #dce4f9;
-    --sig-tot-bg-dark: #243052;
+    --sig-adj-bg-light: #f6efe0;
+    --sig-adj-bg-dark: #262016;
+    --sig-subtot-bg-light: #e8eff6;
+    --sig-subtot-bg-dark: #162a3d;
+    --sig-tot-bg-light: #d7e4ef;
+    --sig-tot-bg-dark: #1f3952;
 
-    --scroll-track-light: #eef2fc;
-    --scroll-thumb-light: #687086;
-    --scroll-track-dark: #121726;
-    --scroll-thumb-dark: #5b6588;
+    --scroll-track-light: #e3ecf3;
+    --scroll-thumb-light: #698096;
+    --scroll-track-dark: #101f2e;
+    --scroll-thumb-dark: #4f6c88;
 
     /* Semantic Defaults (Light Default) */
     --color-canvas: var(--stone-canvas-light);
@@ -125,6 +129,8 @@
     --color-thead-ink: var(--thead-ink-light);
 
     --color-logo: var(--sig-logo-light);
+    --color-logo-soft: var(--sig-logo-soft-light);
+    --color-logo-soft-ink: var(--sig-logo-soft-ink-light);
     --color-accent: var(--sig-cobalt-light);
     --color-accent-ink: var(--sig-cobalt-ink-light);
     --color-accent-soft: var(--sig-cobalt-soft-light);
@@ -146,24 +152,24 @@
     --color-scrollbar-track: var(--scroll-track-light);
     --color-scrollbar-thumb: var(--scroll-thumb-light);
 
-    /* Chart visualization tokens (Option 1: Fresh Fintech, consumed by dashboard.js) */
-    --chart-cobalt: #3b82f6;
-    --chart-blue: #002fa7;
-    --chart-income: #10b981;
-    --chart-expense: #f43f5e;
-    --chart-grant: #f59e0b;
-    --chart-slate: #64748b;
-    --chart-teal: #06b6d4;
-    --chart-plum: #8b5cf6;
-    --chart-grid: rgba(104, 112, 134, 0.18);
-    --chart-tick: #4d5160;
-    --chart-tooltip-bg: #0b051a;
+    /* Chart visualization tokens (Sanzo Wada Pigment Palette + Union Logo, consumed by dashboard.js) */
+    --chart-cobalt: #516db2;
+    --chart-blue: #12354e;
+    --chart-income: #39793c;
+    --chart-expense: #b3392b;
+    --chart-grant: #c48823;
+    --chart-slate: #698096;
+    --chart-teal: #2e7573;
+    --chart-plum: #6e66a6;
+    --chart-grid: rgba(105, 128, 150, 0.22);
+    --chart-tick: #52657a;
+    --chart-tooltip-bg: #12354e;
     --chart-tooltip-ink: #ffffff;
-    --color-thead-rule: rgba(255, 255, 255, 0.16);
-    --color-backdrop: rgba(11, 5, 26, 0.68);
-    --minimap-shade: rgba(11, 5, 26, 0.12);
-    --minimap-lens-bg: rgba(59, 130, 246, 0.14);
-    --minimap-fill: rgba(59, 130, 246, 0.16);
+    --color-thead-rule: rgba(18, 53, 78, 0.14);
+    --color-backdrop: rgba(9, 19, 28, 0.68);
+    --minimap-shade: rgba(13, 27, 42, 0.12);
+    --minimap-lens-bg: rgba(18, 53, 78, 0.14);
+    --minimap-fill: rgba(18, 53, 78, 0.15);
 
     /* Typography & Scales */
     --font-sans: "Pretendard Variable", "Pretendard", "SUIT", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, -apple-system, sans-serif;
@@ -195,8 +201,11 @@
       --color-header-bg: var(--header-bg-dark);
       --color-thead-bg: var(--thead-bg-dark);
       --color-thead-ink: var(--thead-ink-dark);
+      --color-thead-rule: rgba(126, 178, 221, 0.18);
 
       --color-logo: var(--sig-logo-dark);
+      --color-logo-soft: var(--sig-logo-soft-dark);
+      --color-logo-soft-ink: var(--sig-logo-soft-ink-dark);
       --color-accent: var(--sig-cobalt-dark);
       --color-accent-ink: var(--sig-cobalt-ink-dark);
       --color-accent-soft: var(--sig-cobalt-soft-dark);
@@ -216,21 +225,21 @@
       --color-scrollbar-track: var(--scroll-track-dark);
       --color-scrollbar-thumb: var(--scroll-thumb-dark);
 
-      --chart-cobalt: #60a5fa;
-      --chart-blue: #818cf8;
-      --chart-income: #34d399;
-      --chart-expense: #fb7185;
-      --chart-grant: #fbbf24;
-      --chart-slate: #94a3b8;
-      --chart-teal: #22d3ee;
-      --chart-plum: #a78bfa;
-      --chart-grid: rgba(155, 165, 196, 0.16);
-      --chart-tick: #9ba5c4;
-      --chart-tooltip-bg: #1b243e;
-      --chart-tooltip-ink: #f5f7fc;
+      --chart-cobalt: #7994de;
+      --chart-blue: #7eb2dd;
+      --chart-income: #74c678;
+      --chart-expense: #f28b7e;
+      --chart-grant: #f3b457;
+      --chart-slate: #8ca6be;
+      --chart-teal: #5ec2bd;
+      --chart-plum: #a49ce0;
+      --chart-grid: rgba(140, 166, 190, 0.18);
+      --chart-tick: #8ca6be;
+      --chart-tooltip-bg: #172c40;
+      --chart-tooltip-ink: #f0f5f9;
       --minimap-shade: rgba(0, 0, 0, 0.35);
-      --minimap-lens-bg: rgba(96, 165, 250, 0.16);
-      --minimap-fill: rgba(96, 165, 250, 0.15);
+      --minimap-lens-bg: rgba(126, 178, 221, 0.16);
+      --minimap-fill: rgba(126, 178, 221, 0.15);
     }
   }
 
@@ -251,8 +260,11 @@
     --color-header-bg: var(--header-bg-light);
     --color-thead-bg: var(--thead-bg-light);
     --color-thead-ink: var(--thead-ink-light);
+    --color-thead-rule: rgba(18, 53, 78, 0.14);
 
     --color-logo: var(--sig-logo-light);
+    --color-logo-soft: var(--sig-logo-soft-light);
+    --color-logo-soft-ink: var(--sig-logo-soft-ink-light);
     --color-accent: var(--sig-cobalt-light);
     --color-accent-ink: var(--sig-cobalt-ink-light);
     --color-accent-soft: var(--sig-cobalt-soft-light);
@@ -272,21 +284,21 @@
     --color-scrollbar-track: var(--scroll-track-light);
     --color-scrollbar-thumb: var(--scroll-thumb-light);
 
-    --chart-cobalt: #3b82f6;
-    --chart-blue: #002fa7;
-    --chart-income: #10b981;
-    --chart-expense: #f43f5e;
-    --chart-grant: #f59e0b;
-    --chart-slate: #64748b;
-    --chart-teal: #06b6d4;
-    --chart-plum: #8b5cf6;
-    --chart-grid: rgba(104, 112, 134, 0.18);
-    --chart-tick: #4d5160;
-    --chart-tooltip-bg: #0b051a;
+    --chart-cobalt: #516db2;
+    --chart-blue: #12354e;
+    --chart-income: #39793c;
+    --chart-expense: #b3392b;
+    --chart-grant: #c48823;
+    --chart-slate: #698096;
+    --chart-teal: #2e7573;
+    --chart-plum: #6e66a6;
+    --chart-grid: rgba(105, 128, 150, 0.22);
+    --chart-tick: #52657a;
+    --chart-tooltip-bg: #12354e;
     --chart-tooltip-ink: #ffffff;
-    --minimap-shade: rgba(11, 5, 26, 0.12);
-    --minimap-lens-bg: rgba(59, 130, 246, 0.14);
-    --minimap-fill: rgba(59, 130, 246, 0.16);
+    --minimap-shade: rgba(13, 27, 42, 0.12);
+    --minimap-lens-bg: rgba(18, 53, 78, 0.14);
+    --minimap-fill: rgba(18, 53, 78, 0.15);
   }
 
   :root:has(> head > meta[name="color-scheme"][content="dark"]),
@@ -306,8 +318,11 @@
     --color-header-bg: var(--header-bg-dark);
     --color-thead-bg: var(--thead-bg-dark);
     --color-thead-ink: var(--thead-ink-dark);
+    --color-thead-rule: rgba(126, 178, 221, 0.18);
 
     --color-logo: var(--sig-logo-dark);
+    --color-logo-soft: var(--sig-logo-soft-dark);
+    --color-logo-soft-ink: var(--sig-logo-soft-ink-dark);
     --color-accent: var(--sig-cobalt-dark);
     --color-accent-ink: var(--sig-cobalt-ink-dark);
     --color-accent-soft: var(--sig-cobalt-soft-dark);
@@ -327,21 +342,21 @@
     --color-scrollbar-track: var(--scroll-track-dark);
     --color-scrollbar-thumb: var(--scroll-thumb-dark);
 
-    --chart-cobalt: #60a5fa;
-    --chart-blue: #818cf8;
-    --chart-income: #34d399;
-    --chart-expense: #fb7185;
-    --chart-grant: #fbbf24;
-    --chart-slate: #94a3b8;
-    --chart-teal: #22d3ee;
-    --chart-plum: #a78bfa;
-    --chart-grid: rgba(155, 165, 196, 0.16);
-    --chart-tick: #9ba5c4;
-    --chart-tooltip-bg: #1b243e;
-    --chart-tooltip-ink: #f5f7fc;
+    --chart-cobalt: #7994de;
+    --chart-blue: #7eb2dd;
+    --chart-income: #74c678;
+    --chart-expense: #f28b7e;
+    --chart-grant: #f3b457;
+    --chart-slate: #8ca6be;
+    --chart-teal: #5ec2bd;
+    --chart-plum: #a49ce0;
+    --chart-grid: rgba(140, 166, 190, 0.18);
+    --chart-tick: #8ca6be;
+    --chart-tooltip-bg: #172c40;
+    --chart-tooltip-ink: #f0f5f9;
     --minimap-shade: rgba(0, 0, 0, 0.35);
-    --minimap-lens-bg: rgba(96, 165, 250, 0.16);
-    --minimap-fill: rgba(96, 165, 250, 0.15);
+    --minimap-lens-bg: rgba(126, 178, 221, 0.16);
+    --minimap-fill: rgba(126, 178, 221, 0.15);
   }
 
   @supports (color: light-dark(white, black)) {
@@ -359,8 +374,11 @@
       --color-header-bg: light-dark(var(--header-bg-light), var(--header-bg-dark));
       --color-thead-bg: light-dark(var(--thead-bg-light), var(--thead-bg-dark));
       --color-thead-ink: light-dark(var(--thead-ink-light), var(--thead-ink-dark));
+      --color-thead-rule: light-dark(rgba(18, 53, 78, 0.14), rgba(126, 178, 221, 0.18));
 
       --color-logo: light-dark(var(--sig-logo-light), var(--sig-logo-dark));
+      --color-logo-soft: light-dark(var(--sig-logo-soft-light), var(--sig-logo-soft-dark));
+      --color-logo-soft-ink: light-dark(var(--sig-logo-soft-ink-light), var(--sig-logo-soft-ink-dark));
       --color-accent: light-dark(var(--sig-cobalt-light), var(--sig-cobalt-dark));
       --color-accent-ink: light-dark(var(--sig-cobalt-ink-light), var(--sig-cobalt-ink-dark));
       --color-accent-soft: light-dark(var(--sig-cobalt-soft-light), var(--sig-cobalt-soft-dark));
@@ -380,13 +398,21 @@
       --color-scrollbar-track: light-dark(var(--scroll-track-light), var(--scroll-track-dark));
       --color-scrollbar-thumb: light-dark(var(--scroll-thumb-light), var(--scroll-thumb-dark));
 
-      --chart-grid: light-dark(rgba(104, 112, 134, 0.18), rgba(155, 165, 196, 0.16));
-      --chart-tick: light-dark(#4d5160, #9ba5c4);
-      --chart-tooltip-bg: light-dark(#0b051a, #1b243e);
-      --chart-tooltip-ink: light-dark(#ffffff, #f5f7fc);
-      --minimap-shade: light-dark(rgba(11, 5, 26, 0.12), rgba(0, 0, 0, 0.35));
-      --minimap-lens-bg: light-dark(rgba(59, 130, 246, 0.14), rgba(96, 165, 250, 0.16));
-      --minimap-fill: light-dark(rgba(59, 130, 246, 0.16), rgba(96, 165, 250, 0.15));
+      --chart-cobalt: light-dark(#516db2, #7994de);
+      --chart-blue: light-dark(#12354e, #7eb2dd);
+      --chart-income: light-dark(#39793c, #74c678);
+      --chart-expense: light-dark(#b3392b, #f28b7e);
+      --chart-grant: light-dark(#c48823, #f3b457);
+      --chart-slate: light-dark(#698096, #8ca6be);
+      --chart-teal: light-dark(#2e7573, #5ec2bd);
+      --chart-plum: light-dark(#6e66a6, #a49ce0);
+      --chart-grid: light-dark(rgba(105, 128, 150, 0.22), rgba(140, 166, 190, 0.18));
+      --chart-tick: light-dark(#52657a, #8ca6be);
+      --chart-tooltip-bg: light-dark(#12354e, #172c40);
+      --chart-tooltip-ink: light-dark(#ffffff, #f0f5f9);
+      --minimap-shade: light-dark(rgba(13, 27, 42, 0.12), rgba(0, 0, 0, 0.35));
+      --minimap-lens-bg: light-dark(rgba(18, 53, 78, 0.14), rgba(126, 178, 221, 0.16));
+      --minimap-fill: light-dark(rgba(18, 53, 78, 0.15), rgba(126, 178, 221, 0.15));
     }
   }
 
@@ -1975,6 +2001,7 @@
     text-align: center;
     white-space: nowrap;
     border-inline-end-color: var(--color-thead-rule);
+    border-block-end: var(--rule-bar) solid var(--color-rule-strong);
   }
 
   tbody tr:nth-child(even) td,
@@ -3612,9 +3639,9 @@
 
   .doc-card[data-category="statement"] { border-inline-start-color: var(--color-expense); }
   .doc-card[data-category="newsletter"] { border-inline-start-color: var(--color-grant); }
-  .doc-card[data-category="mom"] { border-inline-start-color: var(--color-accent); }
+  .doc-card[data-category="mom"] { border-inline-start-color: var(--color-logo); }
   .doc-card[data-category="knowledge"] { border-inline-start-color: var(--color-income); }
-  .doc-card[data-category="notice"] { border-inline-start-color: var(--color-rule-strong); }
+  .doc-card[data-category="notice"] { border-inline-start-color: var(--color-accent); }
 
   .doc-card:hover {
     background-color: var(--color-well);
@@ -3633,11 +3660,39 @@
 
   .doc-cat-badge {
     display: inline-block;
-    padding: 0.12rem 0.45rem;
+    padding: 0.14rem 0.48rem;
     background-color: var(--color-accent-soft);
     color: var(--color-accent-soft-ink);
+    border: 1px solid color-mix(in srgb, currentColor 24%, transparent);
     border-radius: var(--radius-sharp);
+    font-size: 0.76rem;
     font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .doc-cat-badge[data-cat="statement"] {
+    background-color: var(--color-expense-soft);
+    color: var(--color-expense);
+  }
+
+  .doc-cat-badge[data-cat="mom"] {
+    background-color: var(--color-logo-soft);
+    color: var(--color-logo-soft-ink);
+  }
+
+  .doc-cat-badge[data-cat="newsletter"] {
+    background-color: var(--color-grant-soft);
+    color: var(--color-grant);
+  }
+
+  .doc-cat-badge[data-cat="knowledge"] {
+    background-color: var(--color-income-soft);
+    color: var(--color-income);
+  }
+
+  .doc-cat-badge[data-cat="notice"] {
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent-soft-ink);
   }
 
   .doc-title {
@@ -3973,6 +4028,7 @@
     background-color: var(--color-thead-bg);
     color: var(--color-thead-ink);
     font-weight: 700;
+    border-block-end: var(--rule-bar) solid var(--color-rule-strong);
   }
 
   /* MoM Auto-rendered Finance Summary Panel & Document-Ledger Links */
@@ -4301,9 +4357,9 @@
   .print-light-surface {
     color-scheme: only light;
     background-color: #ffffff;
-    color: #111111;
-    accent-color: #002fa7;
-    border: 1px solid #d1d5e0;
+    color: #0d1b2a;
+    accent-color: #12354e;
+    border: 1px solid #c8d6e2;
     border-radius: var(--radius-sheet);
     padding: clamp(1.2rem, 3vw, 2.25rem);
   }
@@ -4343,12 +4399,12 @@
   }
 
   .post-summary-title {
-    color: #111111;
+    color: #0d1b2a;
     margin-bottom: 0.75rem;
   }
 
   .analysis-note {
-    border-left: 5px solid #002fa7;
+    border-left: 5px solid #12354e;
     padding-left: 0.85rem;
     margin-top: 1rem;
     font-size: calc(14px * var(--font-scale));
@@ -4372,7 +4428,7 @@
   }
 
   .insight-label {
-    color: #002fa7;
+    color: #12354e;
     display: block;
     font-size: calc(13px * var(--font-scale));
     font-weight: 700;
@@ -4399,7 +4455,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #002fa7;
+    color: #12354e;
     font-size: calc(24px * var(--font-scale));
     font-weight: 700;
   }
@@ -4419,7 +4475,7 @@
   }
 
   .chapter-time {
-    color: #002fa7;
+    color: #12354e;
     font-weight: 700;
     font-size: calc(14px * var(--font-scale));
   }
@@ -4442,9 +4498,9 @@
 
   .source-list {
     list-style: none;
-    border: 1px solid #d1d5e0;
+    border: 1px solid #c8d6e2;
     border-radius: 6px;
-    background-color: #f8f9fc;
+    background-color: #f2f6f9;
     margin: 0.9rem 0 1.4rem;
     padding: 0;
     overflow: hidden;
@@ -4456,8 +4512,8 @@
     align-items: start;
     gap: 0.65rem 1rem;
     padding: 0.85rem 1rem;
-    border-bottom: 1px solid #e2e5ef;
-    color: #222222;
+    border-bottom: 1px solid #dce6ee;
+    color: #1e2d3d;
     font-size: calc(15px * var(--font-scale));
     line-height: 1.55;
     word-break: keep-all;
@@ -4468,7 +4524,7 @@
   }
 
   .source-list li:hover {
-    background-color: #f1f4fb;
+    background-color: #e8f0f6;
   }
 
   .source-kind {
@@ -4476,10 +4532,10 @@
     align-items: center;
     justify-content: center;
     padding: 0.22rem 0.5rem;
-    border: 1px solid #c7d2f0;
+    border: 1px solid #adc2d6;
     border-radius: 4px;
-    background-color: #edf1fc;
-    color: #002fa7;
+    background-color: #dce8f2;
+    color: #12354e;
     font-size: calc(12.5px * var(--font-scale));
     font-weight: 700;
     line-height: 1.3;
@@ -4494,13 +4550,13 @@
   }
 
   .source-meta {
-    color: #4d5160;
+    color: #52657a;
     font-size: calc(13px * var(--font-scale));
     line-height: 1.45;
   }
 
   .content-link {
-    color: #002fa7;
+    color: #12354e;
     font-weight: 700;
     text-decoration: underline;
     text-decoration-thickness: 1.5px;
@@ -4510,7 +4566,7 @@
 
   .content-link:hover,
   .content-link:focus-visible {
-    color: #001f73;
+    color: #0d1b2a;
     text-decoration-thickness: 2px;
   }
 
@@ -4572,7 +4628,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(to right, #002fa7 0 72px, #d9d9d9 72px 100%);
+    background: linear-gradient(to right, #12354e 0 72px, #d9d9d9 72px 100%);
   }
 
   .statement-container .statement-identity span + span {
@@ -4601,7 +4657,7 @@
   .statement-container .statement-title {
     grid-column: 1 / -1;
     grid-row: 2;
-    color: #002fa7;
+    color: #12354e;
     font-size: clamp(calc(26px * var(--font-scale)), 3.6vw, calc(44px * var(--font-scale)));
     font-weight: 700;
     line-height: 1.12;
@@ -4642,8 +4698,8 @@
 
   .statement-container .statement-body h2,
   .statement-container .statement-body .section-title {
-    color: #0b051a;
-    border-block-end-color: #111111;
+    color: #0d1b2a;
+    border-block-end-color: #12354e;
   }
 
   .statement-container .statement-body .body-text {
@@ -4658,9 +4714,9 @@
   .statement-container .demands {
     margin: 1rem 0 1.4rem;
     padding: 1.1rem 1.35rem;
-    background: #f7f8fa;
-    border: 1.5px solid #002fa7;
-    border-left: 5px solid #002fa7;
+    background: #f2f6f9;
+    border: 1.5px solid #12354e;
+    border-left: 5px solid #12354e;
   }
 
   .statement-container .demands ol {
@@ -4681,7 +4737,7 @@
   }
 
   .statement-container .closing-highlight {
-    color: #c8102e;
+    color: #b3392b;
     font-weight: 800;
     font-size: calc(20px * var(--font-scale));
   }

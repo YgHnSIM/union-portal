@@ -1007,7 +1007,7 @@ body {
 }
 
 .newsletter-return-links a {
-  color: #002fa7;
+  color: #12354e;
   font-weight: 700;
   text-decoration: none;
 }
@@ -1021,15 +1021,15 @@ body {
   max-width: 1120px;
   margin: 20px auto 0;
   padding: 16px 20px;
-  background: #f7f8fa;
-  border: 1px solid #d1d5e0;
-  border-top: 2px solid #002fa7;
+  background: #f2f6f9;
+  border: 1px solid #c8d6e2;
+  border-top: 2px solid #12354e;
 }
 
 .linked-ledger-panel h2 {
   margin: 0 0 10px;
   font-size: 16px;
-  color: #0b051a;
+  color: #0d1b2a;
 }
 
 .linked-ledger-list {
@@ -1048,12 +1048,12 @@ body {
   gap: 8px 14px;
   padding: 8px 10px;
   background: #ffffff;
-  border: 1px solid #d1d5e0;
+  border: 1px solid #c8d6e2;
   font-size: 13.5px;
 }
 
 .linked-ledger-link {
-  color: #002fa7;
+  color: #12354e;
   font-weight: 700;
   text-decoration: none;
 }

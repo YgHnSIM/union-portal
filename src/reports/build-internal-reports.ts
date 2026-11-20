@@ -63,10 +63,10 @@ const STANDALONE_CSS = `
   :root, body { color-scheme: only light; }
   body {
     font-family: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
-    color: #0b051a;
+    color: #0d1b2a;
     margin: 0;
     padding: clamp(10px, 2vw, 24px);
-    background: #f7f8fa;
+    background: #f2f6f9;
     line-height: 1.5;
   }
   .page {
@@ -74,12 +74,12 @@ const STANDALONE_CSS = `
     margin: 0 auto;
     background: #ffffff;
     padding: clamp(16px, 3vw, 32px);
-    border: 1px solid #d1d5e0;
+    border: 1px solid #c8d6e2;
     border-radius: 6px;
     container-type: inline-size;
   }
   header {
-    border-bottom: 3px solid #002fa7;
+    border-bottom: 3px solid #12354e;
     padding-bottom: 14px;
     margin-bottom: 20px;
     display: flex;
@@ -89,27 +89,27 @@ const STANDALONE_CSS = `
   }
   h1 {
     font-size: clamp(1.18rem, 0.95rem + 1.1vw, 1.55rem);
-    color: #0b051a;
+    color: #0d1b2a;
     margin: 0 0 4px 0;
     line-height: 1.3;
   }
-  .subtitle { font-size: 0.85rem; color: #4d5160; margin: 0; }
-  .meta { text-align: right; font-size: 0.78rem; color: #4d5160; flex-shrink: 0; }
+  .subtitle { font-size: 0.85rem; color: #52657a; margin: 0; }
+  .meta { text-align: right; font-size: 0.78rem; color: #52657a; flex-shrink: 0; }
   .badge {
     display: inline-block;
     padding: 3px 9px;
     border-radius: 4px;
     font-size: 0.72rem;
     font-weight: 700;
-    background: #e5f4ef;
-    color: #146c53;
+    background: #e5f2e5;
+    color: #39793c;
     margin-bottom: 4px;
   }
   h2 {
     font-size: clamp(0.96rem, 0.88rem + 0.4vw, 1.08rem);
-    color: #0b051a;
+    color: #0d1b2a;
     margin: 24px 0 10px 0;
-    border-left: 4px solid #002fa7;
+    border-left: 4px solid #12354e;
     padding-left: 10px;
   }
   .kpi-grid {
@@ -119,48 +119,48 @@ const STANDALONE_CSS = `
     margin-bottom: 18px;
   }
   .kpi {
-    background: #eef2fc;
-    border: 1px solid #d1d5e0;
+    background: #e3ecf3;
+    border: 1px solid #c8d6e2;
     border-radius: 6px;
     padding: 11px 13px;
     min-width: 0;
   }
-  .kpi .label { font-size: 0.76rem; color: #4d5160; margin-bottom: 3px; }
+  .kpi .label { font-size: 0.76rem; color: #52657a; margin-bottom: 3px; }
   .kpi .value {
     font-size: clamp(1rem, 0.9rem + 0.6vw, 1.18rem);
     font-weight: 700;
-    color: #0b051a;
+    color: #0d1b2a;
     font-variant-numeric: tabular-nums;
     word-break: keep-all;
   }
-  .kpi .sub { font-size: 0.72rem; color: #4d5160; margin-top: 2px; }
+  .kpi .sub { font-size: 0.72rem; color: #52657a; margin-top: 2px; }
   .table-wrapper {
     overflow: auto;
     max-inline-size: 100%;
     max-block-size: min(560px, 75dvh);
     container-type: inline-size;
     margin-bottom: 14px;
-    border: 1px solid #d1d5e0;
+    border: 1px solid #c8d6e2;
     border-radius: 4px;
   }
   table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.8rem; }
-  th, td { border-right: 1px solid #d1d5e0; border-bottom: 1px solid #d1d5e0; padding: 6px 8px; }
+  th, td { border-right: 1px solid #c8d6e2; border-bottom: 1px solid #c8d6e2; padding: 6px 8px; }
   thead { position: sticky; inset-block-start: 0; z-index: 2; }
-  thead th { background: #0b051a; color: #ffffff; font-weight: 600; text-align: center; white-space: nowrap; }
+  thead th { background: #e3ecf3; color: #0d1b2a; border-bottom: 2px solid #12354e; font-weight: 700; text-align: center; white-space: nowrap; }
   tbody th { background: #ffffff; font-weight: 600; text-align: left; }
   td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   td.ctr { text-align: center; }
   .coa-path { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 2px; line-height: 1.3; }
-  .coa-gwan, .coa-hang { font-size: 0.73rem; color: #4d5160; white-space: nowrap; }
-  .coa-mok { font-size: 0.8rem; font-weight: 700; color: #0b051a; white-space: nowrap; }
-  tr.subtot td, tr.subtot th { background: #eef2fc; font-weight: 700; }
-  tr.tot td, tr.tot th { background: #dce4f9; font-weight: 700; }
-  tr.muted td, tr.muted th { color: #4d5160; background: #f7f2e7; }
+  .coa-gwan, .coa-hang { font-size: 0.73rem; color: #52657a; white-space: nowrap; }
+  .coa-mok { font-size: 0.8rem; font-weight: 700; color: #0d1b2a; white-space: nowrap; }
+  tr.subtot td, tr.subtot th { background: #e8eff6; font-weight: 700; }
+  tr.tot td, tr.tot th { background: #d7e4ef; font-weight: 700; }
+  tr.muted td, tr.muted th { color: #52657a; background: #f6efe0; }
   .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
-  .chart-card { border: 1px solid #d1d5e0; border-radius: 6px; padding: 10px; background: #ffffff; break-inside: avoid; }
+  .chart-card { border: 1px solid #c8d6e2; border-radius: 6px; padding: 10px; background: #ffffff; break-inside: avoid; }
   .chart-card.full { grid-column: 1 / -1; }
   .chart-card svg { width: 100%; height: auto; display: block; }
-  .note-box { background: #faf2df; border: 1px solid #e6cfa0; border-radius: 6px; padding: 12px 14px; font-size: 0.82rem; }
+  .note-box { background: #faf0e1; border: 1px solid #e6cfa0; border-radius: 6px; padding: 12px 14px; font-size: 0.82rem; }
   .note-box ul { margin: 4px 0 0 18px; padding: 0; }
   @container (width < 680px) {
     header { flex-direction: column; align-items: flex-start; }
@@ -172,9 +172,9 @@ const STANDALONE_CSS = `
     .table-wrapper { max-block-size: none; overflow: visible; border: 0; }
     table, thead, tbody, tr, th, td { display: block; }
     thead { display: none; }
-    tr { margin-block-end: 10px; border: 1px solid #d1d5e0; border-radius: 6px; overflow: hidden; background: #ffffff; }
-    th, td { border-right: none; border-bottom: 1px solid #eef2fc; padding: 7px 10px; }
-    tbody th { background: #0b051a; color: #ffffff; text-align: left; }
+    tr { margin-block-end: 10px; border: 1px solid #c8d6e2; border-radius: 6px; overflow: hidden; background: #ffffff; }
+    th, td { border-right: none; border-bottom: 1px solid #e3ecf3; padding: 7px 10px; }
+    tbody th { background: #e3ecf3; color: #0d1b2a; text-align: left; }
     td { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; text-align: right; white-space: normal; }
     td::before { content: attr(data-label); font-weight: 600; color: #4d5160; text-align: left; flex-shrink: 0; }
     td.empty-cell { display: none; }
@@ -511,7 +511,7 @@ export async function buildInternalReports(
       [...mokMap.entries()]
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10)
-        .map(([label, value]) => ({ label, value, color: '#3b82f6' })),
+        .map(([label, value]) => ({ label, value, color: '#516db2' })),
       `${targetYear}년 주요 활동(목)별 지출 TOP 10`,
       { standalone: true },
     );
@@ -522,7 +522,7 @@ export async function buildInternalReports(
           label,
           value,
           pct: (value / totExp) * 100,
-          color: '#10b981',
+          color: '#39793c',
         })),
       `${targetYear}년 지출형태별 집행 현황`,
       { standalone: true },
@@ -545,9 +545,9 @@ export async function buildInternalReports(
         return {
           label: `${y}년`,
           series: [
-            { name: '정기조합비 합계', value: dues, color: '#3b82f6' },
-            { name: '외부 순지출', value: extExp, color: '#f43f5e' },
-            { name: '지부 교부금', value: grants, color: '#f59e0b' },
+            { name: '정기조합비 합계', value: dues, color: '#516db2' },
+            { name: '외부 순지출', value: extExp, color: '#b3392b' },
+            { name: '지부 교부금', value: grants, color: '#c48823' },
           ],
         };
       }),
