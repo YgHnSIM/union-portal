@@ -76,6 +76,7 @@ interface PublicOfficialsJson {
     roleId: string;
     personId: string;
     kind: string;
+    roleScope?: string;
     name: string;
     org: string;
     title: string;
@@ -551,10 +552,14 @@ export async function validateSite(
     }
   }
 
-  // Active union officials allowlist (for /union/index.html)
+  // Active union officials allowlist (for /union/index.html: strictly our union's active members)
   const activeOfficialNames = new Set(
     officialsJson.officials
       .filter((o) => {
+        if (o.kind !== 'member') return false;
+        if (o.roleScope === 'external_rep' || o.roleScope === 'staff_rotating') {
+          return false;
+        }
         const fromOk = !o.validFrom || o.validFrom.slice(0, 7) <= currentYm;
         const toOk = !o.validTo || o.validTo.slice(0, 7) >= currentYm;
         return fromOk && toOk && Boolean(o.name);

@@ -117,9 +117,14 @@ interface PublicOfficialsJson {
     roleId: string;
     personId: string;
     kind: string;
+    roleScope?: string;
+    termLabel?: string;
+    sortOrder?: number;
     name: string;
     org: string;
     title: string;
+    memberUnitCode?: string | null;
+    memberUnitName?: string | null;
     validFrom: string | null;
     validTo: string | null;
     isPrimary: boolean;
@@ -2063,14 +2068,35 @@ function buildUnionPage(
   const route = 'union/index.html';
   const prefix = computePrefixForRoute(route);
 
-  // Filter active officials only (!validTo || validTo >= currentYm) AND validFrom <= currentYm
-  const activeOfficials = officialsJson.officials.filter((o) => {
-    if (o.validFrom && o.validFrom.slice(0, 7) > currentYm) return false;
-    if (o.validTo && o.validTo.slice(0, 7) < currentYm) return false;
-    return true;
-  });
+  // Exclude external_rep (other unions) and staff_rotating (so-tong-gan-sa); show only active union officers
+  const activeOfficials = officialsJson.officials
+    .filter((o) => {
+      if (o.kind !== 'member') return false;
+      if (o.roleScope === 'external_rep' || o.roleScope === 'staff_rotating') {
+        return false;
+      }
+      if (o.validFrom && o.validFrom.slice(0, 7) > currentYm) return false;
+      if (o.validTo && o.validTo.slice(0, 7) < currentYm) return false;
+      return true;
+    })
+    .sort(
+      (a, b) =>
+        (a.sortOrder ?? 100) - (b.sortOrder ?? 100) ||
+        a.roleId.localeCompare(b.roleId),
+    );
 
-  const unitCards = orgSummary.units
+  const scopeLabelMap: Record<string, string> = {
+    executive: '집행부',
+    branch_head: '지부장',
+    auditor: '감사',
+    committee: '특별기구',
+  };
+
+  const displayUnits = orgSummary.units.filter(
+    (u) => u.code !== 'HQ' || u.activeCount > 0,
+  );
+
+  const unitCards = displayUnits
     .map((u) => {
       const empSummary =
         Object.entries(u.byEmployment)
@@ -2098,8 +2124,8 @@ function buildUnionPage(
     .join('\n    ');
 
   const unitSvg = renderUnitComparisonSvg(
-    orgSummary.units
-      .filter((u) => u.activeCount > 0 || u.status === 'active')
+    displayUnits
+      .filter((u) => u.activeCount > 0 || (u.status === 'active' && u.code !== 'HQ'))
       .map((u) => ({
         label: u.officialName,
         series: [
@@ -2124,20 +2150,26 @@ function buildUnionPage(
   );
 
   const officialCards = activeOfficials
-    .map(
-      (o) => `<article class="official-card">
-      <div class="official-card-role">${escapeHtml(o.org || '본조')} · ${escapeHtml(o.title)}</div>
+    .map((o) => {
+      const scopeTag = o.roleScope ? scopeLabelMap[o.roleScope] ?? '임원' : '임원';
+      const headerParts = [o.termLabel, scopeTag].filter(Boolean).join(' · ');
+      const affiliationParts = [
+        o.memberUnitName ? `소속: ${o.memberUnitName}` : '',
+        o.validFrom ? `임기 시작: ${o.validFrom}` : '',
+      ].filter(Boolean);
+      return `<article class="official-card">
+      <div class="official-card-role">${escapeHtml(headerParts)} · ${escapeHtml(o.title)}</div>
       <div class="official-card-name">${escapeHtml(o.name)}</div>
-      <div class="official-card-term">${o.validFrom ? `임기 시작: ${escapeHtml(o.validFrom)}` : '현직 공적 대표'}</div>
-    </article>`,
-    )
+      <div class="official-card-term">${escapeHtml(affiliationParts.join(' · ') || o.org || '본조')}</div>
+    </article>`;
+    })
     .join('\n    ');
 
   const bodyHtml = `
   <header class="page-masthead">
     <div>
       <h1>노동조합 조직 및 임원 현황</h1>
-      <p class="lead">지부별 조합원 구성 통계와 현 임기 공적 직책 임원 현황을 비식별 공개 정책에 따라 안내합니다.</p>
+      <p class="lead">지부별 조합원 구성 통계와 현 임기 우리 노동조합 임원 현황을 비식별 공개 정책에 따라 안내합니다.</p>
     </div>
     <div class="masthead-meta">
       <span class="data-stamp">활동 조합원 ${orgSummary.totalActive}명 · 기준월 ${escapeHtml(currentYm)}</span>
@@ -2145,13 +2177,13 @@ function buildUnionPage(
   </header>
 
   <div class="privacy-notice-banner" role="note">
-    <strong>공개 개인정보 보호 원칙(ADR-0003):</strong> 공개 웹에서는 지부·직종별 집계 통계와 현 임기 선출·선임 공적 직책 임원의 직책·성명만을 안내합니다. 일반 조합원·순번제 간사·참관인 성명과 연락처·이메일·생년월일 및 모든 개인 회계 내역은 일체 비공개 처리됩니다.
+    <strong>공개 개인정보 보호 원칙(ADR-0003):</strong> 공개 웹에서는 지부·직종별 집계 통계와 현 임기 선출·선임 임원의 직책·성명만을 직제순으로 안내합니다. 타노조 대표, 순번제 소통간사, 일반 조합원의 성명과 연락처·이메일·생년월일 및 개인 회계 내역은 일체 비공개 처리됩니다.
   </div>
 
   <section class="section-band" aria-labelledby="sec-units-org">
     <div class="section-head">
-      <h2 id="sec-units-org">1. 본조 및 지부별 조합원 현황 (총 ${orgSummary.totalActive}명)</h2>
-      <span class="section-sub">표준 지부 명칭 기준 비식별 인원 통계</span>
+      <h2 id="sec-units-org">1. 지부별 조합원 현황 (총 ${orgSummary.totalActive}명)</h2>
+      <span class="section-sub">본조(중앙 집행·회계 단위)는 별도 소속 인원이 없으며, 전 조합원은 지부 소속으로 집계됩니다</span>
     </div>
     <div class="union-unit-grid">
       ${unitCards}
@@ -2163,8 +2195,8 @@ function buildUnionPage(
 
   <section class="section-band" aria-labelledby="sec-officials">
     <div class="section-head">
-      <h2 id="sec-officials">2. 현 임기 공적 직책 임원 (${activeOfficials.length}명)</h2>
-      <span class="section-sub">임기 만료·교체 시 공개 목록에서 자동 제외됩니다</span>
+      <h2 id="sec-officials">2. 현 임기 조합 임원 현황 (${activeOfficials.length}명)</h2>
+      <span class="section-sub">우리 노조 집행부·지부장·감사·특별기구 직책만 직제순 공개 (타노조 대표·소통간사 제외)</span>
     </div>
     <div class="officials-grid">
       ${officialCards || '<p class="muted">현재 등록된 현직 공개 직책 임원이 없습니다.</p>'}

@@ -179,11 +179,23 @@ export const personRoles = sqliteTable(
     validFrom: text('valid_from'),
     validTo: text('valid_to'),
     isPrimary: integer('is_primary', { mode: 'boolean' }).notNull().default(true),
+    roleScope: text('role_scope').notNull().default('other'),
+    termLabel: text('term_label').notNull().default(''),
+    appointedOn: text('appointed_on'),
+    endedOn: text('ended_on'),
+    endReason: text('end_reason').notNull().default(''),
+    sortOrder: integer('sort_order').notNull().default(100),
+    evidenceDocId: text('evidence_doc_id').notNull().default(''),
+    note: text('note').notNull().default(''),
   },
   (table) => [
     check(
       'person_roles_disclosure_chk',
       sql`${table.publicDisclosure} IN ('public_official', 'masked')`,
+    ),
+    check(
+      'person_roles_scope_chk',
+      sql`${table.roleScope} IN ('executive', 'branch_head', 'auditor', 'committee', 'staff_rotating', 'external_rep', 'other')`,
     ),
   ],
 );

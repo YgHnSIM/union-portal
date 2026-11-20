@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-20T18:47:26",
-  "totalActive": 61,
+  "generatedAt": "2026-11-20T21:11:38",
+  "totalActive": 60,
   "totalHistorical": 67,
   "units": [
     {
@@ -48,13 +48,9 @@
       "shortName": "본부",
       "fullName": "우체국물류지원단 물류노동조합 본조합",
       "status": "active",
-      "activeCount": 1,
-      "byEmployment": {
-        "미지정": 1
-      },
-      "byShift": {
-        "미지정": 1
-      }
+      "activeCount": 0,
+      "byEmployment": {},
+      "byShift": {}
     },
     {
       "code": "SS",

@@ -297,14 +297,24 @@ presentation:
         totalHistorical: 12,
         units: [
           {
+            code: 'AY',
+            officialName: '안양지부',
+            shortName: '안물',
+            fullName: '안양물류센터지부',
+            status: 'active',
+            activeCount: 10,
+            byEmployment: { 공무직: 8, 기간제: 2 },
+            byShift: { 주간: 10 },
+          },
+          {
             code: 'HQ',
             officialName: '본조',
             shortName: '본부',
             fullName: '우체국물류지원단 물류노동조합 본조합',
             status: 'active',
-            activeCount: 10,
-            byEmployment: { 공무직: 8, 기간제: 2 },
-            byShift: { 주간: 10 },
+            activeCount: 0,
+            byEmployment: {},
+            byShift: {},
           },
         ],
         monthlyFlows: [{ ym: '2026-05', joins: 1, rejoins: 0, withdraws: 0, transfers: 0 }],
@@ -324,10 +334,31 @@ presentation:
             roleId: 'R-9001',
             personId: 'M-9001',
             kind: 'member',
+            roleScope: 'executive',
+            termLabel: '제3기',
+            sortOrder: 10,
             name: '홍길동',
             org: '본조',
             title: '위원장',
+            memberUnitCode: 'AY',
+            memberUnitName: '안양지부',
             validFrom: '2025-01',
+            validTo: null,
+            isPrimary: true,
+          },
+          {
+            roleId: 'R-9002',
+            personId: 'E-9001',
+            kind: 'external',
+            roleScope: 'external_rep',
+            termLabel: '',
+            sortOrder: 100,
+            name: '이영희',
+            org: '교섭대표노조',
+            title: '사무국장',
+            memberUnitCode: null,
+            memberUnitName: null,
+            validFrom: null,
             validTo: null,
             isPrimary: true,
           },
@@ -370,6 +401,7 @@ presentation:
         { personId: 'M-9001', kind: 'member', name: '홍길동', phone: '', email: '', status: 'active', note: '' },
         { personId: 'M-9002', kind: 'member', name: '김철수', phone: '010-0000-0000', email: '', status: 'active', note: '' },
         { personId: 'M-9003', kind: 'member', name: '박민수', phone: '', email: '', status: 'active', note: '' },
+        { personId: 'E-9001', kind: 'external', name: '이영희', phone: '', email: '', status: 'active', note: '' },
       ],
       aliases: [],
     },
@@ -429,6 +461,14 @@ test('buildSite, validateSite(--ci), 프라이버시 누출 차단 및 generateR
     assert.ok(!sitemap.includes('unlisted_2026.html'));
     assert.ok(sitemap.includes('archive/mom/202605.html'));
 
+    // /union/ includes union officer (홍길동) and branch card (안양지부), excludes external rep (이영희) and 0-member HQ card
+    const unionPath = path.join(siteDir, 'union', 'index.html');
+    const unionHtml = await fs.readFile(unionPath, 'utf8');
+    assert.match(unionHtml, /홍길동/);
+    assert.match(unionHtml, /안양지부/);
+    assert.ok(!unionHtml.includes('이영희'));
+    assert.ok(!unionHtml.includes('<span class="doc-cat-badge">HQ</span>'));
+
     // CI validate passes on clean site
     const ciPass = await validateSite({
       projectRoot: tmpDir,
@@ -437,6 +477,18 @@ test('buildSite, validateSite(--ci), 프라이버시 누출 차단 및 generateR
       currentYm: '2026-05',
     });
     assert.equal(ciPass.ok, true, ciPass.errors.join('\n'));
+
+    // Inject external rep into /union/index.html -> MUST fail CI check
+    await fs.writeFile(unionPath, unionHtml.replace('</main>', '<p>이영희</p></main>'), 'utf8');
+    const ciFailExtUnion = await validateSite({
+      projectRoot: tmpDir,
+      ci: true,
+      salt: TEST_SALT,
+      currentYm: '2026-05',
+    });
+    assert.equal(ciFailExtUnion.ok, false);
+    assert.ok(ciFailExtUnion.errors.some((e) => e.includes('이*희')));
+    await fs.writeFile(unionPath, unionHtml, 'utf8');
 
     // Inject masked person leak into accounting index -> MUST fail CI check with masked token
     const accIdxPath = path.join(siteDir, 'accounting', 'index.html');

@@ -12,6 +12,7 @@ import type {
   PersonAlias,
   PersonRole,
   PrivacyRule,
+  PrivacyRuleType,
   PublicDisclosure,
   StripToken,
   SyncMetadata,
@@ -45,6 +46,7 @@ export interface PeopleRepository {
   listAliases(): Promise<PersonAlias[]>;
   upsertAlias(alias: PersonAlias): Promise<void>;
   listRoles(personId?: string): Promise<PersonRole[]>;
+  findRoleById(roleId: string): Promise<PersonRole | null>;
   upsertRole(role: PersonRole): Promise<void>;
   setRoleDisclosure(roleId: string, disclosure: PublicDisclosure): Promise<void>;
   getDirectoryBundle(): Promise<DirectoryBundle>;
@@ -55,6 +57,7 @@ export interface PrivacyRepository {
   replaceStripTokens(tokens: StripToken[]): Promise<void>;
   listRules(): Promise<PrivacyRule[]>;
   upsertRules(rules: PrivacyRule[]): Promise<void>;
+  deleteRule(ruleType: PrivacyRuleType, matchKey: string): Promise<void>;
 }
 
 export interface LedgerRepository {

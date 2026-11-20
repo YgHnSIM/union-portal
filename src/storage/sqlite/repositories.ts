@@ -14,7 +14,9 @@ import type {
   PersonRole,
   PrivacyBundle,
   PrivacyRule,
+  PrivacyRuleType,
   PublicDisclosure,
+  RoleScope,
   StripToken,
   StripTokensConfig,
   SyncMetadata,
@@ -199,6 +201,17 @@ class SqlitePrivacyRepository implements PrivacyRepository {
           },
         });
     }
+  }
+
+  async deleteRule(ruleType: PrivacyRuleType, matchKey: string): Promise<void> {
+    await this.exec
+      .delete(privacyRules)
+      .where(
+        and(
+          eq(privacyRules.ruleType, ruleType),
+          eq(privacyRules.matchKey, matchKey),
+        ),
+      );
   }
 }
 
@@ -525,16 +538,8 @@ class SqlitePeopleRepository implements PeopleRepository {
       });
   }
 
-  async listRoles(personId?: string): Promise<PersonRole[]> {
-    const query = personId
-      ? this.exec
-          .select()
-          .from(personRoles)
-          .where(eq(personRoles.personId, personId))
-          .orderBy(asc(personRoles.roleId))
-      : this.exec.select().from(personRoles).orderBy(asc(personRoles.roleId));
-    const rows = await query;
-    return rows.map((r) => ({
+  private mapRoleRow(r: typeof personRoles.$inferSelect): PersonRole {
+    return {
       roleId: r.roleId,
       personId: r.personId,
       org: r.org,
@@ -543,10 +548,50 @@ class SqlitePeopleRepository implements PeopleRepository {
       validFrom: r.validFrom,
       validTo: r.validTo,
       isPrimary: r.isPrimary,
-    }));
+      roleScope: r.roleScope as RoleScope,
+      termLabel: r.termLabel,
+      appointedOn: r.appointedOn,
+      endedOn: r.endedOn,
+      endReason: r.endReason,
+      sortOrder: r.sortOrder,
+      evidenceDocId: r.evidenceDocId,
+      note: r.note,
+    };
+  }
+
+  async listRoles(personId?: string): Promise<PersonRole[]> {
+    const query = personId
+      ? this.exec
+          .select()
+          .from(personRoles)
+          .where(eq(personRoles.personId, personId))
+          .orderBy(asc(personRoles.sortOrder), asc(personRoles.roleId))
+      : this.exec
+          .select()
+          .from(personRoles)
+          .orderBy(asc(personRoles.sortOrder), asc(personRoles.roleId));
+    const rows = await query;
+    return rows.map((r) => this.mapRoleRow(r));
+  }
+
+  async findRoleById(roleId: string): Promise<PersonRole | null> {
+    const rows = await this.exec
+      .select()
+      .from(personRoles)
+      .where(eq(personRoles.roleId, roleId));
+    const row = rows[0];
+    return row ? this.mapRoleRow(row) : null;
   }
 
   async upsertRole(role: PersonRole): Promise<void> {
+    const scope: RoleScope = role.roleScope ?? 'other';
+    const termLabel = role.termLabel ?? '';
+    const appointedOn = role.appointedOn ?? null;
+    const endedOn = role.endedOn ?? null;
+    const endReason = role.endReason ?? '';
+    const sortOrder = role.sortOrder ?? 100;
+    const evidenceDocId = role.evidenceDocId ?? '';
+    const note = role.note ?? '';
     await this.exec
       .insert(personRoles)
       .values({
@@ -558,6 +603,14 @@ class SqlitePeopleRepository implements PeopleRepository {
         validFrom: role.validFrom,
         validTo: role.validTo,
         isPrimary: role.isPrimary,
+        roleScope: scope,
+        termLabel,
+        appointedOn,
+        endedOn,
+        endReason,
+        sortOrder,
+        evidenceDocId,
+        note,
       })
       .onConflictDoUpdate({
         target: personRoles.roleId,
@@ -569,6 +622,14 @@ class SqlitePeopleRepository implements PeopleRepository {
           validFrom: role.validFrom,
           validTo: role.validTo,
           isPrimary: role.isPrimary,
+          roleScope: scope,
+          termLabel,
+          appointedOn,
+          endedOn,
+          endReason,
+          sortOrder,
+          evidenceDocId,
+          note,
         },
       });
   }

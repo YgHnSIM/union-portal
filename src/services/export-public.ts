@@ -172,17 +172,34 @@ export async function exportPublicProjection(options: {
 
   // 3. data/public/public_officials.json (only public_official roles, no phone/email/birthDate)
   const personById = new Map(bundle.people.map((p) => [p.personId, p]));
+  const memberById = new Map(bundle.members.map((m) => [m.personId, m]));
+  const unitByCode = new Map(units.map((u) => [u.code, u]));
   const officialEntries = bundle.roles
     .filter((r) => r.publicDisclosure === 'public_official')
+    .sort(
+      (a, b) =>
+        (a.sortOrder ?? 100) - (b.sortOrder ?? 100) ||
+        a.roleId.localeCompare(b.roleId),
+    )
     .map((r) => {
       const p = personById.get(r.personId);
+      const m = memberById.get(r.personId);
+      const kind = p?.kind ?? 'member';
+      const inferredScope =
+        r.roleScope ?? (kind === 'external' ? 'external_rep' : 'executive');
+      const unitObj = m ? unitByCode.get(m.unitCode) : undefined;
       return {
         roleId: r.roleId,
         personId: r.personId,
-        kind: p?.kind ?? 'member',
+        kind,
+        roleScope: inferredScope,
+        termLabel: r.termLabel ?? '',
+        sortOrder: r.sortOrder ?? 100,
         name: p?.name ?? '',
         org: r.org,
         title: r.title,
+        memberUnitCode: m?.unitCode ?? null,
+        memberUnitName: m ? (unitObj?.officialName ?? m.unitCode) : null,
         validFrom: r.validFrom,
         validTo: r.validTo,
         isPrimary: r.isPrimary,

@@ -185,6 +185,7 @@ export async function exportDirectoryMarkdown(options: {
       '| 문서 | 내용 | 건수 |',
       '| :--- | :--- | :---: |',
       `| [members.md](members.md) | 지부별 현직 조합원 명부 · 과거/이력 조합원 · 탈퇴 사유 집계 · 변동 로그 | ${bundle.members.length}명 |`,
+      `| [officers.md](officers.md) | 현 임기 조합 임원 · 순번제 간사(비공개) · 역대 이력 · 외부 타노조 분리 명부 | ${bundle.roles.length}건 |`,
       `| [external_people.md](external_people.md) | 본사·연대노조·상급단체 등 외부인 인명사전 | ${bundle.externals.length}명 |`,
       `| [title_rules.md](title_rules.md) | 정식 성명 통일 정책 · 제외 목록 · 별칭 매핑 · 직책·공개등급 표 | 별칭 ${bundle.aliases.length} · 직책 ${bundle.roles.length} |`,
       `| \`_raw/applications/*.md\` | 개별 가입서·탈퇴 기록서 마크다운 카드 & 원본 이미지 링크 | 서류 ${applicationCards.length} · 증빙 ${bundle.memberDocuments.length} |`,
@@ -339,22 +340,101 @@ export async function exportDirectoryMarkdown(options: {
     '',
     `## 3. 인물별 직책 및 공적 노출 등급 (${bundle.roles.length}건)`,
     '',
-    '| 규칙 ID | 성명 (`person_id`) | 소속/기관 | 직책 | 공적 노출 등급 | 적용 시작 | 종료 | 비고 |',
-    '| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :--- |',
+    '| 규칙 ID | 구분 | 기수 | 성명 (`person_id`) | 소속/기관 | 직책 | 공적 노출 등급 | 시작 | 종료 | 종료사유 |',
+    '| :--- | :---: | :---: | :--- | :--- | :--- | :---: | :---: | :---: | :--- |',
   );
   for (const r of bundle.roles) {
     const formal = bundle.idToName[r.personId] ?? '';
-    const primaryNote = r.isPrimary ? '주 직책' : '겸직';
     ruleLines.push(
-      `| \`${r.roleId}\` | **${formal}** (\`${r.personId}\`) | ${mdCell(r.org)} | ${r.title} | \`${r.publicDisclosure}\` | ${mdCell(r.validFrom)} | ${mdCell(r.validTo)} | ${primaryNote} |`,
+      `| \`${r.roleId}\` | \`${r.roleScope ?? 'other'}\` | ${mdCell(r.termLabel)} | **${formal}** (\`${r.personId}\`) | ${mdCell(r.org)} | ${r.title} | \`${r.publicDisclosure}\` | ${mdCell(r.validFrom)} | ${mdCell(r.validTo)} | ${mdCell(r.endReason)} |`,
     );
   }
   ruleLines.push('');
   const rulesPath = path.join(outDir, 'title_rules.md');
   await fs.writeFile(rulesPath, ruleLines.join('\n'), 'utf8');
 
+  // 4. directory/officers.md (local-only separated officer registry)
+  const personById = new Map(bundle.people.map((p) => [p.personId, p]));
+  const scopeLabel: Record<string, string> = {
+    executive: '집행부',
+    branch_head: '지부장',
+    auditor: '감사',
+    committee: '특별기구',
+    staff_rotating: '순번제간사',
+    external_rep: '외부대표',
+    other: '기타',
+  };
+  const memberRoles = bundle.roles.filter((r) => {
+    const p = personById.get(r.personId);
+    return p?.kind === 'member' && r.roleScope !== 'external_rep';
+  });
+  const activeOfficers = memberRoles.filter(
+    (r) =>
+      !r.validTo &&
+      !r.endedOn &&
+      r.roleScope !== 'staff_rotating' &&
+      r.roleScope !== 'other',
+  );
+  const rotatingStaff = memberRoles.filter(
+    (r) => r.roleScope === 'staff_rotating' && !r.validTo && !r.endedOn,
+  );
+  const historicalMemberRoles = memberRoles.filter((r) => Boolean(r.validTo || r.endedOn));
+  const externalRoles = bundle.roles.filter((r) => {
+    const p = personById.get(r.personId);
+    return p?.kind === 'external' || r.roleScope === 'external_rep';
+  });
+
+  const officersLines = [
+    '# 노동조합 임원·직책 관리 대장 (로컬 전용 · Git 제외)',
+    '',
+    `> 기준: \`${nowStr}\` · 현 임기 임원 \`${activeOfficers.length}명\` · 순번제 간사(비공개) \`${rotatingStaff.length}명\` · 역대/보직변경 이력 \`${historicalMemberRoles.length}건\` · 타노조/외부 대표 \`${externalRoles.length}명\``,
+    '',
+    '## 1. 현 임기 조합 임원 (집행부 · 지부장 · 감사 · 특별기구)',
+    '',
+    '| 규칙 ID | 서열 | 기수 | 구분 | 직책 | 성명 (`person_id`) | 소속 지부 | 시작 | 임명근거 | 비고 |',
+    '| :--- | :---: | :---: | :---: | :--- | :--- | :---: | :---: | :--- | :--- |',
+    ...activeOfficers.map((r) => {
+      const m = memberMap.get(r.personId);
+      const uName = m ? unitMap.get(m.unitCode)?.officialName ?? m.unitCode : '-';
+      const formal = bundle.idToName[r.personId] ?? '';
+      return `| \`${r.roleId}\` | ${r.sortOrder ?? 100} | ${mdCell(r.termLabel)} | ${scopeLabel[r.roleScope ?? 'other'] ?? '기타'} | **${r.title}** | **${formal}** (\`${r.personId}\`) | ${uName} | ${mdCell(r.validFrom)} | ${mdCell(r.evidenceDocId)} | ${mdCell(r.note)} |`;
+    }),
+    '',
+    '## 2. 순번제 · 비공개 관리 직책 (소통간사 등 — 공개 웹 노출 금지)',
+    '',
+    '| 규칙 ID | 기수 | 직책 | 성명 (`person_id`) | 소속 지부 | 시작 | 공개등급 | 비고 |',
+    '| :--- | :---: | :--- | :--- | :---: | :---: | :---: | :--- |',
+    ...rotatingStaff.map((r) => {
+      const m = memberMap.get(r.personId);
+      const uName = m ? unitMap.get(m.unitCode)?.officialName ?? m.unitCode : '-';
+      const formal = bundle.idToName[r.personId] ?? '';
+      return `| \`${r.roleId}\` | ${mdCell(r.termLabel)} | ${r.title} | ${formal} (\`${r.personId}\`) | ${uName} | ${mdCell(r.validFrom)} | \`${r.publicDisclosure}\` | ${mdCell(r.note)} |`;
+    }),
+    '',
+    '## 3. 역대 임원 및 보직 변경 · 임기 종료 이력',
+    '',
+    '| 규칙 ID | 기수 | 구분 | 직책 | 성명 (`person_id`) | 소속/기관 | 기간 | 종료사유 | 근거 |',
+    '| :--- | :---: | :---: | :--- | :--- | :--- | :---: | :--- | :--- |',
+    ...historicalMemberRoles.map((r) => {
+      const formal = bundle.idToName[r.personId] ?? '';
+      return `| \`${r.roleId}\` | ${mdCell(r.termLabel)} | ${scopeLabel[r.roleScope ?? 'other'] ?? '기타'} | ${r.title} | ${formal} (\`${r.personId}\`) | ${mdCell(r.org)} | ${mdCell(r.validFrom)}..${mdCell(r.validTo)} | ${mdCell(r.endReason)} | ${mdCell(r.evidenceDocId)} |`;
+    }),
+    '',
+    '## 4. 타노조 · 외부 유관기관 대표 (조합 현황 비포함 · 회의록 검증용 별도 보관)',
+    '',
+    '| 규칙 ID | 성명 (`person_id`) | 소속 노조/기관 | 직책 | 공개등급 (회의록용) | 비고 |',
+    '| :--- | :--- | :--- | :--- | :---: | :--- |',
+    ...externalRoles.map((r) => {
+      const formal = bundle.idToName[r.personId] ?? '';
+      return `| \`${r.roleId}\` | ${formal} (\`${r.personId}\`) | ${mdCell(r.org)} | ${r.title} | \`${r.publicDisclosure}\` | ${mdCell(r.note)} |`;
+    }),
+    '',
+  ];
+  const officersPath = path.join(outDir, 'officers.md');
+  await fs.writeFile(officersPath, officersLines.join('\n'), 'utf8');
+
   return {
-    directoryFiles: [readmePath, membersPath, extPath, rulesPath],
+    directoryFiles: [readmePath, membersPath, officersPath, extPath, rulesPath],
     applicationCards,
   };
 }

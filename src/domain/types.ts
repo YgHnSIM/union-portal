@@ -25,6 +25,14 @@ export interface Account {
 export type PersonKind = 'member' | 'external';
 export type PersonStatus = 'active' | 'inactive' | 'retired' | 'withdrawn' | 'leave';
 export type PublicDisclosure = 'public_official' | 'masked';
+export type RoleScope =
+  | 'executive'
+  | 'branch_head'
+  | 'auditor'
+  | 'committee'
+  | 'staff_rotating'
+  | 'external_rep'
+  | 'other';
 export type EventType = 'join' | 'withdraw' | 'rejoin' | 'transfer' | 'baseline_sync' | 'ledger_import';
 export type WithdrawReasonCategory = '정년퇴직' | '계약만료·퇴직' | '기타' | '';
 export type MemberDocType = '가입서' | '탈퇴서' | '기타';
@@ -106,6 +114,14 @@ export interface PersonRole {
   validFrom: string | null;
   validTo: string | null;
   isPrimary: boolean;
+  roleScope?: RoleScope;
+  termLabel?: string;
+  appointedOn?: string | null;
+  endedOn?: string | null;
+  endReason?: string;
+  sortOrder?: number;
+  evidenceDocId?: string;
+  note?: string;
 }
 
 export interface StripToken {

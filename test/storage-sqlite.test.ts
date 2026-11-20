@@ -24,7 +24,7 @@ test('SQLite 마이그레이션, 물리 FK 강제, 조합원 생애주기, BlobS
 
   try {
     const applied = await migrateSqlite(conn.client, MIGRATIONS_DIR);
-    assert.deepEqual(applied, ['0000_initial.sql']);
+    assert.deepEqual(applied, ['0000_initial.sql', '0001_officer_governance.sql']);
 
     // Idempotent rerun
     const second = await migrateSqlite(conn.client, MIGRATIONS_DIR);
@@ -125,6 +125,73 @@ test('SQLite 마이그레이션, 물리 FK 강제, 조합원 생애주기, BlobS
     assert.equal(rj.mode, 'rejoin');
     assert.equal(rj.member.personId, 'M-0001');
     assert.equal(rj.event.rejoinCategory, '계약만료 후 재입사');
+
+    // Officer role governance: staff_rotating guard -> appoint -> transfer -> end & auto-close on withdraw
+    await assert.rejects(async () => {
+      await service.appointRole({
+        personId: 'M-0001',
+        title: '소통간사',
+        roleScope: 'staff_rotating',
+        disclosure: 'public_official',
+      });
+    });
+
+    const app = await service.appointRole({
+      personId: 'M-0001',
+      title: '조직국장',
+      org: '본조',
+      roleScope: 'executive',
+      termLabel: '제3기',
+      appointedOn: '2026-07-05',
+      sortOrder: 43,
+      evidenceDocId: 'mom:202607',
+    });
+    assert.equal(app.roleScope, 'executive');
+    assert.equal(app.publicDisclosure, 'public_official');
+    assert.equal(app.validFrom, '2026-07');
+
+    const trRole = await service.transferRole({
+      roleId: app.roleId,
+      newTitle: '사무국장',
+      date: '2026-09-01',
+      sortOrder: 30,
+      reason: '보직변경',
+    });
+    assert.equal(trRole.closedRole.validTo, '2026-09');
+    assert.equal(trRole.closedRole.endReason, '보직변경');
+    assert.equal(trRole.appointedRole.title, '사무국장');
+    assert.equal(trRole.appointedRole.validTo, null);
+
+    // Transferring an already-closed role must throw
+    await assert.rejects(async () => {
+      await service.transferRole({ roleId: app.roleId, newTitle: '중복변경' });
+    });
+
+    const j2 = await service.joinMember({
+      name: '김철수',
+      unit: 'AY',
+      birth: '910202',
+      date: '2026-08-01',
+    });
+    const r2 = await service.appointRole({
+      personId: j2.member.personId,
+      title: '운영위원',
+      roleScope: 'executive',
+      validFrom: '2026-08',
+    });
+    await service.withdrawMember({ id: j2.member.personId, date: '2026-10-15' });
+    const r2After = await repos.people.findRoleById(r2.roleId);
+    assert.equal(r2After?.validTo, '2026-10');
+    assert.equal(r2After?.endReason, '탈퇴');
+
+    await service.endRole({
+      roleId: trRole.appointedRole.roleId,
+      validTo: '2026-11',
+      reason: '사임',
+    });
+    const closedFinal = await repos.people.findRoleById(trRole.appointedRole.roleId);
+    assert.equal(closedFinal?.endReason, '사임');
+    assert.equal(closedFinal?.validTo, '2026-11');
   } finally {
     conn.close();
     await fs.rm(tmpDir, {

@@ -5,6 +5,7 @@ import type {
   AliasMatchMode,
   PersonStatus,
   PublicDisclosure,
+  RoleScope,
 } from '../domain/types.js';
 import { type PdfPaperSize, generateDocumentPdf } from '../pdf/generate-pdf.js';
 import { buildInternalReports } from '../reports/build-internal-reports.js';
@@ -12,7 +13,7 @@ import { runPrivacyAudit } from '../services/audit-privacy.js';
 import { exportDirectoryMarkdown } from '../services/export-markdown.js';
 import { exportPublicProjection } from '../services/export-public.js';
 import { importLegacyData } from '../services/import-legacy.js';
-import { MemberService } from '../services/member-service.js';
+import { MemberService, parseRoleScope } from '../services/member-service.js';
 import { syncLedgerFromFile } from '../services/sync-ledger.js';
 import { buildSite } from '../site/build-site.js';
 import { generateRedirects } from '../site/generate-redirects.js';
@@ -91,7 +92,10 @@ function printHelp(): void {
   union member transfer [--id M-XXXX | --name <name>] --to-unit <unit>
   union external list
   union external add --name <name> [--org ...] [--category ...] [--phone ...]
-  union role list [--person M-XXXX|E-XXXX]
+  union role list [--active | --history] [--scope <scope>] [--person M-XXXX|E-XXXX]
+  union role appoint --person <id|name> --title <title> [--scope <scope>] [--org <org>] [--term <기수>] [--from YYYY-MM] [--appointed-on YYYY-MM-DD] [--order N] [--disclosure public_official|masked] [--doc <mom:...>] [--note ...]
+  union role transfer --role <R-XXXX> --new-title <title> [--new-org <org>] [--new-scope <scope>] [--date YYYY-MM-DD] [--term <기수>] [--order N] [--doc <mom:...>] [--reason ...]
+  union role end --role <R-XXXX> [--to YYYY-MM] [--ended-on YYYY-MM-DD] [--reason 임기만료|사임|보직변경] [--note ...]
   union role add --person <person_id> --org <org> --title <title> --disclosure <public_official|masked> [--valid-from YYYY-MM] [--valid-to YYYY-MM]
   union role set-disclosure --role R-XXXX --disclosure <public_official|masked>
   union alias list
@@ -376,12 +380,94 @@ async function main(): Promise<void> {
 
     if (cmd === 'role') {
       if (sub === 'list') {
+        const onlyActive = parsed.flags.has('active');
+        const onlyHistory = parsed.flags.has('history');
+        const scopeFilter = flagOne(parsed, 'scope');
         const roles = await repos.people.listRoles(flagOne(parsed, 'person'));
-        for (const r of roles) {
+        const filtered = roles.filter((r) => {
+          const isClosed = Boolean(r.validTo || r.endedOn);
+          if (onlyActive && isClosed) return false;
+          if (onlyHistory && !isClosed) return false;
+          if (scopeFilter && r.roleScope !== scopeFilter) return false;
+          return true;
+        });
+        console.log(`직책 ${filtered.length}건:`);
+        for (const r of filtered) {
           console.log(
-            `${r.roleId} | ${r.personId} | ${r.org} | ${r.title} | ${r.publicDisclosure} | ${r.validFrom ?? '-'}..${r.validTo ?? '-'}`,
+            `${r.roleId} | ${r.personId} | ${r.roleScope ?? 'other'} | ${r.termLabel || '-'} | #${r.sortOrder ?? 100} | ${r.org} | ${r.title} | ${r.publicDisclosure} | ${r.validFrom ?? '-'}..${r.validTo ?? '현재'}${r.endReason ? ` (${r.endReason})` : ''}`,
           );
         }
+        return;
+      }
+      if (sub === 'appoint') {
+        const discRaw = flagOne(parsed, 'disclosure');
+        if (discRaw && discRaw !== 'public_official' && discRaw !== 'masked') {
+          throw new Error('disclosure는 public_official 또는 masked 여야 합니다.');
+        }
+        const scopeRaw = flagOne(parsed, 'scope');
+        const roleScope = scopeRaw ? parseRoleScope(scopeRaw, 'executive') : undefined;
+        const orderStr = flagOne(parsed, 'order');
+        const sortOrder = orderStr ? Number(orderStr) : undefined;
+        if (orderStr && !Number.isInteger(sortOrder)) {
+          throw new Error('--order 는 정수여야 합니다.');
+        }
+        const role = await service.appointRole({
+          personId: requireFlag(parsed, 'person'),
+          org: flagOne(parsed, 'org'),
+          title: requireFlag(parsed, 'title'),
+          roleScope,
+          disclosure: discRaw as PublicDisclosure | undefined,
+          termLabel: flagOne(parsed, 'term'),
+          validFrom: flagOne(parsed, 'from') ?? flagOne(parsed, 'valid-from'),
+          validTo: flagOne(parsed, 'to') ?? flagOne(parsed, 'valid-to') ?? null,
+          appointedOn: flagOne(parsed, 'appointed-on') ?? null,
+          sortOrder,
+          evidenceDocId: flagOne(parsed, 'doc'),
+          note: flagOne(parsed, 'note'),
+        });
+        console.log(
+          `직책 임명 완료: ${role.roleId} | ${role.personId} | ${role.roleScope} | ${role.title} | ${role.publicDisclosure}`,
+        );
+        return;
+      }
+      if (sub === 'transfer') {
+        const discRaw = flagOne(parsed, 'disclosure');
+        if (discRaw && discRaw !== 'public_official' && discRaw !== 'masked') {
+          throw new Error('disclosure는 public_official 또는 masked 여야 합니다.');
+        }
+        const scopeRaw = flagOne(parsed, 'new-scope');
+        const newScope = scopeRaw ? parseRoleScope(scopeRaw, 'executive') : undefined;
+        const orderStr = flagOne(parsed, 'order');
+        const sortOrder = orderStr ? Number(orderStr) : undefined;
+        const res = await service.transferRole({
+          roleId: requireFlag(parsed, 'role'),
+          newTitle: requireFlag(parsed, 'new-title'),
+          newOrg: flagOne(parsed, 'new-org'),
+          newScope,
+          date: flagOne(parsed, 'date'),
+          termLabel: flagOne(parsed, 'term'),
+          sortOrder,
+          disclosure: discRaw as PublicDisclosure | undefined,
+          evidenceDocId: flagOne(parsed, 'doc'),
+          reason: flagOne(parsed, 'reason'),
+          note: flagOne(parsed, 'note'),
+        });
+        console.log(
+          `보직 변경 완료: ${res.closedRole.roleId}(${res.closedRole.title} 종료 ${res.closedRole.validTo}) -> ${res.appointedRole.roleId}(${res.appointedRole.title})`,
+        );
+        return;
+      }
+      if (sub === 'end') {
+        const updated = await service.endRole({
+          roleId: requireFlag(parsed, 'role'),
+          validTo: flagOne(parsed, 'to') ?? flagOne(parsed, 'valid-to'),
+          endedOn: flagOne(parsed, 'ended-on'),
+          reason: flagOne(parsed, 'reason'),
+          note: flagOne(parsed, 'note'),
+        });
+        console.log(
+          `직책 종료 완료: ${updated.roleId} (${updated.title}, 종료=${updated.validTo}, 사유=${updated.endReason})`,
+        );
         return;
       }
       if (sub === 'add') {
@@ -389,13 +475,21 @@ async function main(): Promise<void> {
         if (disclosure !== 'public_official' && disclosure !== 'masked') {
           throw new Error('disclosure는 public_official 또는 masked 여야 합니다.');
         }
+        const scopeRaw = flagOne(parsed, 'scope');
+        const roleScope = scopeRaw ? parseRoleScope(scopeRaw, 'executive') : undefined;
+        const orderStr = flagOne(parsed, 'order');
         const role = await service.addRole({
           personId: requireFlag(parsed, 'person'),
           org: flagOne(parsed, 'org') ?? '',
           title: requireFlag(parsed, 'title'),
           disclosure,
+          roleScope,
+          termLabel: flagOne(parsed, 'term'),
           validFrom: flagOne(parsed, 'valid-from') ?? null,
           validTo: flagOne(parsed, 'valid-to') ?? null,
+          sortOrder: orderStr ? Number(orderStr) : undefined,
+          evidenceDocId: flagOne(parsed, 'doc'),
+          note: flagOne(parsed, 'note'),
         });
         console.log(
           `직책 추가 완료: ${role.roleId} | ${role.personId} | ${role.title} | ${role.publicDisclosure}`,

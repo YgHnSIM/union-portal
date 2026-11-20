@@ -8,12 +8,35 @@ import type {
   MemberDocument,
   MemberRecord,
   MembershipEvent,
+  Person,
   PersonAlias,
   PersonRole,
   PublicDisclosure,
+  RoleScope,
   Unit,
   WithdrawReasonCategory,
 } from '../domain/types.js';
+
+export const VALID_ROLE_SCOPES = new Set<RoleScope>([
+  'executive',
+  'branch_head',
+  'auditor',
+  'committee',
+  'staff_rotating',
+  'external_rep',
+  'other',
+]);
+
+export function parseRoleScope(raw: string | undefined, fallback: RoleScope): RoleScope {
+  if (!raw?.trim()) return fallback;
+  const val = raw.trim() as RoleScope;
+  if (!VALID_ROLE_SCOPES.has(val)) {
+    throw new Error(
+      `허용되지 않은 직책 구분(role_scope)입니다: ${raw} (허용: ${[...VALID_ROLE_SCOPES].join(', ')})`,
+    );
+  }
+  return val;
+}
 import type { BlobStorage } from '../storage/blob-storage.js';
 import type { UnionRepositories } from '../storage/repositories.js';
 
@@ -513,6 +536,21 @@ export class MemberService {
 
       await txRepos.people.upsertMember(updated);
       await txRepos.people.addEvent(event);
+
+      // Close active roles automatically on member withdrawal (preserving history)
+      const memberRoles = await txRepos.people.listRoles(target.personId);
+      const endYm = withdrawDate.slice(0, 7);
+      for (const r of memberRoles) {
+        if (!r.validTo && !r.endedOn) {
+          await txRepos.people.upsertRole({
+            ...r,
+            validTo: endYm,
+            endedOn: withdrawDate,
+            endReason: '탈퇴',
+          });
+        }
+      }
+
       const documents = await this.archiveDocFiles(
         input.docs ?? [],
         '탈퇴서',
@@ -610,6 +648,189 @@ export class MemberService {
     });
   }
 
+  private resolvePerson(people: Person[], idOrName: string): Person {
+    const q = idOrName.trim();
+    const upper = q.toUpperCase();
+    const byId = people.find((p) => p.personId.toUpperCase() === upper);
+    if (byId) return byId;
+    const byName = people.filter((p) => p.name === q);
+    if (byName.length === 1) return byName[0]!;
+    if (byName.length > 1) {
+      throw new Error(
+        `동명이인(${q})이 여러 명 있습니다 (${byName.map((p) => p.personId).join(', ')}) — person_id로 지정하세요.`,
+      );
+    }
+    throw new Error(`인물을 찾을 수 없습니다: ${idOrName}`);
+  }
+
+  async appointRole(input: {
+    personId: string;
+    org?: string;
+    title: string;
+    roleScope?: RoleScope;
+    disclosure?: PublicDisclosure;
+    termLabel?: string;
+    validFrom?: string | null;
+    validTo?: string | null;
+    appointedOn?: string | null;
+    sortOrder?: number;
+    evidenceDocId?: string;
+    note?: string;
+    isPrimary?: boolean;
+  }): Promise<PersonRole> {
+    return this.repos.transaction(async (txRepos) => {
+      const people = await txRepos.people.listPeople();
+      const person = this.resolvePerson(people, input.personId);
+      const inferredScope: RoleScope =
+        input.roleScope ?? (person.kind === 'external' ? 'external_rep' : 'executive');
+      const inferredDisclosure: PublicDisclosure =
+        input.disclosure ??
+        (inferredScope === 'staff_rotating' || inferredScope === 'other'
+          ? 'masked'
+          : 'public_official');
+
+      if (inferredScope === 'staff_rotating' && inferredDisclosure === 'public_official') {
+        throw new Error(
+          '순번제·비공개 관리 직책(staff_rotating)은 public_official로 공개할 수 없습니다 (ADR-0003).',
+        );
+      }
+
+      const roles = await txRepos.people.listRoles();
+      const roleId = nextSeqId(
+        roles.map((r) => r.roleId),
+        'R-',
+      );
+      const appointedOn = input.appointedOn ?? null;
+      const validFrom =
+        input.validFrom !== undefined
+          ? input.validFrom
+          : appointedOn
+            ? appointedOn.slice(0, 7)
+            : null;
+
+      const role: PersonRole = {
+        roleId,
+        personId: person.personId,
+        org: (input.org ?? (inferredScope === 'external_rep' ? '' : '본조')).trim(),
+        title: input.title.trim(),
+        publicDisclosure: inferredDisclosure,
+        validFrom,
+        validTo: input.validTo ?? null,
+        isPrimary: input.isPrimary ?? true,
+        roleScope: inferredScope,
+        termLabel: (input.termLabel ?? '').trim(),
+        appointedOn,
+        endedOn: null,
+        endReason: '',
+        sortOrder: input.sortOrder ?? 100,
+        evidenceDocId: (input.evidenceDocId ?? '').trim(),
+        note: (input.note ?? '').trim(),
+      };
+      await txRepos.people.upsertRole(role);
+      return role;
+    });
+  }
+
+  async transferRole(input: {
+    roleId: string;
+    newTitle: string;
+    newOrg?: string;
+    newScope?: RoleScope;
+    date?: string;
+    termLabel?: string;
+    sortOrder?: number;
+    disclosure?: PublicDisclosure;
+    evidenceDocId?: string;
+    reason?: string;
+    note?: string;
+  }): Promise<{ closedRole: PersonRole; appointedRole: PersonRole }> {
+    return this.repos.transaction(async (txRepos) => {
+      const existing = await txRepos.people.findRoleById(input.roleId.trim().toUpperCase());
+      if (!existing) {
+        throw new Error(`직책을 찾을 수 없습니다: ${input.roleId}`);
+      }
+      if (existing.validTo || existing.endedOn) {
+        throw new Error(`이미 종료된 직책(${existing.roleId})은 보직 변경할 수 없습니다.`);
+      }
+
+      const endDate = input.date?.trim() || new Date().toISOString().slice(0, 10);
+      const endYm = endDate.slice(0, 7);
+      const closedRole: PersonRole = {
+        ...existing,
+        validTo: endYm,
+        endedOn: endDate,
+        endReason: (input.reason || '보직변경').trim(),
+      };
+      await txRepos.people.upsertRole(closedRole);
+
+      const nextScope = input.newScope ?? existing.roleScope ?? 'executive';
+      const nextDisclosure: PublicDisclosure =
+        input.disclosure ??
+        (nextScope === 'staff_rotating' || nextScope === 'other'
+          ? 'masked'
+          : existing.publicDisclosure);
+      if (nextScope === 'staff_rotating' && nextDisclosure === 'public_official') {
+        throw new Error(
+          '순번제·비공개 관리 직책(staff_rotating)은 public_official로 공개할 수 없습니다 (ADR-0003).',
+        );
+      }
+
+      const allRoles = await txRepos.people.listRoles();
+      const newRoleId = nextSeqId(
+        allRoles.map((r) => r.roleId),
+        'R-',
+      );
+      const appointedRole: PersonRole = {
+        roleId: newRoleId,
+        personId: existing.personId,
+        org: (input.newOrg ?? existing.org).trim(),
+        title: input.newTitle.trim(),
+        publicDisclosure: nextDisclosure,
+        validFrom: endYm,
+        validTo: null,
+        isPrimary: existing.isPrimary,
+        roleScope: nextScope,
+        termLabel: (input.termLabel ?? existing.termLabel ?? '').trim(),
+        appointedOn: endDate,
+        endedOn: null,
+        endReason: '',
+        sortOrder: input.sortOrder ?? existing.sortOrder ?? 100,
+        evidenceDocId: (input.evidenceDocId ?? '').trim(),
+        note: (input.note ?? '').trim(),
+      };
+      await txRepos.people.upsertRole(appointedRole);
+      return { closedRole, appointedRole };
+    });
+  }
+
+  async endRole(input: {
+    roleId: string;
+    validTo?: string;
+    endedOn?: string;
+    reason?: string;
+    note?: string;
+  }): Promise<PersonRole> {
+    return this.repos.transaction(async (txRepos) => {
+      const existing = await txRepos.people.findRoleById(input.roleId.trim().toUpperCase());
+      if (!existing) {
+        throw new Error(`직책을 찾을 수 없습니다: ${input.roleId}`);
+      }
+      const endedOn = input.endedOn?.trim() || null;
+      const validTo =
+        input.validTo?.trim() ||
+        (endedOn ? endedOn.slice(0, 7) : new Date().toISOString().slice(0, 7));
+      const updated: PersonRole = {
+        ...existing,
+        validTo,
+        endedOn,
+        endReason: (input.reason || '임기만료').trim(),
+        note: input.note !== undefined ? input.note.trim() : (existing.note ?? ''),
+      };
+      await txRepos.people.upsertRole(updated);
+      return updated;
+    });
+  }
+
   async addRole(input: {
     personId: string;
     org: string;
@@ -618,30 +839,14 @@ export class MemberService {
     validFrom?: string | null;
     validTo?: string | null;
     isPrimary?: boolean;
+    roleScope?: RoleScope;
+    termLabel?: string;
+    appointedOn?: string | null;
+    sortOrder?: number;
+    evidenceDocId?: string;
+    note?: string;
   }): Promise<PersonRole> {
-    return this.repos.transaction(async (txRepos) => {
-      const person = await txRepos.people.findPersonById(input.personId);
-      if (!person) {
-        throw new Error(`인물을 찾을 수 없습니다: ${input.personId}`);
-      }
-      const roles = await txRepos.people.listRoles();
-      const roleId = nextSeqId(
-        roles.map((r) => r.roleId),
-        'R-',
-      );
-      const role: PersonRole = {
-        roleId,
-        personId: input.personId,
-        org: input.org.trim(),
-        title: input.title.trim(),
-        publicDisclosure: input.disclosure,
-        validFrom: input.validFrom ?? null,
-        validTo: input.validTo ?? null,
-        isPrimary: input.isPrimary ?? true,
-      };
-      await txRepos.people.upsertRole(role);
-      return role;
-    });
+    return this.appointRole(input);
   }
 
   async setRoleDisclosure(roleId: string, disclosure: PublicDisclosure): Promise<void> {
