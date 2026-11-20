@@ -252,8 +252,7 @@ ${menuLinks}
   ${opts.bodyHtml}
 </main>
 <footer class="site-footer">
-  <span>우체국물류지원단 물류노동조합 · 통합 공개 포털</span>
-  <span>개인 실명·금융 내역 비식별 처리 원칙 적용</span>
+  <span>우체국물류지원단 물류노동조합</span>
 </footer>
 <script src="${escapeAttr(navJs)}"></script>
 ${opts.extraScriptsHtml ?? ''}

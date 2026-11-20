@@ -392,8 +392,8 @@ function buildPortalHomeHtml(
   const bodyHtml = `
   <section class="portal-hero" aria-labelledby="hero-title">
     <span class="portal-hero-kicker">우체국물류지원단 물류노동조합 · 통합 공개 포털</span>
-    <h1 id="hero-title">조합 활동 아카이브와 투명한 재정 공개를 한곳에서 확인하세요</h1>
-    <p class="portal-hero-lead">성명서·현장소식지·운영위원회 회의록·노동법률 지식 자료와 월간·연간 공개 회계 원장 및 조직 현황을 로그인 없이 누구나 열람할 수 있습니다. 공개 웹의 모든 자료에는 엄격한 개인정보 비식별 원칙이 적용됩니다.</p>
+    <h1 id="hero-title">조합 활동과 회계·조직 현황을 한곳에서 확인하세요</h1>
+    <p class="portal-hero-lead">성명서·소식지·회의록·지식 자료와 회계 원장, 조합 현황을 열람할 수 있습니다.</p>
     <div class="portal-actions">
       <a class="btn" href="archive/index.html">자료실 전체 보기 (${sortedPublic.length}건)</a>
       <a class="btn secondary" href="accounting/index.html">회계 대시보드 열기</a>
@@ -405,20 +405,20 @@ function buildPortalHomeHtml(
     <div class="kpi"><div class="label">자료실 공개 문서</div><div class="value">${sortedPublic.length}건</div><div class="sub">성명·소식지·회의록·지식·알림</div></div>
     <div class="kpi" data-tone="balance"><div class="label">현재 조합 통장 잔액</div><div class="value">${fmtWon(totalBal)}원</div><div class="sub">기준월 ${escapeHtml(latestYm)}</div></div>
     <div class="kpi" data-tone="income"><div class="label">최근월(${escapeHtml(latestYm)}) 수입 / 지출</div><div class="value">${fmtMan(latestMonthSum.inc)} / ${fmtMan(latestMonthSum.exp)}</div><div class="sub">전체 원장 ${ledger.meta.totalRecords}건</div></div>
-    <div class="kpi"><div class="label">활동 조합원 수</div><div class="value">${orgSummary.totalActive}명</div><div class="sub">공개 비식별 단위 통계 기준</div></div>
+    <div class="kpi"><div class="label">활동 조합원 수</div><div class="value">${orgSummary.totalActive}명</div><div class="sub">안양·부평지부 합계</div></div>
   </div>
 
   <section class="section-band" aria-labelledby="sec-axes">
     <div class="section-head">
       <h2 id="sec-axes">포털 주요 서비스 안내</h2>
-      <span class="section-sub">자료실 · 회계 · 조합 조직 현황</span>
+      <span class="section-sub">자료실 · 회계 · 조합</span>
     </div>
     <div class="portal-grid">
       <article class="portal-card" data-axis="archive">
         <div>
           <span class="portal-card-kicker">ARCHIVE · 자료실</span>
           <h3>회의록 · 성명서 · 소식지 · 지식</h3>
-          <p>운영위원회 회의록의 재정 보고가 회계 원장과 실시간으로 연결되며, 모든 문서는 인쇄용 규격과 모바일 접근성을 지원합니다.</p>
+          <p>성명서, 소식지, 회의록, 지식, 알림 자료를 열람할 수 있습니다.</p>
         </div>
         <a class="portal-card-link" href="archive/index.html">자료실 이동 →</a>
       </article>
@@ -426,7 +426,7 @@ function buildPortalHomeHtml(
         <div>
           <span class="portal-card-kicker">ACCOUNTING · 회계</span>
           <h3>회계 대시보드 · 원장 · 결산 보고</h3>
-          <p>${escapeHtml(ledger.meta.monthsRange[0])} ~ ${escapeHtml(ledger.meta.monthsRange[1])} 기간의 수지 흐름, 3단계 계정과목 분석, 월간·연간 결산 보고서를 제공합니다.</p>
+          <p>${escapeHtml(ledger.meta.monthsRange[0])} ~ ${escapeHtml(ledger.meta.monthsRange[1])} 수지 현황과 결산 보고서를 제공합니다.</p>
         </div>
         <a class="portal-card-link" href="accounting/index.html">회계 포털 이동 →</a>
       </article>
@@ -434,7 +434,7 @@ function buildPortalHomeHtml(
         <div>
           <span class="portal-card-kicker">UNION · 조합</span>
           <h3>지부별 조직 통계 및 공개 임원</h3>
-          <p>본조 및 각 지부별 조합원 구성 통계와 현 임기 선출·선임 공적 직책 임원 안내를 개인정보 노출 없이 공개합니다.</p>
+          <p>지부별 조합원 통계와 현 임기 임원 현황을 안내합니다.</p>
         </div>
         <a class="portal-card-link" href="union/index.html">조합 현황 이동 →</a>
       </article>
@@ -454,7 +454,7 @@ function buildPortalHomeHtml(
   <section class="section-band" aria-labelledby="sec-latest-report">
     <div class="section-head">
       <h2 id="sec-latest-report">최근 공개 재정 보고서</h2>
-      <span class="section-sub">${escapeHtml(latestYm)} 운영위원회 보고 및 ${escapeHtml(latestYear)}년 결산</span>
+      <span class="section-sub">${escapeHtml(latestYm)} 월간 · ${escapeHtml(latestYear)}년 연간</span>
     </div>
     <div class="portal-latest-item">
       <div>
@@ -509,7 +509,7 @@ function buildArchiveIndexPages(
     const pageTitle = catMeta ? `${catMeta.title} · 자료실` : '공개 자료실';
     const pageDesc =
       catMeta?.description ??
-      '우체국물류지원단 물류노동조합의 성명서, 현장소식지, 운영위원회 회의록, 법률·노동 지식 및 알림 자료를 모아 제공합니다.';
+      '성명서, 소식지, 회의록, 지식, 알림 자료를 제공합니다.';
     const prefix = computePrefixForRoute(route);
     const prefixToArchive = categoryKey === 'all' ? '' : '../';
 
@@ -545,7 +545,6 @@ function buildArchiveIndexPages(
     <section class="archive-tools" aria-label="자료 검색 및 주제 필터">
       <div class="archive-ledger-meta">
         <span id="archive-result-summary">자료 ${docs.length}건</span>
-        <span>개인정보 비식별 원칙(ADR-0003) 적용</span>
       </div>
       <div class="archive-query-row">
         <form class="archive-search" role="search">
@@ -648,7 +647,7 @@ function buildMomFinancePanelHtml(
       <div class="kpi" data-tone="grant"><div class="label">지부 교부·지원</div><div class="value">${fmtWon(currSum.trOut)}원</div></div>
       <div class="kpi" data-tone="balance"><div class="label">기말 잔액</div><div class="value">${fmtWon(endBal)}원</div></div>
     </div>
-    <p class="muted" style="font-size:0.84rem;">조직 현황 스냅샷: ${escapeHtml(flowSummary)} · 공개 웹 개인 실명 비식별 처리 적용</p>
+    <p class="muted" style="font-size:0.84rem;">조합원 현황: ${escapeHtml(flowSummary)}</p>
     <div class="mom-finance-actions no-print">
       <a class="btn small" href="${escapeAttr(`${prefix}accounting/reports/monthly/${ym}.html`)}">${escapeHtml(ym)} 재정보고서 보기 →</a>
       <a class="btn secondary small" href="${escapeAttr(`${prefix}accounting/ledger.html?year=${encodeURIComponent(ym.slice(0, 4))}&q=${encodeURIComponent(ym)}`)}">${escapeHtml(ym)} 원장 거래 검색</a>
@@ -1052,7 +1051,7 @@ function buildAccountingPages(
   <header class="page-masthead">
     <div>
       <h1>노동조합 회계 대시보드</h1>
-      <p class="lead">대분류·중분류·세부활동 기준으로 한눈에 보는 조합 살림살이 현황</p>
+      <p class="lead">대분류·중분류·세부활동 기준 재정 현황입니다.</p>
     </div>
     <div class="masthead-meta">
       <span id="sync-badge" class="data-stamp">기준: ${escapeHtml(ledger.meta.monthsRange[0])} ~ ${escapeHtml(ledger.meta.monthsRange[1])} (${ledger.meta.totalRecords}건)</span>
@@ -1089,7 +1088,7 @@ function buildAccountingPages(
   <section class="section-band" aria-labelledby="sec-charts">
     <div class="section-head">
       <h2 id="sec-charts">월별 추이 및 활동별 시각화</h2>
-      <span class="section-sub">항목 선택 시 하위 분류와 통계를 즉시 재계산합니다</span>
+      <span class="section-sub">항목 선택 시 하위 통계 반영</span>
     </div>
 
     <div class="chart-grid">
@@ -1175,7 +1174,7 @@ function buildAccountingPages(
   <section class="section-band" aria-labelledby="sec-act-tbl">
     <div class="section-head">
       <h2 id="sec-act-tbl">선택 조건별 세부활동 지출 집계</h2>
-      <span class="section-sub">세부활동명을 누르면 거래 탐색기로 이동해 상세 내역을 보여줍니다</span>
+      <span class="section-sub">세부활동 선택 시 거래 내역 이동</span>
     </div>
     <div tabindex="0" role="region" aria-labelledby="sec-act-tbl" class="table-wrapper">
       <table>
@@ -1217,7 +1216,7 @@ function buildAccountingPages(
   <header class="page-masthead">
     <div>
       <h1>공개 거래 탐색기</h1>
-      <p class="lead">연도, 구분, 대분류, 키워드 또는 거래번호(tx)로 원장 내역을 조회하고 연계 문서를 바로 열 수 있습니다. (개인 실명 비식별 처리)</p>
+      <p class="lead">연도, 구분, 대분류, 검색어, 거래번호로 원장 내역을 조회합니다.</p>
     </div>
     <div class="masthead-meta">
       <button id="btn-csv" type="button" class="btn secondary small">필터 결과 CSV 저장</button>
@@ -1404,7 +1403,7 @@ function buildAccountingPages(
   <header class="page-masthead">
     <div>
       <h1>수입·지출 분류 기준 및 회계단위 안내</h1>
-      <p class="lead">조합의 활동이 한눈에 드러나도록 대분류·중분류·세부활동 3단계와 표준 지부 명칭을 정리한 기준표입니다.</p>
+      <p class="lead">수입·지출 3단계 분류와 회계단위 기준표입니다.</p>
     </div>
     <div class="masthead-meta">
       <span class="data-stamp">${coaCfg.accounts.length}개 세부활동 · ${units.length}개 단위</span>
@@ -1417,7 +1416,7 @@ function buildAccountingPages(
     <section class="section-band" aria-labelledby="sec-coa-map">
       <div class="section-head">
         <h2 id="sec-coa-map">한눈에 보는 회계 구조</h2>
-        <span class="section-sub">대분류를 누르면 중분류, 중분류를 누르면 세부활동이 펼쳐집니다</span>
+        <span class="section-sub">항목 선택 시 하위 분류 펼침</span>
       </div>
       <div class="coa-map" id="coa-map">
         <div class="coa-map-fallback" id="coa-map-fallback">${fallbackTree}</div>
@@ -1430,7 +1429,7 @@ function buildAccountingPages(
     <section class="section-band" aria-labelledby="sec-units">
       <div class="section-head">
         <h2 id="sec-units">1. 회계단위 안내 (본조 · 지부)</h2>
-        <span class="section-sub">표준 조직명칭(본조/지부) 및 원장 회계단위 매핑</span>
+        <span class="section-sub">본조 및 지부 회계단위</span>
       </div>
       <div tabindex="0" role="region" aria-labelledby="sec-units" class="table-wrapper">
         <table>
@@ -1444,7 +1443,7 @@ function buildAccountingPages(
     <section class="section-band" aria-labelledby="sec-coa-list">
       <div class="section-head">
         <h2 id="sec-coa-list">2. 수입·지출 분류 기준표 (대분류 · 중분류 · 세부활동 · ${coaCfg.accounts.length}개)</h2>
-        <span class="section-sub">조합 활동 중심의 3단계 계층 분류</span>
+        <span class="section-sub">대분류 · 중분류 · 세부활동</span>
       </div>
       <div tabindex="0" role="region" aria-labelledby="sec-coa-list" class="table-wrapper">
         <table>
@@ -1584,7 +1583,7 @@ function buildAccountingPages(
   <header class="page-masthead" data-year-tone="${yearTone(Number(yN))}">
     <div>
       <h1>${escapeHtml(title)}</h1>
-      <p class="lead">공개 웹 보고서(개인 실명 비식별 처리)</p>
+      <p class="lead">${escapeHtml(yN)}년 ${Number(mN)}월 수지 요약 및 거래 내역입니다.</p>
     </div>
     <div class="masthead-meta">
       <span class="data-stamp">${escapeHtml(yN)}년 · ${escapeHtml(ym)}</span>
@@ -1801,7 +1800,7 @@ function buildAccountingPages(
   <header class="page-masthead" data-year-tone="${yearTone(targetYear)}">
     <div>
       <h1>${escapeHtml(title)}</h1>
-      <p class="lead">활동별 연간 결산 및 인라인 SVG 시각화</p>
+      <p class="lead">연간 수지 현황 및 활동별 결산입니다.</p>
     </div>
     <div class="masthead-meta">
       <span class="data-stamp">${targetYear}년 결산</span>
@@ -1821,7 +1820,7 @@ function buildAccountingPages(
   <section class="section-band" aria-labelledby="sec-annual-charts">
     <div class="section-head">
       <h2 id="sec-annual-charts">1. 연간 재정 시각화</h2>
-      <span class="section-sub">해상도 손실 없는 반응형 인라인 SVG 차트</span>
+      <span class="section-sub">월별 추이 및 지출 비중</span>
     </div>
     <div class="chart-grid">
       <figure class="chart-card full svg-chart-wrap">${svgMonthly}</figure>
@@ -1989,7 +1988,7 @@ function buildAccountingPages(
   <header class="page-masthead">
     <div>
       <h1>보고서 아카이브</h1>
-      <p class="lead">연도별 대의원대회 결산 보고서와 월별 운영위원회 재정 보고서를 열람할 수 있습니다.</p>
+      <p class="lead">연간 결산 보고서와 월간 재정 보고서 목록입니다.</p>
     </div>
     <div class="masthead-meta">
       <span class="data-stamp">${years.length}개 연도 · ${months.length}개월</span>
@@ -1999,7 +1998,7 @@ function buildAccountingPages(
   <section class="section-band" aria-labelledby="sec-ann">
     <div class="section-head">
       <h2 id="sec-ann">1. 연간 대의원대회 결산 보고서</h2>
-      <span class="section-sub">연도별 인라인 SVG 시각화 및 3단계 결산표</span>
+      <span class="section-sub">연도별 수지 결산표</span>
     </div>
     <div class="archive-grid">${annCards}</div>
   </section>
@@ -2007,7 +2006,7 @@ function buildAccountingPages(
   <section class="section-band" aria-labelledby="sec-mon">
     <div class="section-head">
       <h2 id="sec-mon">2. 월간 운영위원회 재정보고 (${months.length}개월)</h2>
-      <span class="section-sub">연도 칩을 눌러 원하는 기간만 모아볼 수 있습니다</span>
+      <span class="section-sub">연도별 월간 보고서</span>
     </div>
     <div class="year-filter-bar" role="group" aria-label="보고서 연도 필터">
       ${yearChips.join('\n      ')}
@@ -2169,21 +2168,17 @@ function buildUnionPage(
   <header class="page-masthead">
     <div>
       <h1>노동조합 조직 및 임원 현황</h1>
-      <p class="lead">지부별 조합원 구성 통계와 현 임기 우리 노동조합 임원 현황을 비식별 공개 정책에 따라 안내합니다.</p>
+      <p class="lead">지부별 조합원 현황과 현 임기 임원 안내입니다.</p>
     </div>
     <div class="masthead-meta">
       <span class="data-stamp">활동 조합원 ${orgSummary.totalActive}명 · 기준월 ${escapeHtml(currentYm)}</span>
     </div>
   </header>
 
-  <div class="privacy-notice-banner" role="note">
-    <strong>공개 개인정보 보호 원칙(ADR-0003):</strong> 공개 웹에서는 지부·직종별 집계 통계와 현 임기 선출·선임 임원의 직책·성명만을 직제순으로 안내합니다. 타노조 대표, 순번제 소통간사, 일반 조합원의 성명과 연락처·이메일·생년월일 및 개인 회계 내역은 일체 비공개 처리됩니다.
-  </div>
-
   <section class="section-band" aria-labelledby="sec-units-org">
     <div class="section-head">
       <h2 id="sec-units-org">1. 지부별 조합원 현황 (총 ${orgSummary.totalActive}명)</h2>
-      <span class="section-sub">본조(중앙 집행·회계 단위)는 별도 소속 인원이 없으며, 전 조합원은 지부 소속으로 집계됩니다</span>
+      <span class="section-sub">안양·부평지부 조합원 구성 통계</span>
     </div>
     <div class="union-unit-grid">
       ${unitCards}
@@ -2196,7 +2191,7 @@ function buildUnionPage(
   <section class="section-band" aria-labelledby="sec-officials">
     <div class="section-head">
       <h2 id="sec-officials">2. 현 임기 조합 임원 현황 (${activeOfficials.length}명)</h2>
-      <span class="section-sub">우리 노조 집행부·지부장·감사·특별기구 직책만 직제순 공개 (타노조 대표·소통간사 제외)</span>
+      <span class="section-sub">집행부 · 지부장 · 감사 · 선거관리위원회</span>
     </div>
     <div class="officials-grid">
       ${officialCards || '<p class="muted">현재 등록된 현직 공개 직책 임원이 없습니다.</p>'}
