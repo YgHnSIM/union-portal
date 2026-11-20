@@ -4342,6 +4342,11 @@
     padding-top: 1.1rem;
   }
 
+  .post-summary-title {
+    color: #111111;
+    margin-bottom: 0.75rem;
+  }
+
   .analysis-note {
     border-left: 5px solid #002fa7;
     padding-left: 0.85rem;
@@ -4433,6 +4438,88 @@
 
   .formula-list li:last-child {
     border-bottom: 0;
+  }
+
+  .source-list {
+    list-style: none;
+    border: 1px solid #d1d5e0;
+    border-radius: 6px;
+    background-color: #f8f9fc;
+    margin: 0.9rem 0 1.4rem;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .source-list li {
+    display: grid;
+    grid-template-columns: 108px minmax(0, 1fr);
+    align-items: start;
+    gap: 0.65rem 1rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #e2e5ef;
+    color: #222222;
+    font-size: calc(15px * var(--font-scale));
+    line-height: 1.55;
+    word-break: keep-all;
+  }
+
+  .source-list li:last-child {
+    border-bottom: 0;
+  }
+
+  .source-list li:hover {
+    background-color: #f1f4fb;
+  }
+
+  .source-kind {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.22rem 0.5rem;
+    border: 1px solid #c7d2f0;
+    border-radius: 4px;
+    background-color: #edf1fc;
+    color: #002fa7;
+    font-size: calc(12.5px * var(--font-scale));
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .source-entry {
+    display: grid;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  .source-meta {
+    color: #4d5160;
+    font-size: calc(13px * var(--font-scale));
+    line-height: 1.45;
+  }
+
+  .content-link {
+    color: #002fa7;
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 0.2em;
+    overflow-wrap: anywhere;
+  }
+
+  .content-link:hover,
+  .content-link:focus-visible {
+    color: #001f73;
+    text-decoration-thickness: 2px;
+  }
+
+  .content-link[target="_blank"]::after {
+    content: " ↗";
+    font-size: 0.85em;
+    font-weight: 600;
+    display: inline-block;
+    text-decoration: none;
   }
 
   .post-table {
@@ -4738,8 +4825,17 @@
     .document-facts dl,
     .insight-grid,
     .double-cut-flow,
-    .chapter-list li {
+    .chapter-list li,
+    .source-list li {
       grid-template-columns: 1fr;
+    }
+
+    .source-list li {
+      gap: 0.4rem;
+    }
+
+    .source-kind {
+      justify-self: start;
     }
 
     .flow-arrow {
