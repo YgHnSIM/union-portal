@@ -1,0 +1,59 @@
+{
+  "spreadsheetId": "1uD8E7Sew4e3Xs50DsExENEbK9gAewtbJwRDY5Z-co3U",
+  "spreadsheetName": "ledger",
+  "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1uD8E7Sew4e3Xs50DsExENEbK9gAewtbJwRDY5Z-co3U/edit",
+  "units": [
+    {
+      "code": "HQ",
+      "name": "본부",
+      "officialName": "본조",
+      "shortName": "본부",
+      "fullName": "우체국물류지원단 물류노동조합 본조합",
+      "status": "active",
+      "openedOn": "2023-01",
+      "closedOn": null,
+      "ledgerSheet": "원장_본부",
+      "rawDir": "_raw/HQ",
+      "note": "조합비 수납, 교부금 배분, 중앙 교섭·복지 총괄"
+    },
+    {
+      "code": "AY",
+      "name": "안물",
+      "officialName": "안양지부",
+      "shortName": "안물",
+      "fullName": "안양물류센터지부",
+      "status": "active",
+      "openedOn": "2023-01",
+      "closedOn": null,
+      "ledgerSheet": "원장_안물",
+      "rawDir": "_raw/AY",
+      "note": "안양물류센터 현장 지부"
+    },
+    {
+      "code": "BP",
+      "name": "부평물",
+      "officialName": "부평지부",
+      "shortName": "부평물",
+      "fullName": "부평물류센터지부",
+      "status": "active",
+      "openedOn": "2023-01",
+      "closedOn": null,
+      "ledgerSheet": "원장_부평물",
+      "rawDir": "_raw/BP",
+      "note": "부평물류센터 현장 지부"
+    },
+    {
+      "code": "SS",
+      "name": "서물",
+      "officialName": "서서울지부",
+      "shortName": "서물",
+      "fullName": "서서울물류센터지부",
+      "status": "closed",
+      "openedOn": "2023-01",
+      "closedOn": "2024-03",
+      "ledgerSheet": null,
+      "rawDir": "_raw/SS",
+      "note": "폐지 지부 (2024.04 잔여노조비 1,000,000원 본부 회수 완료, 과거 자료 보관용)"
+    }
+  ]
+}

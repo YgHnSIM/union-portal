@@ -1,0 +1,79 @@
+{
+  "generatedAt": "2026-11-20T18:47:26",
+  "totalActive": 61,
+  "totalHistorical": 67,
+  "units": [
+    {
+      "code": "AY",
+      "officialName": "안양지부",
+      "shortName": "안물",
+      "fullName": "안양물류센터지부",
+      "status": "active",
+      "activeCount": 33,
+      "byEmployment": {
+        "공무직": 33
+      },
+      "byShift": {
+        "야근": 18,
+        "중야근": 2,
+        "요일": 3,
+        "중근": 4,
+        "석근": 2,
+        "심야": 2,
+        "조근": 1,
+        "미지정": 1
+      }
+    },
+    {
+      "code": "BP",
+      "officialName": "부평지부",
+      "shortName": "부평물",
+      "fullName": "부평물류센터지부",
+      "status": "active",
+      "activeCount": 27,
+      "byEmployment": {
+        "공무직": 24,
+        "기간제": 3
+      },
+      "byShift": {
+        "석근": 5,
+        "중근": 3,
+        "야근": 13,
+        "조근": 6
+      }
+    },
+    {
+      "code": "HQ",
+      "officialName": "본조",
+      "shortName": "본부",
+      "fullName": "우체국물류지원단 물류노동조합 본조합",
+      "status": "active",
+      "activeCount": 1,
+      "byEmployment": {
+        "미지정": 1
+      },
+      "byShift": {
+        "미지정": 1
+      }
+    },
+    {
+      "code": "SS",
+      "officialName": "서서울지부",
+      "shortName": "서물",
+      "fullName": "서서울물류센터지부",
+      "status": "closed",
+      "activeCount": 0,
+      "byEmployment": {},
+      "byShift": {}
+    }
+  ],
+  "monthlyFlows": [
+    {
+      "ym": "2026-11",
+      "joins": 3,
+      "rejoins": 0,
+      "withdraws": 0,
+      "transfers": 0
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yghnsim.github.io/union-portal/schema/catalog.schema.json",
+  "title": "Union Portal content catalog v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "schemaVersion", "documents"],
+  "properties": {
+    "$schema": { "type": "string", "minLength": 1 },
+    "schemaVersion": { "const": 3 },
+    "documents": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "$ref": "https://yghnsim.github.io/union-portal/schema/document.schema.json"
+      }
+    }
+  }
+}

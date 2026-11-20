@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <!-- seo-head:start -->
+  <!-- seo-head:end -->
+
+<!-- page-style:start -->
+<style>
+    .video-grid {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin: 24px 0;
+    }
+
+    .video-panel {
+      border: 1px solid #111111;
+      background: #FFFFFF;
+    }
+
+    .video-frame {
+      aspect-ratio: 16 / 9;
+      border: 0;
+      display: block;
+      width: 100%;
+    }
+
+    .video-panel-body {
+      border-top: 1px solid #111111;
+      padding: 16px;
+    }
+
+    .video-label,
+    .matrix-label,
+    .timeline-time,
+    .slide-label,
+    .check-label {
+      color: var(--color-knowledge, #A33A00);
+      display: block;
+      font-size: calc(13px * var(--font-scale));
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+
+    .video-panel h3,
+    .matrix-card strong,
+    .timeline-copy strong,
+    .slide-card strong,
+    .check-card strong {
+      color: #111111;
+      display: block;
+      line-height: 1.35;
+      margin: 0 0 8px;
+      word-break: keep-all;
+    }
+
+    .video-panel h3 {
+      font-size: calc(20px * var(--font-scale));
+    }
+
+    .video-panel p,
+    .matrix-card p,
+    .timeline-copy span,
+    .slide-card p,
+    .check-card p {
+      color: #333333;
+      font-size: calc(14px * var(--font-scale));
+      line-height: 1.6;
+      margin: 0;
+      word-break: keep-all;
+    }
+
+    .matrix-grid {
+      border: 1px solid #111111;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin: 24px 0;
+    }
+
+    .matrix-card {
+      min-height: 190px;
+      padding: 18px;
+    }
+
+    .matrix-card + .matrix-card {
+      border-left: 1px solid #D9D9D9;
+    }
+
+    .matrix-card strong {
+      font-size: calc(20px * var(--font-scale));
+    }
+
+    .logic-flow {
+      border: 1px solid #111111;
+      display: grid;
+      grid-template-columns: 1fr 48px 1fr 48px 1fr;
+      margin: 24px 0;
+    }
+
+    .logic-step {
+      min-height: 170px;
+      padding: 18px;
+    }
+
+    .logic-arrow {
+      align-items: center;
+      border-left: 1px solid #D9D9D9;
+      border-right: 1px solid #D9D9D9;
+      color: var(--color-knowledge, #A33A00);
+      display: flex;
+      font-size: calc(28px * var(--font-scale));
+      font-weight: 700;
+      justify-content: center;
+    }
+
+    .logic-step strong {
+      color: #111111;
+      display: block;
+      font-size: calc(19px * var(--font-scale));
+      line-height: 1.35;
+      margin-bottom: 10px;
+      word-break: keep-all;
+    }
+
+    .logic-step p {
+      color: #333333;
+      font-size: calc(14px * var(--font-scale));
+      line-height: 1.65;
+      margin: 0;
+      word-break: keep-all;
+    }
+
+    .timeline-list {
+      border-top: 1px solid #111111;
+      list-style: none;
+      margin: 24px 0 0;
+      padding: 0;
+    }
+
+    .timeline-list li {
+      border-bottom: 1px solid #D9D9D9;
+      display: grid;
+      gap: 18px;
+      grid-template-columns: 112px minmax(0, 1fr);
+      padding: 16px 0;
+    }
+
+    .timeline-time {
+      white-space: nowrap;
+    }
+
+    .slide-grid {
+      border: 1px solid #111111;
+      border-bottom: 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin: 24px 0;
+    }
+
+    .slide-card {
+      border-bottom: 1px solid #111111;
+      padding: 18px;
+    }
+
+    .slide-card:nth-child(odd) {
+      border-right: 1px solid #D9D9D9;
+    }
+
+    .slide-card strong {
+      font-size: calc(18px * var(--font-scale));
+    }
+
+    .check-grid {
+      border: 1px solid #111111;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin: 24px 0;
+    }
+
+    .check-card {
+      padding: 18px;
+    }
+
+    .check-card + .check-card {
+      border-left: 1px solid #D9D9D9;
+    }
+
+    .source-list {
+      border: 1px solid #111111;
+      list-style: none;
+      margin: 18px 0 24px;
+      padding: 0;
+    }
+
+    .source-list li {
+      border-bottom: 1px solid #D9D9D9;
+      color: #222222;
+      font-size: calc(15px * var(--font-scale));
+      line-height: 1.6;
+      padding: 12px 14px;
+    }
+
+    .source-list li:last-child {
+      border-bottom: 0;
+    }
+
+    .content-link {
+      color: #002FA7;
+      font-weight: 700;
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 24px 16px 96px;
+      }
+.archive-container {
+        width: 100%;
+      }
+
+      .archive-header {
+        grid-template-columns: 1fr;
+        padding: 18px 0 22px;
+      }
+
+      .header-logo,
+      .archive-title,
+      .archive-desc {
+        grid-column: 1;
+        grid-row: auto;
+      }
+
+      .header-logo {
+        height: 42px;
+      }
+
+      .archive-title {
+        font-size: clamp(calc(32px * var(--font-scale)), 13vw, calc(46px * var(--font-scale)));
+      }
+
+      .post-article {
+        padding: 0 16px;
+      }
+
+      .video-grid,
+      .matrix-grid,
+      .logic-flow,
+      .slide-grid,
+      .check-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .matrix-card + .matrix-card,
+      .check-card + .check-card {
+        border-left: 0;
+        border-top: 1px solid #D9D9D9;
+      }
+
+      .logic-arrow {
+        border-bottom: 1px solid #D9D9D9;
+        border-left: 0;
+        border-right: 0;
+        min-height: 44px;
+      }
+
+      .logic-step {
+        min-height: 0;
+      }
+
+      .timeline-list li {
+        gap: 8px;
+        grid-template-columns: 1fr;
+      }
+
+      .slide-card:nth-child(odd) {
+        border-right: 0;
+      }
+    }
+  </style>
+<!-- page-style:end -->
+</head>
+
+<body>
+<!-- site-masthead:start -->
+  <header class="site-masthead">
+    <a class="site-logo" href="../" aria-label="우체국물류지원단 물류노동조합 첫 페이지">
+      <img src="../assets/logo-header-300.webp?v=02c96d546fb3" srcset="../assets/logo-header-300.webp?v=02c96d546fb3 1x, ../assets/logo-header-600.webp?v=47e0fed82fc9 2x" width="300" height="84" alt="우체국물류지원단 물류노동조합">
+    </a>
+    <a class="site-archive-entry" href="../">공개 자료실</a>
+  </header>
+<!-- site-masthead:end -->
+  <main class="archive-container document-article" data-document-category="지식">
+<!-- document-header:start -->
+    <header class="document-header">
+    <nav class="document-breadcrumb" aria-label="현재 위치">
+      <ol>
+        <li><a href="../">공개 자료실</a></li>
+        <li aria-current="page"><a href="./">지식</a></li>
+      </ol>
+    </nav>
+      <h1 class="document-title">원청 사용자성·교섭단위 분리 영상 해설</h1>
+      <p class="document-summary">원청 사용자성, 교섭창구 단일화, 공정대표의무, 교섭단위 분리를 다룬 두 YouTube 영상의 스크립트와 슬라이드 흐름을 해설한 자료입니다.</p>
+    </header>
+<!-- document-header:end -->
+
+<!-- document-facts:start -->
+    <aside class="document-facts" aria-label="문서 정보">
+      <dl>
+        <div>
+          <dt>상태</dt>
+          <dd><span class="document-status-badge" data-status="reviewed">검토 완료</span></dd>
+        </div>
+        <div>
+          <dt>최근 검토</dt>
+          <dd><time class="document-fact-date" datetime="2026-07-14">2026년&nbsp;7월&nbsp;14일</time></dd>
+        </div>
+        <div>
+          <dt>근거</dt>
+          <dd>7건</dd>
+        </div>
+        <div class="document-fact-topics">
+          <dt>쟁점</dt>
+          <dd><a href="../?topic=%EC%9B%90%EC%B2%AD%20%EC%82%AC%EC%9A%A9%EC%9E%90%EC%84%B1">원청 사용자성</a><a href="../?topic=%EB%8B%A8%EC%B2%B4%EA%B5%90%EC%84%AD">단체교섭</a><a href="../?topic=%EA%B5%90%EC%84%AD%EB%8B%A8%EC%9C%84">교섭단위</a></dd>
+        </div>
+      </dl>
+      <p>영상 2편과 관련 법령·판례 자료를 대조해 작성</p>
+    </aside>
+<!-- document-facts:end -->
+<article class="post-article" data-copy-body>
+      <section class="post-summary" aria-labelledby="source-videos">
+        <h2 class="post-summary-title" id="source-videos">1. 영상 자료</h2>
+        <div class="video-grid">
+          <article class="video-panel">
+            <button class="video-facade video-frame" type="button" data-video-id="kZBB9ryUctk" data-video-title="숨어있는 원청 사장을 협상장에 세우는 법" data-frame-class="video-frame" aria-label="숨어있는 원청 사장을 협상장에 세우는 법 영상 재생">
+              <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M18 13v22l18-11z"></path></svg>
+              <span>영상 재생</span>
+            </button>
+            <div class="video-panel-body">
+              <span class="video-label">영상 1, 19분 34초</span>
+              <h3>숨어있는 원청 사장을 협상장에 세우는 법</h3>
+              <p>서류상 사용자와 실제 통제권자를 구분하고, 원청을 교섭 테이블에 세우기 위해 어떤 증거와 의제 설정이 필요한지 설명합니다.</p>
+              <p><a class="content-link" href="https://youtu.be/kZBB9ryUctk?si=zSLfRXPScBtrVTa3" target="_blank" rel="noopener noreferrer">YouTube에서 보기</a></p>
+            </div>
+          </article>
+          <article class="video-panel">
+            <button class="video-facade video-frame" type="button" data-video-id="4I4kC1ncFSM" data-video-title="안건 따라 사장님이 바뀌는 협상장" data-frame-class="video-frame" aria-label="안건 따라 사장님이 바뀌는 협상장 영상 재생">
+              <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M18 13v22l18-11z"></path></svg>
+              <span>영상 재생</span>
+            </button>
+            <div class="video-panel-body">
+              <span class="video-label">영상 2, 13분 12초</span>
+              <h3>안건 따라 사장님이 바뀌는 협상장</h3>
+              <p>교섭단위의 원칙과 예외, 노무제공자·하청 구조에서의 분리 가능성, 안건별 사용자성 판단이 만드는 절차적 복잡성을 설명합니다.</p>
+              <p><a class="content-link" href="https://youtu.be/4I4kC1ncFSM?si=OCMcKtGtR_USdNxz" target="_blank" rel="noopener noreferrer">YouTube에서 보기</a></p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="post-summary" aria-labelledby="core-map">
+        <h2 class="post-summary-title" id="core-map">2. 핵심 논점 지도</h2>
+        <p class="body-text">
+          두 영상은 같은 문제를 다른 방향에서 봅니다. 첫 번째 영상은 “누가 진짜 사장인가”를 묻고, 두 번째 영상은 “사장님이 안건마다 달라질 때 교섭 구조가 어떻게 변하는가”를 묻습니다.
+        </p>
+        <div class="matrix-grid" aria-label="두 영상 핵심 비교">
+          <div class="matrix-card">
+            <span class="matrix-label">영상 1의 중심 질문</span>
+            <strong>원청을 어떻게 협상장에 세울 것인가</strong>
+            <p>계약서상 사용자가 아니라 작업속도, 안전장비, 출입통제, 앱·알고리즘 등 실제 근로조건을 지배하는 주체를 찾는 데 초점을 둡니다.</p>
+          </div>
+          <div class="matrix-card">
+            <span class="matrix-label">영상 2의 중심 질문</span>
+            <strong>협상장이 왜 안건별로 쪼개지는가</strong>
+            <p>교섭단위는 원칙적으로 하나지만, 고용형태·근로조건·실질적 지배력의 차이가 커질수록 분리와 통합 판단이 어려워진다는 점을 다룹니다.</p>
+          </div>
+        </div>
+        <div class="logic-flow" aria-label="원청 사용자성과 교섭단위 분리 논리 흐름">
+          <div class="logic-step">
+            <span class="video-label">1단계</span>
+            <strong>실질적 지배력 확인</strong>
+            <p>누가 현장의 규칙, 속도, 안전, 시스템 접근권을 정하는지 확인합니다.</p>
+          </div>
+          <div class="logic-arrow" aria-hidden="true">→</div>
+          <div class="logic-step">
+            <span class="video-label">2단계</span>
+            <strong>의제별 사용자 범위 확정</strong>
+            <p>원청이 모든 의제의 사용자가 되는 것은 아니며, 지배·결정하는 범위에서만 교섭 의무가 문제됩니다.</p>
+          </div>
+          <div class="logic-arrow" aria-hidden="true">→</div>
+          <div class="logic-step">
+            <span class="video-label">3단계</span>
+            <strong>교섭단위 설계</strong>
+            <p>여러 노조와 여러 하청이 얽힌 경우 단일화, 공정대표의무, 교섭단위 분리를 함께 검토해야 합니다.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="post-summary" aria-labelledby="script-analysis">
+        <h2 class="post-summary-title" id="script-analysis">3. 스크립트 분석</h2>
+        <h3 class="post-summary-title">영상 1: 숨어있는 원청 사장을 협상장에 세우는 법</h3>
+        <ol class="timeline-list">
+          <li>
+            <span class="timeline-time">0:00-3:00</span>
+            <span class="timeline-copy"><strong>문제 제기</strong><span>월급을 주는 서류상 사용자와 현장을 통제하는 실제 권력자가 다를 수 있다는 딜레마를 제시합니다.</span></span>
+          </li>
+          <li>
+            <span class="timeline-time">3:03-6:49</span>
+            <span class="timeline-copy"><strong>원청 사용자성</strong><span>개정 노동조합법의 핵심을 계약서가 아니라 실질적·구체적 지배력으로 설명합니다. 다만 원청이 모든 문제의 사용자가 되는 것은 아니라는 제한도 함께 제시합니다.</span></span>
+          </li>
+          <li>
+            <span class="timeline-time">7:17-10:04</span>
+            <span class="timeline-copy"><strong>교섭창구 단일화와 공정대표의무</strong><span>복수노조의 창구를 하나로 묶는 효율성과, 소수노조 요구가 묻힐 위험을 대비시킵니다.</span></span>
+          </li>
+          <li>
+            <span class="timeline-time">10:35-14:00</span>
+            <span class="timeline-copy"><strong>교섭단위 분리</strong><span>감정적 갈등이나 상급단체 차이만으로는 부족하고, 근로조건의 현격한 차이와 생존·안전의 차이가 객관적으로 드러나야 함을 강조합니다.</span></span>
+          </li>
+          <li>
+            <span class="timeline-time">14:30-17:19</span>
+            <span class="timeline-copy"><strong>실전 전략</strong><span>원청 통제 영역부터 의제를 좁히고, 앱 화면·업무지시·출입기록 같은 디지털 증거를 모으며, 긴 절차를 버틸 조직력을 갖추라는 메시지로 정리됩니다.</span></span>
+          </li>
+        </ol>
+
+        <h3 class="post-summary-title">영상 2: 안건 따라 사장님이 바뀌는 협상장</h3>
+        <ol class="timeline-list">
+          <li>
+            <span class="timeline-time">0:00-2:08</span>
+            <span class="timeline-copy"><strong>명확한 선의 붕괴</strong><span>전통적인 노사 협상은 상대가 명확한 줄다리기로 그려지지만, 플랫폼·하청·사무직이 섞인 현대 노동시장에서는 상대방이 불명확해졌다고 설명합니다.</span></span>
+          </li>
+          <li>
+            <span class="timeline-time">2:08-4:40</span>
+            <span class="timeline-copy"><strong>교섭단위의 원칙과 높은 예외 문턱</strong><span>하나의 사업 또는 사업장 단위로 교섭창구를 묶는 원칙을 설명하고, 일반 정규직 내부의 분리 인정은 쉽지 않다고 해설합니다.</span></span>
+          </li>
+          <li>
+            <span class="timeline-time">4:40-6:23</span>
+            <span class="timeline-copy"><strong>노무제공자 예외</strong><span>학습지 교사, 보험설계사 같은 노무제공자는 채용·보수·감독 체계가 다르므로 일반 정규직보다 분리 필요성이 인정될 수 있다는 흐름을 제시합니다.</span></span>
+          </li>
+          <li>
+            <span class="timeline-time">6:23-9:12</span>
+            <span class="timeline-copy"><strong>원청 사용자성 확대와 30일의 압박</strong><span>원청의 실질적 지배력이 인정되면 교섭 상대가 될 수 있지만, 30일 결정 구조와 축적되지 않은 판정례가 분쟁을 장기화할 수 있다는 우려를 제기합니다.</span></span>
+          </li>
+          <li>
+            <span class="timeline-time">9:12-13:12</span>
+            <span class="timeline-copy"><strong>안건별 교섭단위 분리의 역설</strong><span>임금, 복리후생, 안전 등 의제마다 지배력이 다른 경우 협상 상대가 바뀌고 절차가 지나치게 쪼개질 수 있다는 문제를 결론으로 삼습니다.</span></span>
+          </li>
+        </ol>
+      </section>
+
+      <section class="post-summary" aria-labelledby="slide-analysis">
+        <h2 class="post-summary-title" id="slide-analysis">4. 슬라이드 해설</h2>
+        <p class="body-text">
+          두 영상의 슬라이드는 법률 개념을 시각적 은유로 풀어냅니다. 반복되는 핵심 장면은 아래처럼 읽을 수 있습니다.
+        </p>
+        <div class="slide-grid" aria-label="슬라이드 구조 해설">
+          <div class="slide-card">
+            <span class="slide-label">서류상 사장님 vs 진짜 권력자</span>
+            <strong>계약서와 통제 장치의 대비</strong>
+            <p>문서 아이콘은 하청업체를, CCTV·안전모·시계는 원청의 현장 통제를 상징합니다. 형식상 고용주와 실제 지배자가 다를 수 있다는 출발점입니다.</p>
+          </div>
+          <div class="slide-card">
+            <span class="slide-label">종이쪼가리에서 실질 지배력으로</span>
+            <strong>셰어하우스 비유</strong>
+            <p>방세를 받는 사람과 보일러·출입문·와이파이를 통제하는 사람이 다를 때, 누구에게 요구해야 하는지를 보여 줍니다. 원청 사용자성 판단을 생활 비유로 바꾼 장면입니다.</p>
+          </div>
+          <div class="slide-card">
+            <span class="slide-label">홀로그램 사장님</span>
+            <strong>안건별로 나타났다 사라지는 사용자</strong>
+            <p>안전, 임금, 작업속도, 위험수당 같은 안건을 표로 나눠 원청·하청·공동 의제가 섞일 수 있음을 보여 줍니다. “모든 의제의 원청 책임”이 아니라 “범위별 사용자성”이라는 점이 핵심입니다.</p>
+          </div>
+          <div class="slide-card">
+            <span class="slide-label">교섭창구 단일화의 맹점</span>
+            <strong>둥근 테이블과 지워진 마이크</strong>
+            <p>창구를 하나로 만들면 협상은 단순해지지만 소수노조 의제는 지워질 수 있습니다. 공정대표의무가 왜 절차상 중요한지 설명하는 장면입니다.</p>
+          </div>
+          <div class="slide-card">
+            <span class="slide-label">감정싸움은 분리 사유가 될 수 없다</span>
+            <strong>A노조와 B노조 사이의 선</strong>
+            <p>조직 간 갈등이나 상급단체 차이는 분리의 핵심 근거가 아니며, 객관적인 근로조건 차이와 대표 가능성이 판단 기준이라는 메시지를 전달합니다.</p>
+          </div>
+          <div class="slide-card">
+            <span class="slide-label">물리적 생존권이 다를 때</span>
+            <strong>용광로와 통제실의 대비</strong>
+            <p>산업안전 위험이 완전히 다른 현장을 나란히 보여 주며, 하나의 교섭대표가 서로 다른 생존 조건을 모두 대변하기 어려운 경우를 설명합니다.</p>
+          </div>
+          <div class="slide-card">
+            <span class="slide-label">30일의 역설</span>
+            <strong>짧은 타임라인 안에 엉킨 절차</strong>
+            <p>교섭단위 판단 기한은 신속성을 위한 장치지만, 실질 지배력 판단과 소송 대응이 얽히면 오히려 분쟁이 길어질 수 있음을 시각화합니다.</p>
+          </div>
+          <div class="slide-card">
+            <span class="slide-label">보호의 역설</span>
+            <strong>보호 장치가 절차 장벽이 되는 장면</strong>
+            <p>노동권 보호를 위한 제도가 과도하게 세분화되면, 실제 현장에서는 비용·시간·증명 부담이 늘어날 수 있다는 결론부의 경고입니다.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="post-summary" aria-labelledby="field-use">
+        <h2 class="post-summary-title" id="field-use">5. 현장 활용법</h2>
+        <p class="body-text">
+          두 영상의 실무적 가치는 “원청 책임을 주장하자”라는 구호에 그치지 않는 데 있습니다. 현장에서는 의제별로 누가 바꿀 권한을 갖는지, 누가 비용을 부담하는지, 누가 실제로 지시·감독했는지를 분리해서 정리해야 합니다.
+        </p>
+        <div class="check-grid" aria-label="현장 활용 체크리스트">
+          <div class="check-card">
+            <span class="check-label">의제 분류</span>
+            <strong>누가 바꿀 수 있는가</strong>
+            <p>작업속도, 안전장비, 출입통제, 앱 배차, 휴게공간, 위험수당 등 의제를 나누고 원청·하청·공동 책임 가능성을 표시합니다.</p>
+          </div>
+          <div class="check-card">
+            <span class="check-label">증거 수집</span>
+            <strong>통제 흔적을 남긴다</strong>
+            <p>업무 앱 화면, 원청 지시 메시지, 보안카드 출입기록, 작업표준서, 안전교육 자료, 설비 변경 지시를 모읍니다.</p>
+          </div>
+          <div class="check-card">
+            <span class="check-label">대표성 점검</span>
+            <strong>누가 누구를 대변하는가</strong>
+            <p>교섭창구 단일화 상황에서는 소수노조 의제 반영 절차, 정보공유, 회의록, 차별적 합의 여부를 따로 확인합니다.</p>
+          </div>
+        </div>
+        <p class="analysis-note">
+          조합 교육에서는 이 자료를 “원청 사용자성 입증표”와 함께 쓰는 것이 좋습니다. 각 의제마다 지시 주체, 결정 주체, 비용 부담 주체, 증거 파일, 조합원 진술을 한 줄씩 채우면 교섭 요구와 노동위원회 절차를 준비하는 데 도움이 됩니다.
+        </p>
+      </section>
+
+      <section class="post-summary" aria-labelledby="sources">
+        <h2 class="post-summary-title" id="sources">6. 근거와 참고</h2>
+        <ul class="source-list">
+          <li><a class="content-link" href="https://youtu.be/kZBB9ryUctk?si=zSLfRXPScBtrVTa3" target="_blank" rel="noopener noreferrer">YouTube, 숨어있는 원청 사장을 협상장에 세우는 법</a></li>
+          <li><a class="content-link" href="https://youtu.be/4I4kC1ncFSM?si=OCMcKtGtR_USdNxz" target="_blank" rel="noopener noreferrer">YouTube, 안건 따라 사장님이 바뀌는 협상장</a></li>
+          <li><a class="content-link" href="https://law.go.kr/lsInfoP.do?ancYnChk=0&lsId=000143" target="_blank" rel="noopener noreferrer">국가법령정보센터, 노동조합 및 노동관계조정법</a></li>
+          <li><a class="content-link" href="https://www.law.go.kr/LSW//lsSideInfoP.do?docCls=jo&joBrNo=11&joNo=0014&lsiSeq=283803&urlMode=lsScJoRltInfoR" target="_blank" rel="noopener noreferrer">국가법령정보센터, 노동조합 및 노동관계조정법 시행령 제14조의11</a></li>
+          <li><a class="content-link" href="https://whatsnew.mofe.go.kr/mec/ots/dif/view.do?comBaseCd=DIFTYPCD&difField1=DIFFIELD26&difSer=1eeabaf2-64b4-4931-9265-a1f5fc1e9603&temp=2026&temp2=HALF001" target="_blank" rel="noopener noreferrer">정부 정책 안내, 개정 노동조합 및 노동관계조정법 제2·3조 시행</a></li>
+          <li><a class="content-link" href="https://www.moel.go.kr/news/enews/report/enewsView.do?news_seq=19047" target="_blank" rel="noopener noreferrer">고용노동부, 2026년 3월 10일 개정 노동조합법 2·3조 시행 보도자료</a></li>
+        </ul>
+      </section>
+    </article>
+<!-- related-documents:start -->
+    <aside class="related-documents" aria-labelledby="related-documents-title">
+      <h2 id="related-documents-title">관련 자료</h2>
+      <div class="related-document-grid">
+        <a class="related-document" href="../statement/성명서_202607.html">
+          <span>성명서 · <time class="related-document-date" datetime="2026-07-06">2026년&nbsp;7월&nbsp;6일</time></span>
+          <strong>교섭대표노조와 우체국물류지원단, 우정사업본부는 물류노동자의 노동강도 증가와 차별 문제 해결에 즉각 나서라</strong>
+        </a>
+        <a class="related-document" href="../MoM/202607.html">
+          <span>회의록 · <time class="related-document-date" datetime="2026-07-03">2026년&nbsp;7월&nbsp;3일</time></span>
+          <strong>2026년 7월 운영위원회 회의록</strong>
+        </a>
+        <a class="related-document" href="../notice/logistics-union-9-years.html">
+          <span>알림 · <time class="related-document-date" datetime="2026-07-06">2026년&nbsp;7월&nbsp;6일</time></span>
+          <strong>우체국물류지원단 물류노동조합 9년의 투쟁과 역사</strong>
+        </a>
+      </div>
+    </aside>
+<!-- related-documents:end -->
+  </main>
+
+
+  <script src="../assets/video-embed.js?v=9c27b0adae58" defer></script>
+<!-- document-tools:start -->
+  <div class="document-tools" data-document-tools>
+    <button class="document-tools-trigger" type="button" aria-expanded="false" aria-controls="document-tools-panel">문서 도구</button>
+    <div class="document-tools-backdrop" hidden></div>
+    <section class="document-tools-panel" id="document-tools-panel" aria-label="문서 도구" role="dialog" aria-modal="false" tabindex="-1" hidden>
+      <div class="document-tools-panel-header">
+        <h2>문서 도구</h2>
+        <button class="document-tools-close" type="button" aria-label="문서 도구 닫기">닫기</button>
+      </div>
+      <div class="document-tools-size" role="group" aria-label="글자 크기">
+        <button type="button" data-document-action="font-down">글자 축소</button>
+        <output id="document-font-scale" for="document-font-down document-font-up">현재 100%</output>
+        <button type="button" data-document-action="font-up">글자 확대</button>
+        <button type="button" data-document-action="font-reset">초기화</button>
+      </div>
+      <div class="document-tools-actions">
+        <button type="button" data-document-action="copy-document"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11"></rect><path d="M15 9V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h4"></path></svg><span>본문 복사</span></button>
+        <button type="button" data-document-action="share"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="18" cy="5" r="2"></circle><circle cx="6" cy="12" r="2"></circle><circle cx="18" cy="19" r="2"></circle><path d="m8 11 8-5M8 13l8 5"></path></svg><span>공유</span></button>
+        <button type="button" data-document-action="copy-link"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11"></rect><path d="M15 9V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h4"></path></svg><span>링크 복사</span></button>
+        <button type="button" data-document-action="top"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 14 6-6 6 6"></path><path d="M12 8v11"></path></svg><span>맨 위로</span></button>
+      </div>
+      <p class="document-tools-status" id="document-action-status" role="status" aria-live="polite" aria-atomic="true"></p>
+    </section>
+  </div>
+<!-- document-tools:end -->
+  <script src="../assets/document-tools.js?v=563116a9a8dc" defer></script>
+</body>
+
+</html>

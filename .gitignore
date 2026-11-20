@@ -1,0 +1,16 @@
+# Local-only sensitive data & raw evidence (never commit to Git)
+data/local/
+_raw/
+directory/
+/reports/
+/redirects/
+_site/
+.env
+.env.local
+
+# Build & tool noise
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,219 @@
+import { randomBytes } from 'node:crypto';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { computePrivacyHashes, sanitizeLedgerRecords } from '../domain/privacy.js';
+import type { UnionRepositories } from '../storage/repositories.js';
+
+export async function ensureLocalPrivacySalt(projectRoot: string): Promise<string> {
+  const fromEnv = process.env.PRIVACY_HMAC_SALT?.trim();
+  if (fromEnv) return fromEnv;
+
+  const envPath = path.join(projectRoot, '.env');
+  let existingContent = '';
+  try {
+    existingContent = await fs.readFile(envPath, 'utf8');
+    for (const line of existingContent.split(/\r?\n/)) {
+      const m = line.match(/^\s*PRIVACY_HMAC_SALT\s*=\s*(.+?)\s*$/);
+      if (m && m[1]) {
+        const val = m[1].replace(/^['"]|['"]$/g, '').trim();
+        if (val && val !== 'change-me-local-secret-32bytes-hex') {
+          return val;
+        }
+      }
+    }
+  } catch {
+    // .env not created yet
+  }
+
+  const generated = randomBytes(32).toString('hex');
+  const nextLines = existingContent
+    ? existingContent
+        .split(/\r?\n/)
+        .filter((l) => !/^\s*PRIVACY_HMAC_SALT\s*=/.test(l))
+    : [];
+  nextLines.push(`PRIVACY_HMAC_SALT=${generated}`);
+  await fs.writeFile(envPath, nextLines.join('\n').trimEnd() + '\n', 'utf8');
+  return generated;
+}
+
+export async function exportPublicProjection(options: {
+  projectRoot: string;
+  repos: UnionRepositories;
+  outDir?: string;
+}): Promise<{
+  outDir: string;
+  ledgerRecords: number;
+  publicOfficials: number;
+  documentLinks: number;
+  privacyHashes: number;
+}> {
+  const { projectRoot, repos } = options;
+  const outDir = path.resolve(
+    options.outDir ?? path.join(projectRoot, 'data', 'public'),
+  );
+  await fs.mkdir(outDir, { recursive: true });
+
+  const salt = await ensureLocalPrivacySalt(projectRoot);
+  const [units, bundle, ledgerEntries, docLinks, syncMetaRow] = await Promise.all([
+    repos.units.listAll(),
+    repos.people.getDirectoryBundle(),
+    repos.ledger.listEntries(),
+    repos.links.listAll(),
+    repos.syncMeta.get('ledger_sync'),
+  ]);
+
+  const syncMeta = syncMetaRow
+    ? (JSON.parse(syncMetaRow.valueJson) as {
+        syncedAt?: string;
+        monthsRange?: [string, string];
+      })
+    : {};
+
+  // 1. data/public/ledger_public.json
+  const sanitizedEntries = sanitizeLedgerRecords(ledgerEntries, bundle);
+  const yms = sanitizedEntries.map((r) => r.ym).filter(Boolean).sort();
+  const monthsRange: [string, string] = syncMeta.monthsRange ?? [
+    yms[0] ?? '',
+    yms[yms.length - 1] ?? '',
+  ];
+  const ledgerPayload = {
+    meta: {
+      syncedAt: syncMeta.syncedAt ?? new Date().toISOString().slice(0, 19),
+      totalRecords: sanitizedEntries.length,
+      monthsRange,
+      sanitized: true,
+    },
+    records: sanitizedEntries.map((r) => ({
+      tx_id: r.txId,
+      unit: r.unitName,
+      year: r.year,
+      ym: r.ym,
+      date: r.date,
+      gubun: r.gubun,
+      gwan: r.gwan,
+      hang: r.hang,
+      mok: r.mok,
+      exp_type: r.expType,
+      fund: r.fund,
+      target: r.target,
+      attr_ym: r.attrYm,
+      inc: r.inc,
+      exp: r.exp,
+      unit_bal: r.unitBal,
+      note: r.note,
+      memo: r.memo,
+    })),
+  };
+  await fs.writeFile(
+    path.join(outDir, 'ledger_public.json'),
+    JSON.stringify(ledgerPayload, null, 2) + '\n',
+    'utf8',
+  );
+
+  // 2. data/public/org_summary.json (strictly aggregated, non-PII)
+  const activeMembers = bundle.members.filter((m) => m.status === 'active');
+  const byUnit = units.map((u) => {
+    const unitActive = activeMembers.filter((m) => m.unitCode === u.code);
+    const byEmployment: Record<string, number> = {};
+    const byShift: Record<string, number> = {};
+    for (const m of unitActive) {
+      const emp = m.employmentType || '미지정';
+      const sh = m.shift || '미지정';
+      byEmployment[emp] = (byEmployment[emp] ?? 0) + 1;
+      byShift[sh] = (byShift[sh] ?? 0) + 1;
+    }
+    return {
+      code: u.code,
+      officialName: u.officialName,
+      shortName: u.shortName,
+      fullName: u.fullName,
+      status: u.status,
+      activeCount: unitActive.length,
+      byEmployment,
+      byShift,
+    };
+  });
+
+  const monthlyFlowsMap = new Map<
+    string,
+    { ym: string; joins: number; rejoins: number; withdraws: number; transfers: number }
+  >();
+  for (const ev of bundle.membershipEvents) {
+    if (!['join', 'rejoin', 'withdraw', 'transfer'].includes(ev.eventType)) continue;
+    const ym = ev.eventDate.slice(0, 7);
+    const cur = monthlyFlowsMap.get(ym) ?? {
+      ym,
+      joins: 0,
+      rejoins: 0,
+      withdraws: 0,
+      transfers: 0,
+    };
+    if (ev.eventType === 'join') cur.joins += 1;
+    else if (ev.eventType === 'rejoin') cur.rejoins += 1;
+    else if (ev.eventType === 'withdraw') cur.withdraws += 1;
+    else if (ev.eventType === 'transfer') cur.transfers += 1;
+    monthlyFlowsMap.set(ym, cur);
+  }
+
+  const orgSummaryPayload = {
+    generatedAt: new Date().toISOString().slice(0, 19),
+    totalActive: activeMembers.length,
+    totalHistorical: bundle.members.length,
+    units: byUnit,
+    monthlyFlows: [...monthlyFlowsMap.values()].sort((a, b) =>
+      a.ym.localeCompare(b.ym),
+    ),
+  };
+  await fs.writeFile(
+    path.join(outDir, 'org_summary.json'),
+    JSON.stringify(orgSummaryPayload, null, 2) + '\n',
+    'utf8',
+  );
+
+  // 3. data/public/public_officials.json (only public_official roles, no phone/email/birthDate)
+  const personById = new Map(bundle.people.map((p) => [p.personId, p]));
+  const officialEntries = bundle.roles
+    .filter((r) => r.publicDisclosure === 'public_official')
+    .map((r) => {
+      const p = personById.get(r.personId);
+      return {
+        roleId: r.roleId,
+        personId: r.personId,
+        kind: p?.kind ?? 'member',
+        name: p?.name ?? '',
+        org: r.org,
+        title: r.title,
+        validFrom: r.validFrom,
+        validTo: r.validTo,
+        isPrimary: r.isPrimary,
+      };
+    });
+  await fs.writeFile(
+    path.join(outDir, 'public_officials.json'),
+    JSON.stringify({ officials: officialEntries }, null, 2) + '\n',
+    'utf8',
+  );
+
+  // 4. data/public/document_ledger_links.json
+  await fs.writeFile(
+    path.join(outDir, 'document_ledger_links.json'),
+    JSON.stringify({ links: docLinks }, null, 2) + '\n',
+    'utf8',
+  );
+
+  // 5. data/public/privacy_hashes.json (HMAC-SHA256 index only, zero plaintext PII)
+  const hashIndex = computePrivacyHashes(bundle, salt);
+  await fs.writeFile(
+    path.join(outDir, 'privacy_hashes.json'),
+    JSON.stringify(hashIndex, null, 2) + '\n',
+    'utf8',
+  );
+
+  return {
+    outDir,
+    ledgerRecords: sanitizedEntries.length,
+    publicOfficials: officialEntries.length,
+    documentLinks: docLinks.length,
+    privacyHashes: hashIndex.hashes.length,
+  };
+}
