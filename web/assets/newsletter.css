@@ -342,6 +342,10 @@
   word-break: keep-all;
 }
 
+.newsletter-sheet .closing-poster-text:last-child {
+  margin-bottom: 0;
+}
+
 .newsletter-sheet .closing-pill-badge {
   display: inline-block;
   max-width: 100%;
@@ -543,6 +547,10 @@
     font-size: 22px !important;
     line-height: 1.75 !important;
     margin-bottom: 18px !important;
+  }
+
+  .newsletter-sheet .closing-poster-text:last-child {
+    margin-bottom: 0 !important;
   }
 
   .newsletter-sheet .closing-pill-badge {
