@@ -289,6 +289,20 @@ function renderLinkedLedgerPanel(
   </section>`;
 }
 
+function cardTitleOf(doc: DocumentRecordV3): string {
+  if (doc.category === 'statement') {
+    const lines = doc.presentation?.print?.titleLines;
+    if (lines && lines.length > 0) {
+      const mainLines = lines.filter((line) => !/^—.*—$/.test(line.trim()));
+      if (mainLines.length > 0) {
+        return mainLines.join(' ');
+      }
+    }
+    return doc.title.replace(/\s*—[^—]+—\s*$/, '').trim() || doc.title;
+  }
+  return doc.title;
+}
+
 function renderRelatedDocsSection(
   doc: DocumentRecordV3,
   graph: ContentGraph,
@@ -306,7 +320,7 @@ function renderRelatedDocsSection(
       const catLabel = CATEGORY_BY_ID.get(r.category)?.label ?? r.category;
       return `<a class="related-document" href="${escapeAttr(`${prefix}${r.route}`)}">
         <span>${escapeHtml(catLabel)} · ${escapeHtml(primaryDateOf(r))}</span>
-        <strong>${escapeHtml(r.title)}</strong>
+        <strong>${escapeHtml(cardTitleOf(r))}</strong>
       </a>`;
     })
     .join('\n      ');
@@ -342,7 +356,7 @@ function renderDocCard(
           <time>${escapeHtml(dateText)}</time>
           ${doc.financePeriod ? `<span>· 재정 기준월 ${escapeHtml(doc.financePeriod)}</span>` : ''}
         </div>
-        <h3 class="doc-title"><a href="${escapeAttr(href)}">${escapeHtml(doc.title)}</a></h3>
+        <h3 class="doc-title"><a href="${escapeAttr(href)}">${escapeHtml(cardTitleOf(doc))}</a></h3>
         <p class="doc-summary">${escapeHtml(doc.summary)}</p>
       </div>
       <div>
@@ -382,7 +396,7 @@ function buildPortalHomeHtml(
       return `<li class="portal-latest-item">
         <div>
           <span class="doc-cat-badge" data-cat="${escapeAttr(doc.category)}">${escapeHtml(catLabel)}</span>
-          <a href="${escapeAttr(doc.route)}">${escapeHtml(doc.title)}</a>
+          <a href="${escapeAttr(doc.route)}">${escapeHtml(cardTitleOf(doc))}</a>
         </div>
         <span class="portal-latest-meta">${badge}<time>${escapeHtml(dateTxt)}</time></span>
       </li>`;
@@ -862,53 +876,65 @@ function buildArchiveDetailPages(
       if (!srcPath || !fs.existsSync(srcPath)) {
         throw new Error(`소식지 원본 HTML이 없습니다: ${doc.id}`);
       }
-      let rawHtml = fs.readFileSync(srcPath, 'utf8').replace(/^\uFEFF/, '');
+      const rawHtml = fs.readFileSync(srcPath, 'utf8').replace(/^\uFEFF/, '');
       const nlCssHref = assetHref(prefix, 'newsletter.css', assets);
-      const docToolsJsHref = assetHref(prefix, 'document-tools.js', assets);
-      const canonical = canonicalUrlForRoute(doc.route, baseUrl);
-      const ogImage = `${baseUrl.replace(/\/+$/, '')}/assets/social-card.png`;
 
-      rawHtml = rawHtml
-        .replace(
-          /href=["']\.\.\/assets\/newsletter\.css(?:\?[^"']*)?["']/gi,
-          `href="${escapeAttr(nlCssHref)}"`,
-        )
-        .replace(
-          /src=["']\.\.\/assets\/document-tools\.js(?:\?[^"']*)?["']/gi,
-          `src="${escapeAttr(docToolsJsHref)}"`,
-        );
+      const ast = parse5.parse(rawHtml, { sourceCodeLocationInfo: true });
+      let mainEl: DefaultTreeAdapterTypes.Element | undefined;
+      visitNodes(ast, (node) => {
+        if (!mainEl && isElement(node) && node.tagName === 'main') {
+          mainEl = node;
+        }
+      });
+      if (!mainEl) {
+        throw new Error(`${srcPath}: <main> 요소를 찾을 수 없습니다.`);
+      }
 
-      const injectedHead = `
-  <meta name="color-scheme" content="only light">
-  ${robots ? `<meta name="robots" content="${escapeAttr(robots)}">` : ''}
-  <link rel="canonical" href="${escapeAttr(canonical)}">
-  <meta property="og:type" content="article">
-  <meta property="og:title" content="${escapeAttr(doc.title)}">
-  <meta property="og:description" content="${escapeAttr(doc.summary)}">
-  <meta property="og:url" content="${escapeAttr(canonical)}">
-  <meta property="og:image" content="${escapeAttr(ogImage)}">
-  <link rel="icon" type="image/png" sizes="32x32" href="${escapeAttr(assetHref(prefix, 'favicon-32.png', assets))}">
-</head>`;
-      rawHtml = rawHtml.replace(/<\/head>/i, injectedHead);
+      const loc = mainEl.sourceCodeLocation;
+      const mainInnerHtml =
+        loc?.startTag?.endOffset !== undefined && loc?.endTag?.startOffset !== undefined
+          ? rawHtml.slice(loc.startTag.endOffset, loc.endTag.startOffset)
+          : mainEl.childNodes
+              .map((child) =>
+                parse5.serialize({
+                  childNodes: [child],
+                } as unknown as DefaultTreeAdapterTypes.DocumentFragment),
+              )
+              .join('');
 
-      const returnBar = `<body>
-  <nav class="newsletter-return-bar no-print" aria-label="포털 내비게이션">
-    <div class="newsletter-return-links">
-      <a href="${escapeAttr(`${prefix}index.html`)}">← 포털 홈</a>
-      <a href="${escapeAttr(`${prefix}archive/index.html`)}">자료실 전체</a>
-      <a href="${escapeAttr(`${prefix}archive/newsletter/index.html`)}">소식지 목록</a>
-      <a href="${escapeAttr(`${prefix}accounting/index.html`)}">회계 포털</a>
-    </div>
-    <button type="button" onclick="window.print()" style="min-height:36px;padding:4px 12px;border:1px solid #12354e;background:#12354e;color:#fff;font-weight:700;cursor:pointer;">인쇄 / A3 PDF</button>
-  </nav>`;
-      rawHtml = rawHtml.replace(/<body[^>]*>/i, returnBar);
+      const nlDate = primaryDateOf(doc) || doc.id;
+      const bodyHtml = `
+  <div class="newsletter-chrome no-print">
+    <nav class="document-breadcrumb" aria-label="현재 위치">
+      <ol>
+        <li><a href="${escapeAttr(`${prefix}archive/index.html`)}">공개 자료실</a></li>
+        <li><a href="${escapeAttr(`${prefix}archive/newsletter/index.html`)}">소식지</a></li>
+        <li aria-current="page">${escapeHtml(nlDate)}</li>
+      </ol>
+    </nav>
+    <button type="button" class="btn small newsletter-print-btn" onclick="window.print()">인쇄 / A3 PDF</button>
+  </div>
+  <article class="page-a3 print-light-surface newsletter-sheet" data-document-category="소식지" data-copy-body>
+    ${mainInnerHtml}
+  </article>`;
 
-      const extras = `${linkedLedgerHtml}\n  ${relatedHtml}\n  ${renderDocumentToolsWidget()}\n  <script src="${escapeAttr(docToolsJsHref)}" defer></script>\n</body>`;
-      rawHtml = rawHtml
-        .replace(/<script\s+src=["'][^"']*document-tools\.js[^"']*["'][^>]*><\/script>\s*/gi, '')
-        .replace(/<\/body>/i, extras);
-
-      writeOutFile(outDir, doc.route, rawHtml);
+      const htmlOut = renderPageShell({
+        title: doc.title,
+        description: doc.summary,
+        activeNav: 'archive',
+        route: doc.route,
+        prefix,
+        baseUrl,
+        assets,
+        robots,
+        ogType: 'article',
+        publishedTime: doc.dates.publishedOn,
+        modifiedTime: doc.dates.modifiedOn,
+        keywords: topicLabels,
+        extraHeadHtml: `<link rel="stylesheet" href="${escapeAttr(nlCssHref)}">`,
+        bodyHtml,
+      });
+      writeOutFile(outDir, doc.route, htmlOut);
       continue;
     }
 

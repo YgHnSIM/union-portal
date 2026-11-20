@@ -954,6 +954,15 @@
     filter: brightness(1.06);
   }
 
+  a.btn {
+    color: var(--color-accent-ink);
+    text-decoration: none;
+  }
+
+  a.btn.secondary {
+    color: var(--color-ink);
+  }
+
   .btn.secondary {
     background-color: var(--color-sheet);
     border-color: var(--color-rule-ui);
@@ -3452,14 +3461,14 @@
     border-radius: var(--radius-control);
   }
 
-  .portal-latest-item a {
+  .portal-latest-item a:not(.btn) {
     font-weight: 700;
     color: var(--color-ink);
     text-decoration: none;
   }
 
-  .portal-latest-item a:hover,
-  .portal-latest-item a:focus-visible {
+  .portal-latest-item a:not(.btn):hover,
+  .portal-latest-item a:not(.btn):focus-visible {
     color: var(--color-accent);
     text-decoration: underline;
   }

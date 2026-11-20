@@ -86,7 +86,7 @@ export async function generateDocumentPdf(
   ${PAPER_PAGE_CSS[size]}
   @media print {
     :root, body { color-scheme: only light !important; background: #ffffff !important; }
-    .no-print, .site-header, .site-footer, .document-tools, .newsletter-return-bar, .document-breadcrumb { display: none !important; }
+    .no-print, .site-header, .site-footer, .document-tools, .newsletter-return-bar, .newsletter-chrome, .document-breadcrumb { display: none !important; }
   }
 </style>`;
   const patchedHtml = rawHtml.includes('</head>')
