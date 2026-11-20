@@ -418,7 +418,7 @@ function buildPortalHomeHtml(
   <div class="kpi-strip" role="region" aria-label="조합 통합 주요 지표">
     <div class="kpi"><div class="label">자료실 공개 문서</div><div class="value">${sortedPublic.length}건</div><div class="sub">성명·소식지·회의록·지식·알림</div></div>
     <div class="kpi" data-tone="balance"><div class="label">현재 조합 통장 잔액</div><div class="value">${fmtWon(totalBal)}원</div><div class="sub">기준월 ${escapeHtml(latestYm)}</div></div>
-    <div class="kpi" data-tone="income"><div class="label">최근월(${escapeHtml(latestYm)}) 수입 / 지출</div><div class="value">${fmtMan(latestMonthSum.inc)} / ${fmtMan(latestMonthSum.exp)}</div><div class="sub">전체 원장 ${ledger.meta.totalRecords}건</div></div>
+    <div class="kpi"><div class="label">최근월(${escapeHtml(latestYm)}) 수입 / 지출</div><div class="value"><span class="kpi-income">${fmtMan(latestMonthSum.inc)}</span> <span class="kpi-sep">/</span> <span class="kpi-expense">${fmtMan(latestMonthSum.exp)}</span></div></div>
     <div class="kpi"><div class="label">활동 조합원 수</div><div class="value">${orgSummary.totalActive}명</div><div class="sub">안양·부평지부 합계</div></div>
   </div>
 
