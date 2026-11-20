@@ -213,7 +213,6 @@ export function renderPageShell(opts: RenderShellOptions): string {
   <div class="header-inner">
     <a class="brand" href="${escapeAttr(`${prefix}index.html`)}" aria-label="우체국물류지원단 물류노동조합 포털 홈">
       <img class="brand-logo" src="${escapeAttr(logo300)}" srcset="${escapeAttr(logo300)} 1x, ${escapeAttr(logo600)} 2x" width="140" height="39" alt="우체국물류지원단 물류노동조합">
-      <span class="brand-sub">물류노동조합 통합 포털</span>
     </a>
     <div class="header-controls">
       <nav class="site-nav" aria-label="주요 메뉴">
