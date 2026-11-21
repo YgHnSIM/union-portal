@@ -1062,6 +1062,33 @@
     font-weight: 500;
   }
 
+  .kpi-split-rows {
+    display: grid;
+    gap: 0.16rem;
+    margin-block: 0.08rem;
+  }
+
+  .kpi-split-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  .kpi-split-tag {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-muted);
+  }
+
+  .kpi-split-row .kpi-income,
+  .kpi-split-row .kpi-expense {
+    font-size: clamp(0.98rem, 0.9rem + 0.35vw, 1.12rem);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
   .kpi .sub {
     font-size: 0.75rem;
     color: var(--color-muted);

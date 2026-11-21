@@ -386,6 +386,13 @@ function buildPortalHomeHtml(
   const totalBal = entries.reduce((acc, r) => acc + r.inc - r.exp, 0);
   const latestMonthRecs = entries.filter((r) => r.ym === latestYm);
   const latestMonthSum = summarizePeriod(latestMonthRecs);
+  const latestMonthNet = latestMonthSum.inc - latestMonthSum.exp;
+  const latestMonthNetText =
+    latestMonthNet > 0
+      ? `+${fmtWon(latestMonthNet)}원`
+      : latestMonthNet < 0
+        ? `-${fmtWon(Math.abs(latestMonthNet))}원`
+        : '0원';
 
   const latestListHtml = latestDocs
     .map((doc) => {
@@ -418,7 +425,14 @@ function buildPortalHomeHtml(
   <div class="kpi-strip" role="region" aria-label="조합 통합 주요 지표">
     <div class="kpi"><div class="label">자료실 공개 문서</div><div class="value">${sortedPublic.length}건</div><div class="sub">성명·소식지·회의록·지식·알림</div></div>
     <div class="kpi" data-tone="balance"><div class="label">현재 조합 통장 잔액</div><div class="value">${fmtWon(totalBal)}원</div><div class="sub">기준월 ${escapeHtml(latestYm)}</div></div>
-    <div class="kpi"><div class="label">최근월(${escapeHtml(latestYm)}) 수입 / 지출</div><div class="value"><span class="kpi-income">${fmtMan(latestMonthSum.inc)}</span> <span class="kpi-sep">/</span> <span class="kpi-expense">${fmtMan(latestMonthSum.exp)}</span></div></div>
+    <div class="kpi kpi-split">
+      <div class="label">최근월 수지 (${escapeHtml(latestYm)})</div>
+      <div class="kpi-split-rows">
+        <div class="kpi-split-row"><span class="kpi-split-tag">수입</span><span class="kpi-income">${fmtWon(latestMonthSum.inc)}원</span></div>
+        <div class="kpi-split-row"><span class="kpi-split-tag">지출</span><span class="kpi-expense">${fmtWon(latestMonthSum.exp)}원</span></div>
+      </div>
+      <div class="sub">순수지 ${escapeHtml(latestMonthNetText)}</div>
+    </div>
     <div class="kpi"><div class="label">활동 조합원 수</div><div class="value">${orgSummary.totalActive}명</div><div class="sub">안양·부평지부 합계</div></div>
   </div>
 
