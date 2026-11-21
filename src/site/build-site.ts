@@ -40,7 +40,13 @@ import {
   selectPrintDensity,
   visitNodes,
 } from './statement-fragment.js';
-import { renderActivityBarsSvg, renderMonthlyFlowSvg, renderUnitComparisonSvg } from './svg-charts.js';
+import {
+  allocateWaffleCells,
+  CHART_PALETTE_CSS,
+  renderActivityBarsSvg,
+  renderMonthlyFlowSvg,
+  renderUnitComparisonSvg,
+} from './svg-charts.js';
 
 export interface BuildSiteOptions {
   projectRoot: string;
@@ -1709,11 +1715,12 @@ function buildAccountingPages(
     const prevRecs = entries.filter((r) => r.year === prevYear);
     const ps = prevRecs.length > 0 ? summarizePeriod(prevRecs) : undefined;
 
-    // SVG chart datasets
+    // Chart datasets (matched to Dashboard palette & visualization types)
     const yMonths = [...new Set(yRecs.map((r) => r.ym).filter(Boolean))].sort();
     let runBal = priorBal;
     const flowPoints = yMonths.map((ym) => {
-      const s = summarizePeriod(yRecs.filter((r) => r.ym === ym));
+      const mRecs = yRecs.filter((r) => r.ym === ym);
+      const s = summarizePeriod(mRecs);
       runBal += s.op + s.net;
       return {
         label: `${Number(ym.slice(5, 7))}월`,
@@ -1725,48 +1732,189 @@ function buildAccountingPages(
 
     const gwanMap = new Map<string, number>();
     const mokMap = new Map<string, number>();
+    const mokGwanMap = new Map<string, string>();
     const etMap = new Map<string, number>();
     for (const r of yRecs) {
       if (r.gubun !== '지출') continue;
       gwanMap.set(r.gwan, (gwanMap.get(r.gwan) ?? 0) + r.exp);
-      mokMap.set(`${r.mok} (${r.gwan})`, (mokMap.get(`${r.mok} (${r.gwan})`) ?? 0) + r.exp);
+      mokMap.set(r.mok, (mokMap.get(r.mok) ?? 0) + r.exp);
+      if (!mokGwanMap.has(r.mok) && r.gwan) {
+        mokGwanMap.set(r.mok, r.gwan);
+      }
       if (r.expType) {
         etMap.set(r.expType, (etMap.get(r.expType) ?? 0) + r.exp);
       }
     }
     const totExpDenom = cs.exp || 1;
-    const gwanItems = [...gwanMap.entries()]
+    const gwanRanked = [...gwanMap.entries()].filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+    const gwanColorMap = new Map(
+      gwanRanked.map(([gwan], i) => [gwan, CHART_PALETTE_CSS[i % CHART_PALETTE_CSS.length]!]),
+    );
+    const gwanItems = gwanRanked.map(([label, value], i) => ({
+      label,
+      value,
+      pct: (value / totExpDenom) * 100,
+      color: CHART_PALETTE_CSS[i % CHART_PALETTE_CSS.length]!,
+    }));
+
+    const mokRanked = [...mokMap.entries()]
+      .filter(([, v]) => v > 0)
       .sort((a, b) => b[1] - a[1])
-      .map(([label, value]) => ({ label, value, pct: (value / totExpDenom) * 100 }));
-    const mokItems = [...mokMap.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([label, value]) => ({ label, value, color: 'var(--chart-cobalt, #516db2)' }));
+      .slice(0, 10);
+    const mokItems = mokRanked.map(([label, value]) => ({
+      label,
+      value,
+      color: gwanColorMap.get(mokGwanMap.get(label) ?? '') ?? CHART_PALETTE_CSS[0],
+    }));
+
     const etItems = [...etMap.entries()]
+      .filter(([, v]) => v > 0)
       .sort((a, b) => b[1] - a[1])
-      .map(([label, value]) => ({
+      .map(([label, value], i) => ({
         label,
         value,
         pct: (value / totExpDenom) * 100,
-        color: 'var(--chart-blue, #12354e)',
+        color: CHART_PALETTE_CSS[i % CHART_PALETTE_CSS.length]!,
       }));
 
     const svgMonthly = renderMonthlyFlowSvg(
       flowPoints,
       `${targetYear}년 월별 조합 수입·사업 지출 및 잔액 추이`,
-    );
-    const svgGwan = renderActivityBarsSvg(
-      gwanItems,
-      `${targetYear}년 대분류별 사업 지출 비중`,
+      { hideTitle: true },
     );
     const svgMok = renderActivityBarsSvg(
       mokItems,
       `${targetYear}년 주요 세부활동별 지출 TOP 10`,
+      { hideTitle: true },
     );
-    const svgExpType = renderActivityBarsSvg(
-      etItems,
-      `${targetYear}년 지출방식별 집행 현황`,
+
+    const duesGrantGroups = yMonths.map((ym) => {
+      const mRecs = yRecs.filter((r) => r.ym === ym);
+      const dues = mRecs
+        .filter((r) => r.gwan === '조합비수입')
+        .reduce((acc, r) => acc + r.inc, 0);
+      const grants = mRecs
+        .filter((r) => r.mok === '지부 교부금')
+        .reduce((acc, r) => acc + r.exp, 0);
+      return {
+        label: `${Number(ym.slice(5, 7))}월`,
+        series: [
+          { name: '정기조합비 수입', value: dues, color: 'var(--chart-cobalt, #516db2)' },
+          { name: '지부 교부금', value: grants, color: 'var(--chart-grant, #c48823)' },
+        ],
+      };
+    });
+    const svgDuesGrant = renderUnitComparisonSvg(
+      duesGrantGroups,
+      `${targetYear}년 정기조합비 vs 지부 교부금 추이`,
+      { hideTitle: true },
     );
+
+    const ledgerBase = `${prefix}accounting/ledger.html`;
+    const buildAnnualLedgerHref = (params: { gubun?: string; gwan?: string; q?: string }) => {
+      const sp = new URLSearchParams({ year: String(targetYear) });
+      if (params.gubun) sp.set('gubun', params.gubun);
+      if (params.gwan) sp.set('gwan', params.gwan);
+      if (params.q) sp.set('q', params.q);
+      return `${ledgerBase}?${sp.toString()}`;
+    };
+
+    // Card 1: 100-Cell Waffle for Gwan
+    const waffleGridItems = gwanItems.slice(0, 100);
+    const waffleCounts = allocateWaffleCells(waffleGridItems.map((it) => it.value));
+    const waffleCellsHtml = waffleGridItems
+      .flatMap((it, i) => {
+        const titleAttr = `${it.label}: ${fmtWon(it.value)}원 (${it.pct.toFixed(1)}%)`;
+        return Array.from(
+          { length: waffleCounts[i] ?? 0 },
+          () =>
+            `<div class="waffle-cell" data-idx="${i}" data-label="${escapeAttr(it.label)}" data-val="${fmtWon(it.value)}원 (${it.pct.toFixed(1)}%)" data-color="${escapeAttr(it.color)}" style="--cell-color:${escapeAttr(it.color)}" title="${escapeAttr(titleAttr)}" aria-hidden="true"></div>`,
+        );
+      })
+      .join('');
+    const waffleLegendHtml = gwanItems
+      .map((it, i) => {
+        const href = buildAnnualLedgerHref({ gubun: '지출', gwan: it.label });
+        return `<a class="waffle-legend-btn" href="${escapeAttr(href)}" data-idx="${i}" data-label="${escapeAttr(it.label)}" data-val="${fmtWon(it.value)}원 (${it.pct.toFixed(1)}%)" data-color="${escapeAttr(it.color)}" style="--cell-color:${escapeAttr(it.color)}">
+          <span class="waffle-swatch" aria-hidden="true"></span>
+          <span class="waffle-lbl">${escapeHtml(it.label)}</span>
+          <span class="waffle-meta"><strong>${it.pct.toFixed(1)}%</strong> <span class="waffle-amt">${fmtWon(it.value)}원</span></span>
+          <span class="waffle-arrow" aria-hidden="true">→</span>
+        </a>`;
+      })
+      .join('');
+    const waffleHtml =
+      gwanItems.length > 0
+        ? `<div class="waffle-stage">
+            <div class="waffle-grid" role="img" aria-label="${targetYear}년 대분류별 지출 비중 100칸 와플 그리드">${waffleCellsHtml}</div>
+            <div class="waffle-caption">1칸 ≈ 1% · 총 100칸</div>
+          </div>
+          <div class="waffle-legend">${waffleLegendHtml}</div>`
+        : `<p class="chart-empty">표시할 지출 내역이 없습니다.</p>`;
+    const waffleDefaultReadout = gwanItems[0]
+      ? `<span class="readout-key">${escapeHtml(gwanItems[0].label)} (1위)</span><span class="readout-items" data-count="1"><span class="readout-item" style="--swatch-color:${escapeAttr(gwanItems[0].color)}"><span class="readout-label">지출액</span><b class="readout-val">${fmtWon(gwanItems[0].value)}원 (${gwanItems[0].pct.toFixed(1)}%)</b></span></span>`
+      : `<span class="readout-key">표시할 데이터가 없습니다</span>`;
+
+    // Card 2: TOP 10 Gwan legend + default readout
+    const usedTopGwans = new Set(mokRanked.map(([mok]) => mokGwanMap.get(mok)).filter(Boolean));
+    const topMokLegendHtml = [...gwanColorMap.entries()]
+      .filter(([g]) => usedTopGwans.has(g))
+      .map(
+        ([g, col]) =>
+          `<span class="top-mok-pill"><span class="waffle-swatch" style="--cell-color:${escapeAttr(col)}" aria-hidden="true"></span>${escapeHtml(g)}</span>`,
+      )
+      .join('');
+    const topMokDefaultReadout = mokRanked[0]
+      ? (() => {
+          const [lbl, val] = mokRanked[0]!;
+          const gwan = mokGwanMap.get(lbl) ?? '지출액';
+          const col = gwanColorMap.get(gwan) ?? CHART_PALETTE_CSS[0];
+          return `<span class="readout-key">1위 · ${escapeHtml(lbl)}</span><span class="readout-items" data-count="1"><span class="readout-item" style="--swatch-color:${escapeAttr(col)}"><span class="readout-label">${escapeHtml(gwan)}</span><b class="readout-val">${fmtWon(val)}원</b></span></span>`;
+        })()
+      : `<span class="readout-key">표시할 데이터가 없습니다</span>`;
+
+    // Card 3: 100% Stacked Bar + Ranked Rows for ExpType
+    const expStackSegsHtml = etItems
+      .map((it, i) => {
+        const href = buildAnnualLedgerHref({ gubun: '지출', q: it.label });
+        return `<a class="exp-stack-seg" href="${escapeAttr(href)}" data-idx="${i}" data-label="${escapeAttr(it.label)}" data-val="${fmtWon(it.value)}원 (${it.pct.toFixed(1)}%)" data-color="${escapeAttr(it.color)}" style="flex-grow:${it.value};--seg-color:${escapeAttr(it.color)}" aria-label="${escapeAttr(`${it.label} ${it.pct.toFixed(1)}% (${fmtWon(it.value)}원) 거래 내역 보기`)}" title="${escapeAttr(`${it.label}: ${fmtWon(it.value)}원 (${it.pct.toFixed(1)}%)`)}"></a>`;
+      })
+      .join('');
+    const expRankRowsHtml = etItems
+      .map((it, i) => {
+        const href = buildAnnualLedgerHref({ gubun: '지출', q: it.label });
+        return `<a class="exp-rank-row" href="${escapeAttr(href)}" data-idx="${i}" data-label="${escapeAttr(it.label)}" data-val="${fmtWon(it.value)}원 (${it.pct.toFixed(1)}%)" data-color="${escapeAttr(it.color)}" style="--item-color:${escapeAttr(it.color)}">
+          <div class="exp-rank-top">
+            <span class="exp-rank-swatch" aria-hidden="true"></span>
+            <span class="exp-rank-name">${escapeHtml(it.label)}</span>
+            <span class="exp-rank-nums">
+              <strong>${it.pct.toFixed(1)}%</strong>
+              <span class="exp-rank-amt">${fmtWon(it.value)}원</span>
+              <span class="exp-rank-arrow" aria-hidden="true">→</span>
+            </span>
+          </div>
+          <span class="exp-rank-track" aria-hidden="true"><span class="exp-rank-fill" style="width:${it.pct.toFixed(2)}%"></span></span>
+        </a>`;
+      })
+      .join('');
+    const expTypeHtml =
+      etItems.length > 0
+        ? `<div class="exp-stack-bar" role="group" aria-label="${targetYear}년 지출방식별 100% 누적 구성 막대">${expStackSegsHtml}</div>
+          <div class="exp-rank-list">${expRankRowsHtml}</div>`
+        : `<p class="chart-empty">표시할 지출 내역이 없습니다.</p>`;
+    const expTypeDefaultReadout = etItems[0]
+      ? `<span class="readout-key">${escapeHtml(etItems[0].label)} (최다)</span><span class="readout-items" data-count="1"><span class="readout-item" style="--swatch-color:${escapeAttr(etItems[0].color)}"><span class="readout-label">지출액</span><b class="readout-val">${fmtWon(etItems[0].value)}원 (${etItems[0].pct.toFixed(1)}%)</b></span></span>`
+      : `<span class="readout-key">표시할 데이터가 없습니다</span>`;
+
+    // Card 4: Dues vs Grant annual totals readout
+    const totalDues = yRecs
+      .filter((r) => r.gwan === '조합비수입')
+      .reduce((acc, r) => acc + r.inc, 0);
+    const totalGrants = yRecs
+      .filter((r) => r.mok === '지부 교부금')
+      .reduce((acc, r) => acc + r.exp, 0);
+    const duesGrantReadout = `<span class="readout-key">${targetYear}년 합계</span><span class="readout-items" data-count="2"><span class="readout-item" style="--swatch-color:var(--chart-cobalt, #516db2)"><span class="readout-label">조합비</span><b class="readout-val">${fmtWon(totalDues)}원</b></span><span class="readout-item" style="--swatch-color:var(--chart-grant, #c48823)"><span class="readout-label">교부금</span><b class="readout-val">${fmtWon(totalGrants)}원</b></span></span>`;
+    const monthlyReadout = `<span class="readout-key">${targetYear}년 총괄</span><span class="readout-items" data-count="3"><span class="readout-item" style="--swatch-color:var(--chart-income, #39793c)"><span class="readout-label">수입</span><b class="readout-val">${fmtWon(cs.inc)}원</b></span><span class="readout-item" style="--swatch-color:var(--chart-expense, #b3392b)"><span class="readout-label">지출</span><b class="readout-val">${fmtWon(cs.exp)}원</b></span><span class="readout-item" style="--swatch-color:var(--chart-cobalt, #516db2)"><span class="readout-label">기말잔액</span><b class="readout-val">${fmtWon(endBal)}원</b></span></span>`;
 
     const coaRows: string[] = [];
     for (const acc of coaCfg.accounts) {
@@ -1860,13 +2008,65 @@ function buildAccountingPages(
   <section class="section-band" aria-labelledby="sec-annual-charts">
     <div class="section-head">
       <h2 id="sec-annual-charts">1. 연간 재정 시각화</h2>
-      <span class="section-sub">월별 추이 및 지출 비중</span>
+      <span class="section-sub">월별 추이 및 지출 비중 (항목 선택 시 거래내역 이동)</span>
     </div>
     <div class="chart-grid">
-      <figure class="chart-card full svg-chart-wrap">${svgMonthly}</figure>
-      <figure class="chart-card svg-chart-wrap">${svgGwan}</figure>
-      <figure class="chart-card svg-chart-wrap">${svgMok}</figure>
-      <figure class="chart-card full svg-chart-wrap">${svgExpType}</figure>
+      <section class="chart-card full">
+        <div class="chart-head">
+          <h3>월별 수입·지출 및 기말 잔액 추이</h3>
+          <span class="chart-hint">단위: 만원 · 수입·지출 막대 및 잔액 추이선</span>
+        </div>
+        <div class="chart-readout">${monthlyReadout}</div>
+        <div class="svg-chart-body">${svgMonthly}</div>
+      </section>
+    </div>
+
+    <div class="chart-deck" aria-roledescription="carousel" aria-label="활동별 결산 분석 차트 모음">
+      <nav id="annual-deck-tabs" class="chart-deck-tabs" aria-label="분석 차트 선택">
+        <button type="button" class="chart-deck-tab" aria-current="true">1. 대분류별 지출</button>
+        <button type="button" class="chart-deck-tab">2. 세부활동 TOP 10</button>
+        <button type="button" class="chart-deck-tab">3. 지출방식별 구성비</button>
+        <button type="button" class="chart-deck-tab">4. 조합비 vs 교부금</button>
+      </nav>
+
+      <div id="annual-deck-track" class="chart-deck-track" tabindex="0" role="group" aria-label="분석 차트 슬라이드">
+        <section class="chart-card" role="group" aria-roledescription="slide" aria-label="4개 중 1번째: 대분류별 사업 지출 비중">
+          <div class="chart-head">
+            <h3>대분류별 사업 지출 비중</h3>
+            <span class="chart-hint">100칸 와플 · 항목 선택 시 거래내역 이동</span>
+          </div>
+          <div id="annual-readout-waffle" class="chart-readout">${waffleDefaultReadout}</div>
+          <div id="annual-waffle" class="waffle-wrap">${waffleHtml}</div>
+        </section>
+
+        <section class="chart-card" role="group" aria-roledescription="slide" aria-label="4개 중 2번째: 주요 세부활동별 지출 TOP 10">
+          <div class="chart-head">
+            <h3>주요 세부활동별 지출 TOP 10</h3>
+            <span class="chart-hint">대분류 색상 연동 · 상위 10개 활동</span>
+          </div>
+          <div class="chart-readout">${topMokDefaultReadout}</div>
+          <div class="top-mok-legend" aria-label="대분류 색상 범례">${topMokLegendHtml}</div>
+          <div class="svg-chart-body">${svgMok}</div>
+        </section>
+
+        <section class="chart-card" role="group" aria-roledescription="slide" aria-label="4개 중 3번째: 지출방식별 구성비">
+          <div class="chart-head">
+            <h3>지출방식별 구성비</h3>
+            <span class="chart-hint">항목 선택 시 해당 지출 내역 이동</span>
+          </div>
+          <div id="annual-readout-exptype" class="chart-readout">${expTypeDefaultReadout}</div>
+          <div id="annual-exptype" class="exp-rank-wrap">${expTypeHtml}</div>
+        </section>
+
+        <section class="chart-card" role="group" aria-roledescription="slide" aria-label="4개 중 4번째: 정기조합비 vs 지부 교부금 추이">
+          <div class="chart-head">
+            <h3>정기조합비 vs 지부 교부금 추이</h3>
+            <span class="chart-hint">단위: 만원 · 조합비 수납과 지부 배분 비교</span>
+          </div>
+          <div class="chart-readout">${duesGrantReadout}</div>
+          <div class="svg-chart-body">${svgDuesGrant}</div>
+        </section>
+      </div>
     </div>
   </section>
 
@@ -1894,6 +2094,79 @@ function buildAccountingPages(
     ${nextBtn}
   </nav>`;
 
+    const annualScript = `<script>
+(function(){
+  var track=document.getElementById('annual-deck-track');
+  var tabsWrap=document.getElementById('annual-deck-tabs');
+  if(track&&tabsWrap){
+    var slides=Array.prototype.slice.call(track.querySelectorAll('.chart-card'));
+    var tabs=Array.prototype.slice.call(tabsWrap.querySelectorAll('.chart-deck-tab'));
+    var pending=null,raf=0;
+    function setTab(i){
+      tabs.forEach(function(b,idx){
+        if(idx===i)b.setAttribute('aria-current','true');
+        else b.removeAttribute('aria-current');
+      });
+    }
+    function nearest(){
+      var c=track.scrollLeft+track.clientWidth/2,best=0,bd=Infinity;
+      slides.forEach(function(s,i){
+        var d=Math.abs(s.offsetLeft-track.offsetLeft+s.offsetWidth/2-c);
+        if(d<bd){bd=d;best=i;}
+      });
+      return best;
+    }
+    tabs.forEach(function(b,i){
+      b.addEventListener('click',function(){
+        var sl=slides[i];if(!sl)return;
+        pending=i;setTab(i);
+        var red=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        track.scrollTo({left:sl.offsetLeft-track.offsetLeft,behavior:red?'auto':'smooth'});
+      });
+    });
+    track.addEventListener('scroll',function(){
+      if(pending!==null||raf)return;
+      raf=requestAnimationFrame(function(){raf=0;setTab(nearest());});
+    },{passive:true});
+    var tm=0;
+    track.addEventListener('scroll',function(){clearTimeout(tm);tm=setTimeout(function(){pending=null;setTab(nearest());},140);},{passive:true});
+  }
+  function bindSync(wrapId,readoutId){
+    var w=document.getElementById(wrapId),r=document.getElementById(readoutId);
+    if(!w||!r)return;
+    var defHtml=r.innerHTML;
+    function clear(){
+      w.classList.remove('has-hover');
+      w.querySelectorAll('.is-active').forEach(function(e){e.classList.remove('is-active');});
+      r.innerHTML=defHtml;
+    }
+    function act(el){
+      var idx=el.getAttribute('data-idx');
+      w.classList.add('has-hover');
+      w.querySelectorAll('[data-idx]').forEach(function(e){e.classList.toggle('is-active',e.getAttribute('data-idx')===idx);});
+      var k=r.querySelector('.readout-key'),v=r.querySelector('.readout-val'),it=r.querySelector('.readout-item');
+      if(k)k.textContent=el.getAttribute('data-label')||'';
+      if(v)v.textContent=el.getAttribute('data-val')||'';
+      if(it)it.style.setProperty('--swatch-color',el.getAttribute('data-color')||'');
+    }
+    w.addEventListener('pointerover',function(e){
+      if(e.pointerType!=='mouse')return;
+      var t=e.target.closest('[data-idx]');
+      if(t)act(t);else clear();
+    });
+    w.addEventListener('focusin',function(e){
+      var t=e.target.closest('[data-idx]');
+      if(t&&t.matches(':focus-visible'))act(t);
+    });
+    w.addEventListener('pointerleave',clear);
+    w.addEventListener('mouseleave',clear);
+    w.addEventListener('focusout',function(e){if(!e.relatedTarget||!w.contains(e.relatedTarget))clear();});
+  }
+  bindSync('annual-waffle','annual-readout-waffle');
+  bindSync('annual-exptype','annual-readout-exptype');
+})();
+</script>`;
+
     writeOutFile(
       outDir,
       route,
@@ -1907,6 +2180,7 @@ function buildAccountingPages(
         assets,
         subnavHtml: renderAccountingSubnav('../../', 'reports'),
         bodyHtml,
+        extraScriptsHtml: annualScript,
       }),
     );
     pages += 1;

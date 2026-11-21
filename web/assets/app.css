@@ -2786,8 +2786,15 @@
     }
 
     .site-header, .toolbar, .pager-bar, .site-footer, .no-print,
-    .section-subnav, .document-tools, .document-toc, .archive-tools, .mom-finance-actions {
+    .section-subnav, .document-tools, .document-toc, .archive-tools, .mom-finance-actions,
+    .chart-deck-tabs {
       display: none !important;
+    }
+
+    .chart-deck-track {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      overflow: visible !important;
     }
 
     body {
@@ -5013,7 +5020,8 @@
     padding: 0.9rem;
   }
 
-  .svg-chart-wrap svg {
+  .svg-chart-wrap svg,
+  .svg-chart-body svg {
     width: 100%;
     height: auto;
     display: block;

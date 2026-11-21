@@ -3,6 +3,7 @@ import path from 'node:path';
 import { summarizePeriod, validateLedgerRecords } from '../domain/accounting.js';
 import type { Account, LedgerEntry, Unit } from '../domain/types.js';
 import {
+  CHART_PALETTE_HEX,
   renderActivityBarsSvg,
   renderMonthlyFlowSvg,
   renderUnitComparisonSvg,
@@ -494,6 +495,17 @@ export async function buildInternalReports(
         etMap.set(r.expType, (etMap.get(r.expType) ?? 0) + r.exp);
       }
     }
+    const gwanSorted = [...gwanMap.entries()].sort((a, b) => b[1] - a[1]);
+    const gwanColorHex = new Map(
+      gwanSorted.map(([gwan], idx) => [gwan, CHART_PALETTE_HEX[idx % CHART_PALETTE_HEX.length]!]),
+    );
+    const mokGwanMap = new Map<string, string>();
+    for (const r of yRecs) {
+      if (r.gubun !== '지출') continue;
+      const key = `${r.mok} (${r.gwan})`;
+      if (!mokGwanMap.has(key)) mokGwanMap.set(key, r.gwan);
+    }
+
     const totExp = currSum.exp || 1;
     const svgMonthly = renderMonthlyFlowSvg(
       monthlyPts,
@@ -501,9 +513,12 @@ export async function buildInternalReports(
       { standalone: true },
     );
     const svgGwan = renderActivityBarsSvg(
-      [...gwanMap.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .map(([label, value]) => ({ label, value, pct: (value / totExp) * 100 })),
+      gwanSorted.map(([label, value], idx) => ({
+        label,
+        value,
+        pct: (value / totExp) * 100,
+        color: CHART_PALETTE_HEX[idx % CHART_PALETTE_HEX.length],
+      })),
       `${targetYear}년 관(대분류)별 외부 순지출 비중`,
       { standalone: true },
     );
@@ -511,18 +526,22 @@ export async function buildInternalReports(
       [...mokMap.entries()]
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10)
-        .map(([label, value]) => ({ label, value, color: '#516db2' })),
+        .map(([label, value]) => ({
+          label,
+          value,
+          color: gwanColorHex.get(mokGwanMap.get(label) ?? '') ?? CHART_PALETTE_HEX[0],
+        })),
       `${targetYear}년 주요 활동(목)별 지출 TOP 10`,
       { standalone: true },
     );
     const svgEt = renderActivityBarsSvg(
       [...etMap.entries()]
         .sort((a, b) => b[1] - a[1])
-        .map(([label, value]) => ({
+        .map(([label, value], idx) => ({
           label,
           value,
           pct: (value / totExp) * 100,
-          color: '#39793c',
+          color: CHART_PALETTE_HEX[idx % CHART_PALETTE_HEX.length],
         })),
       `${targetYear}년 지출형태별 집행 현황`,
       { standalone: true },
