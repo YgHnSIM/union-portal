@@ -899,6 +899,22 @@
     color: var(--color-muted);
   }
 
+  .section-head-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 0.75rem;
+    flex-wrap: wrap;
+    flex: 1 1 auto;
+  }
+
+  @media (min-width: 640px) {
+    .section-head-actions {
+      flex: 0 0 auto;
+      justify-content: flex-end;
+    }
+  }
+
   /* Integrated Filter Bar */
   .toolbar {
     display: flex;
@@ -2226,28 +2242,51 @@
   }
 
   .year-filter-bar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.45rem;
     margin-block-end: 1.15rem;
+  }
+
+  @media (min-width: 640px) {
+    .year-filter-bar {
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
   }
 
   .year-chip {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding-block: 0.38rem;
+    justify-content: space-between;
+    gap: 0.45rem;
+    inline-size: 100%;
+    min-inline-size: 0;
+    padding-block: 0.45rem;
     padding-inline: 0.78rem;
     border: var(--rule-hair) solid var(--color-rule-ui);
     border-radius: var(--radius-control);
     background-color: var(--color-sheet);
     color: var(--color-ink-2);
     font-family: inherit;
-    font-size: 0.82rem;
+    font-size: 0.84rem;
     font-weight: 600;
     cursor: pointer;
     touch-action: manipulation;
+  }
+
+  .year-chip-main {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42rem;
+    min-inline-size: 0;
+  }
+
+  .year-chip-meta {
+    font-size: 0.78rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-muted);
+    white-space: nowrap;
   }
 
   .year-chip-swatch {
@@ -2269,6 +2308,47 @@
     color: var(--year-color);
     font-weight: 700;
     box-shadow: inset 0 -2px 0 var(--year-color);
+  }
+
+  .year-chip[aria-pressed="true"] .year-chip-meta {
+    color: inherit;
+    opacity: 0.85;
+  }
+
+  .year-chip--all {
+    inline-size: auto;
+    padding-block: 0.3rem;
+    padding-inline: 0.65rem;
+    font-size: 0.78rem;
+  }
+
+  .year-more-popover {
+    padding: 0.4rem;
+    background-color: var(--color-sheet);
+    border: var(--rule-hair) solid var(--color-rule-ui);
+    border-radius: var(--radius-sheet);
+    inline-size: min(82dvw, 15rem);
+    max-block-size: min(50dvh, 18rem);
+    overflow: auto;
+  }
+
+  .year-more-popover[popover]:not(:is(:popover-open, .\:popover-open)) {
+    display: none;
+  }
+
+  .year-more-popover[popover]:is(:popover-open, .\:popover-open) {
+    display: grid;
+    gap: 0.3rem;
+  }
+
+  @supports (position-area: block-end) {
+    .year-more-popover {
+      inset: auto;
+      margin: 0;
+      margin-block-start: 0.35rem;
+      position-area: block-end span-inline-start;
+      position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+    }
   }
 
   .year-group {
@@ -2678,7 +2758,8 @@
     .month-grid,
     .month-card,
     .theme-toggle,
-    .site-menu {
+    .site-menu,
+    .year-more-popover {
       border-color: ButtonBorder;
     }
 

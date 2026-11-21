@@ -1956,9 +1956,11 @@ function buildAccountingPages(
       monthInfo.set(ym, { sum: ms, count: mr.length, endBal: runningBal, topMok });
     }
 
-    const yearChips: string[] = [];
+    const primaryChips: string[] = [];
+    const olderChips: string[] = [];
     const yearSections: string[] = [];
-    for (const y of sortedYears) {
+    const hasOverflowYears = sortedYears.length > 4;
+    for (const [idx, y] of sortedYears.entries()) {
       const yt = yearTone(y);
       const yMonths = months.filter((ym) => ym.startsWith(`${y}-`)).reverse();
       const ys = summarizePeriod(entries.filter((r) => r.year === y));
@@ -1971,9 +1973,12 @@ function buildAccountingPages(
         1,
       );
       const isDefault = y === defaultYear;
-      yearChips.push(
-        `<button type="button" class="year-chip" data-filter-year="${y}" data-year-tone="${yt}" aria-pressed="${String(isDefault)}"><span class="year-chip-swatch" aria-hidden="true"></span><span>${y}년 (${yMonths.length})</span></button>`,
-      );
+      const chipHtml = `<button type="button" class="year-chip" data-filter-year="${y}" data-year-tone="${yt}" aria-pressed="${String(isDefault)}"><span class="year-chip-main"><span class="year-chip-swatch" aria-hidden="true"></span><span>${y}년</span></span><span class="year-chip-meta">${yMonths.length}개월</span></button>`;
+      if (hasOverflowYears && idx >= 3) {
+        olderChips.push(chipHtml);
+      } else {
+        primaryChips.push(chipHtml);
+      }
 
       const monthCards = yMonths
         .map((ym) => {
@@ -2020,9 +2025,15 @@ function buildAccountingPages(
       );
     }
 
-    yearChips.push(
-      `<button type="button" class="year-chip" data-filter-year="all" aria-pressed="${String(defaultYear === undefined)}">전체 기간 (${months.length}개월)</button>`,
-    );
+    const moreYearsHtml =
+      olderChips.length > 0
+        ? `<button type="button" class="year-chip year-chip--more" popovertarget="older-years-panel" aria-pressed="false" data-default-label="이전 연도" data-default-meta="${olderChips.length}개년 ▾"><span class="year-chip-main">이전 연도</span><span class="year-chip-meta">${olderChips.length}개년 ▾</span></button>
+      <div id="older-years-panel" class="year-more-popover" popover="auto" role="group" aria-label="이전 연도 선택">
+        ${olderChips.join('\n        ')}
+      </div>`
+        : '';
+
+    const allYearsBtn = `<button type="button" class="year-chip year-chip--all" data-filter-year="all" aria-pressed="${String(defaultYear === undefined)}">전체 ${months.length}개월 보기</button>`;
 
     const bodyHtml = `
   <header class="page-masthead">
@@ -2046,18 +2057,24 @@ function buildAccountingPages(
   <section class="section-band" aria-labelledby="sec-mon">
     <div class="section-head">
       <h2 id="sec-mon">2. 월간 운영위원회 재정보고 (${months.length}개월)</h2>
-      <span class="section-sub">연도별 월간 보고서</span>
+      <div class="section-head-actions">
+        <span class="section-sub">연도별 월간 보고서</span>
+        ${allYearsBtn}
+      </div>
     </div>
     <div class="year-filter-bar" role="group" aria-label="보고서 연도 필터">
-      ${yearChips.join('\n      ')}
+      ${primaryChips.join('\n      ')}
+      ${moreYearsHtml}
     </div>
     ${yearSections.join('\n')}
   </section>`;
 
     const toggleScript = `<script>
 (function(){
-  var chips=document.querySelectorAll('.year-chip');
+  var chips=document.querySelectorAll('.year-chip[data-filter-year]');
   var groups=document.querySelectorAll('.year-group');
+  var moreBtn=document.querySelector('.year-chip--more');
+  var morePanel=document.getElementById('older-years-panel');
   chips.forEach(function(btn){
     btn.addEventListener('click',function(){
       var target=btn.getAttribute('data-filter-year');
@@ -2065,6 +2082,26 @@ function buildAccountingPages(
       groups.forEach(function(g){
         g.hidden=(target!=='all'&&g.getAttribute('data-year')!==target);
       });
+      if(moreBtn&&morePanel){
+        var inMore=morePanel.contains(btn);
+        moreBtn.setAttribute('aria-pressed',String(inMore));
+        var mainEl=moreBtn.querySelector('.year-chip-main');
+        var metaEl=moreBtn.querySelector('.year-chip-meta');
+        if(inMore){
+          var yTone=btn.getAttribute('data-year-tone');
+          if(yTone)moreBtn.setAttribute('data-year-tone',yTone);
+          if(mainEl)mainEl.textContent=target+'년';
+          var mTxt=btn.querySelector('.year-chip-meta');
+          if(metaEl)metaEl.textContent=(mTxt?mTxt.textContent+' ':'')+'▾';
+          if(typeof morePanel.hidePopover==='function'){
+            try{morePanel.hidePopover();}catch(_){}
+          }
+        }else{
+          moreBtn.removeAttribute('data-year-tone');
+          if(mainEl)mainEl.textContent=moreBtn.getAttribute('data-default-label')||'이전 연도';
+          if(metaEl)metaEl.textContent=moreBtn.getAttribute('data-default-meta')||'';
+        }
+      }
     });
   });
 })();
