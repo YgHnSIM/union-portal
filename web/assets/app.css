@@ -75,6 +75,13 @@
     --sig-logo-dark: #7994de;
     --sig-logo-soft-dark: #1b2747;
     --sig-logo-soft-ink-dark: #c9d8f8;
+    /* Raster logo (opaque off-white bg, #516DB2 + #0B051A ink) theme adaptation.
+       invert + hue-rotate(180deg) maps #516DB2 → ≈#7894D9 (≈ --sig-logo-dark), #0B051A → near-white,
+       and the off-white bg → near-black; blend modes then drop the bg into the header surface. */
+    --logo-image-filter-light: none;
+    --logo-image-blend-light: multiply;
+    --logo-image-filter-dark: invert(1) hue-rotate(180deg);
+    --logo-image-blend-dark: screen;
 
     --sig-cobalt-light: #12354e;
     --sig-cobalt-ink-light: #ffffff;
@@ -131,6 +138,8 @@
     --color-logo: var(--sig-logo-light);
     --color-logo-soft: var(--sig-logo-soft-light);
     --color-logo-soft-ink: var(--sig-logo-soft-ink-light);
+    --logo-image-filter: var(--logo-image-filter-light);
+    --logo-image-blend: var(--logo-image-blend-light);
     --color-accent: var(--sig-cobalt-light);
     --color-accent-ink: var(--sig-cobalt-ink-light);
     --color-accent-soft: var(--sig-cobalt-soft-light);
@@ -206,6 +215,8 @@
       --color-logo: var(--sig-logo-dark);
       --color-logo-soft: var(--sig-logo-soft-dark);
       --color-logo-soft-ink: var(--sig-logo-soft-ink-dark);
+      --logo-image-filter: var(--logo-image-filter-dark);
+      --logo-image-blend: var(--logo-image-blend-dark);
       --color-accent: var(--sig-cobalt-dark);
       --color-accent-ink: var(--sig-cobalt-ink-dark);
       --color-accent-soft: var(--sig-cobalt-soft-dark);
@@ -265,6 +276,8 @@
     --color-logo: var(--sig-logo-light);
     --color-logo-soft: var(--sig-logo-soft-light);
     --color-logo-soft-ink: var(--sig-logo-soft-ink-light);
+    --logo-image-filter: var(--logo-image-filter-light);
+    --logo-image-blend: var(--logo-image-blend-light);
     --color-accent: var(--sig-cobalt-light);
     --color-accent-ink: var(--sig-cobalt-ink-light);
     --color-accent-soft: var(--sig-cobalt-soft-light);
@@ -323,6 +336,8 @@
     --color-logo: var(--sig-logo-dark);
     --color-logo-soft: var(--sig-logo-soft-dark);
     --color-logo-soft-ink: var(--sig-logo-soft-ink-dark);
+    --logo-image-filter: var(--logo-image-filter-dark);
+    --logo-image-blend: var(--logo-image-blend-dark);
     --color-accent: var(--sig-cobalt-dark);
     --color-accent-ink: var(--sig-cobalt-ink-dark);
     --color-accent-soft: var(--sig-cobalt-soft-dark);
@@ -579,6 +594,8 @@
   .brand-logo {
     display: block;
     height: auto;
+    filter: var(--logo-image-filter, none);
+    mix-blend-mode: var(--logo-image-blend, normal);
   }
 
   .site-logo:hover,
