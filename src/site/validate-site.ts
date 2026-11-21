@@ -680,11 +680,12 @@ export async function validateSite(
         salt,
         errors,
       });
-    } else if (relPosix === 'union/index.html') {
+    } else if (relPosix.startsWith('union/')) {
+      const unionAllowed = relPosix === 'union/index.html' ? activeOfficialNames : new Set<string>();
       checkTextPrivacy({
         text: `${extracted.financeText}\n${extracted.nonFinanceText}`,
         label: relPosix,
-        allowedPlaintext: activeOfficialNames,
+        allowedPlaintext: unionAllowed,
         bundle,
         hashIndex,
         salt,

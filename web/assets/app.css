@@ -5026,14 +5026,1083 @@
     height: auto;
     display: block;
   }
+
+  /* ==========================================================================
+     Union Bylaws Guide (/union/bylaws-guide.html) & Full Text (/union/bylaws.html)
+     ========================================================================== */
+  .union-bylaws-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 1.5rem;
+    padding: 1.15rem 1.25rem;
+    background-color: var(--color-sheet);
+    border: var(--rule-hair) solid var(--color-rule);
+    border-block-start: 3px solid var(--color-accent);
+    border-radius: 0;
+  }
+
+  .union-bylaws-banner h3 {
+    font-size: 1.02rem;
+    font-weight: 800;
+    color: var(--color-ink);
+    margin-block-end: 0.3rem;
+  }
+
+  .union-bylaws-banner p {
+    max-width: 64ch;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--color-ink-2);
+  }
+
+  .bylaw-ref-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-block-start: 0.65rem;
+  }
+
+  .bylaw-ref-chip {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 26px;
+    padding: 0.14rem 0.5rem;
+    border: var(--rule-hair) solid var(--color-rule);
+    border-radius: var(--radius-sharp);
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent-soft-ink);
+    font-size: 0.76rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .bylaw-ref-chip:hover,
+  .bylaw-ref-chip:focus-visible {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-accent-ink);
+  }
+
+  .bylaws-diagram-frame {
+    background-color: var(--color-sheet);
+    border: var(--rule-hair) solid var(--color-rule);
+    border-radius: var(--radius-sheet);
+    padding: clamp(0.75rem, 2vw, 1.25rem);
+  }
+
+  .bylaws-diagram-scroll-hint {
+    display: none;
+    margin-block-end: 0.45rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    text-align: center;
+  }
+
+  .bylaws-diagram-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .bylaws-diagram-svg {
+    width: 100%;
+    min-inline-size: 620px;
+    height: auto;
+    display: block;
+    font-family: var(--font-sans);
+  }
+
+  .bylaws-diagram-caption {
+    margin-block-start: 0.75rem;
+    padding-block-start: 0.65rem;
+    border-block-start: var(--rule-hair) solid var(--color-rule);
+    font-size: 0.82rem;
+    color: var(--color-muted);
+    line-height: 1.55;
+  }
+
+  .bylaws-callout-grid,
+  .bylaws-dual-panel,
+  .bylaw-tracks {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-block-start: 1rem;
+  }
+
+  .bylaw-info-card,
+  .bylaw-quorum-card,
+  .bylaw-dual-card,
+  .bylaw-track-card,
+  .bylaw-dept-group {
+    padding: 1.05rem 1.15rem;
+    background-color: var(--color-sheet);
+    border: var(--rule-hair) solid var(--color-rule);
+    border-block-start: 3px solid var(--color-accent);
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .bylaw-info-card h3,
+  .bylaw-quorum-card h3,
+  .bylaw-dual-card h3,
+  .bylaw-track-card h3 {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--color-ink);
+    line-height: 1.4;
+  }
+
+  .bylaw-card-desc {
+    margin-block-start: 0.35rem;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    line-height: 1.55;
+  }
+
+  .bylaw-bullet-list,
+  .bylaw-numbered-list {
+    margin-block-start: 0.65rem;
+    padding-inline-start: 1.2rem;
+    display: grid;
+    gap: 0.38rem;
+    font-size: 0.88rem;
+    color: var(--color-ink-2);
+    line-height: 1.55;
+  }
+
+  .bylaw-rank-steps {
+    list-style: none;
+    margin-block-start: 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .bylaw-rank-steps li {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.5rem 0.65rem;
+    background-color: var(--color-well);
+    border: var(--rule-hair) solid var(--color-rule);
+    border-radius: var(--radius-control);
+    font-size: 0.86rem;
+    color: var(--color-ink);
+  }
+
+  .bylaw-step-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.14rem 0.42rem;
+    background-color: var(--color-accent);
+    color: var(--color-accent-ink);
+    border-radius: var(--radius-sharp);
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .bylaw-quorum-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .bylaw-quorum-card[data-tone="cobalt"],
+  .bylaw-dual-card[data-tone="cobalt"],
+  .bylaw-dept-group[data-tone="cobalt"] {
+    border-block-start-color: var(--chart-cobalt);
+  }
+
+  .bylaw-quorum-card[data-tone="expense"],
+  .bylaw-track-card[data-tone="expense"] {
+    border-block-start-color: var(--color-expense);
+  }
+
+  .bylaw-quorum-card[data-tone="grant"],
+  .bylaw-dept-group[data-tone="grant"] {
+    border-block-start-color: var(--color-grant);
+  }
+
+  .bylaw-dual-card[data-tone="income"],
+  .bylaw-dept-group[data-tone="income"] {
+    border-block-start-color: var(--color-income);
+  }
+
+  .bylaw-quorum-top,
+  .bylaw-dual-head,
+  .bylaw-roadmap-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-block-end: 0.45rem;
+  }
+
+  .bylaw-quorum-ratio {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--color-ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bylaw-meter {
+    position: relative;
+    block-size: 10px;
+    background-color: var(--color-well);
+    border: var(--rule-hair) solid var(--color-rule);
+    border-radius: var(--radius-sharp);
+    margin-block: 0.65rem 0.25rem;
+    overflow: hidden;
+  }
+
+  .bylaw-meter-fill {
+    block-size: 100%;
+    background-color: var(--chart-cobalt);
+  }
+
+  .bylaw-quorum-card[data-tone="expense"] .bylaw-meter-fill {
+    background-color: var(--color-expense);
+  }
+
+  .bylaw-quorum-card[data-tone="grant"] .bylaw-meter-fill {
+    background-color: var(--color-grant);
+  }
+
+  .bylaw-meter-mark {
+    position: absolute;
+    inset-block: 0;
+    inline-size: 2px;
+    background-color: var(--color-ink);
+    opacity: 0.45;
+  }
+
+  .bylaw-table-block {
+    margin-block-start: 1.25rem;
+  }
+
+  .bylaw-sub-heading {
+    font-size: 0.96rem;
+    font-weight: 800;
+    color: var(--color-ink);
+    margin-block-end: 0.6rem;
+  }
+
+  .bylaw-flow-steps {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+
+  .bylaw-flow-step {
+    position: relative;
+    padding: 0.95rem 1rem;
+    background-color: var(--color-sheet);
+    border: var(--rule-hair) solid var(--color-rule);
+    border-block-start: 3px solid var(--color-accent);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .bylaw-flow-num {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--color-accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bylaw-flow-step h3 {
+    font-size: 0.96rem;
+    font-weight: 800;
+    color: var(--color-ink);
+  }
+
+  .bylaw-flow-step p {
+    font-size: 0.84rem;
+    color: var(--color-ink-2);
+    line-height: 1.55;
+    flex: 1;
+  }
+
+  .bylaw-remedy-bar {
+    margin-block-start: 1rem;
+    padding: 1rem 1.1rem;
+    background-color: var(--color-well);
+    border: var(--rule-hair) solid var(--color-rule);
+    border-inline-start: 4px solid var(--color-expense);
+    border-radius: 0;
+  }
+
+  .bylaw-remedy-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--color-ink);
+    margin-block-end: 0.7rem;
+  }
+
+  .bylaw-remedy-chain {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .bylaw-chain-node {
+    flex: 1 1 160px;
+    padding: 0.6rem 0.75rem;
+    background-color: var(--color-sheet);
+    border: var(--rule-hair) solid var(--color-rule);
+    border-radius: var(--radius-control);
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .bylaw-chain-node.is-highlight {
+    border-color: var(--color-expense);
+    background-color: var(--color-expense-soft);
+  }
+
+  .bylaw-chain-node strong {
+    font-size: 0.86rem;
+    color: var(--color-ink);
+  }
+
+  .bylaw-chain-node small {
+    font-size: 0.78rem;
+    color: var(--color-ink-2);
+    line-height: 1.45;
+  }
+
+  .bylaw-chain-arrow {
+    align-self: center;
+    font-weight: 800;
+    color: var(--color-muted);
+  }
+
+  .bylaw-track-head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    margin-block-end: 0.8rem;
+  }
+
+  .bylaw-vertical-flow {
+    list-style: none;
+    counter-reset: track-step;
+    display: grid;
+    gap: 0.75rem;
+    padding-inline-start: 0;
+  }
+
+  .bylaw-vertical-flow li {
+    counter-increment: track-step;
+    position: relative;
+    padding-inline-start: 2.15rem;
+  }
+
+  .bylaw-vertical-flow li::before {
+    content: counter(track-step);
+    position: absolute;
+    inset-inline-start: 0;
+    inset-block-start: 0.05rem;
+    inline-size: 1.55rem;
+    block-size: 1.55rem;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-sharp);
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent-soft-ink);
+    font-size: 0.78rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bylaw-track-card[data-tone="expense"] .bylaw-vertical-flow li::before {
+    background-color: var(--color-expense-soft);
+    color: var(--color-expense);
+  }
+
+  .bylaw-vertical-flow strong {
+    font-size: 0.92rem;
+    color: var(--color-ink);
+    margin-inline-end: 0.25rem;
+  }
+
+  .bylaw-vertical-flow p {
+    margin-block-start: 0.25rem;
+    font-size: 0.84rem;
+    color: var(--color-ink-2);
+    line-height: 1.55;
+  }
+
+  .bylaw-track-foot {
+    margin-block-start: auto;
+    padding-block-start: 0.85rem;
+    border-block-start: var(--rule-hair) solid var(--color-rule);
+    font-size: 0.84rem;
+    color: var(--color-ink-2);
+    line-height: 1.55;
+  }
+
+  .bylaw-dept-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .bylaw-dept-group-title {
+    font-size: 0.96rem;
+    font-weight: 800;
+    color: var(--color-ink);
+    padding-block-end: 0.55rem;
+    margin-block-end: 0.65rem;
+    border-block-end: var(--rule-hair) solid var(--color-rule);
+  }
+
+  .bylaw-dept-list {
+    margin: 0;
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .bylaw-dept-row {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr;
+    gap: 0.65rem;
+    align-items: baseline;
+  }
+
+  .bylaw-dept-row dt {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--color-accent);
+  }
+
+  .bylaw-dept-row dd {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--color-ink-2);
+    line-height: 1.55;
+  }
+
+  .bylaw-roadmap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.85rem;
+  }
+
+  .bylaw-roadmap-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.9rem 1rem;
+    background-color: var(--color-sheet);
+    border: var(--rule-hair) solid var(--color-rule);
+    border-radius: var(--radius-control);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .bylaw-roadmap-card:hover,
+  .bylaw-roadmap-card:focus-visible {
+    border-color: var(--color-accent);
+    background-color: var(--color-well);
+  }
+
+  .bylaw-roadmap-card.is-addenda {
+    border-style: dashed;
+  }
+
+  .bylaw-roadmap-range {
+    font-size: 0.76rem;
+    color: var(--color-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bylaw-roadmap-card h3 {
+    font-size: 0.96rem;
+    font-weight: 800;
+    color: var(--color-ink);
+  }
+
+  .bylaw-roadmap-card p {
+    font-size: 0.82rem;
+    color: var(--color-ink-2);
+    line-height: 1.5;
+  }
+
+  /* Full Bylaws Reader (/union/bylaws.html) */
+  .bylaws-head-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .bylaws-toolbar {
+    padding: 1rem 1.1rem;
+    background-color: var(--color-sheet);
+    border: var(--rule-hair) solid var(--color-rule);
+    border-block-start: var(--rule-bar) solid var(--color-rule-strong);
+    margin-block-end: 1.25rem;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .bylaws-search-form {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .bylaws-search-form label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-ink-2);
+  }
+
+  .bylaws-search-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  .bylaws-search-row .archive-search-field {
+    flex: 1;
+  }
+
+  .bylaws-topic-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.38rem;
+  }
+
+  .bylaws-topic-chip {
+    min-block-size: 34px;
+    padding: 0.25rem 0.7rem;
+    border: var(--rule-hair) solid var(--color-rule);
+    border-radius: var(--radius-control);
+    background-color: var(--color-canvas);
+    color: var(--color-ink-2);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .bylaws-topic-chip:hover,
+  .bylaws-topic-chip:focus-visible {
+    border-color: var(--color-accent);
+    background-color: var(--color-well);
+    color: var(--color-ink);
+  }
+
+  .bylaws-topic-chip[aria-pressed="true"] {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-accent-ink);
+    font-weight: 700;
+  }
+
+  .bylaws-search-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: var(--color-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bylaws-copy-status {
+    color: var(--color-accent);
+    font-weight: 700;
+  }
+
+  .bylaws-layout {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .bylaws-sidebar {
+    position: sticky;
+    inset-block-start: 4.75rem;
+    max-block-size: calc(100dvh - 6rem);
+    overflow-y: auto;
+    background-color: var(--color-sheet);
+    border: var(--rule-hair) solid var(--color-rule);
+    border-radius: var(--radius-sheet);
+    padding: 0.75rem;
+  }
+
+  .bylaws-toc-summary {
+    font-size: 0.86rem;
+    font-weight: 800;
+    color: var(--color-ink);
+    cursor: pointer;
+    padding: 0.25rem 0.2rem;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .bylaws-toc-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .bylaws-toc-summary::after {
+    content: "▾";
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    transition: transform 0.15s ease;
+  }
+
+  .bylaws-toc-disclosure[open] > .bylaws-toc-summary::after {
+    transform: rotate(180deg);
+  }
+
+  .bylaws-toc-nav {
+    margin-block-start: 0.55rem;
+    padding-block-start: 0.55rem;
+    border-block-start: var(--rule-hair) solid var(--color-rule);
+    scroll-target-group: auto;
+  }
+
+  .bylaws-toc-list,
+  .bylaws-toc-sub {
+    list-style: none;
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .bylaws-toc-sub {
+    padding-inline-start: 0.75rem;
+    margin-block: 0.15rem 0.3rem;
+  }
+
+  .bylaws-toc-link {
+    display: block;
+    padding: 0.34rem 0.55rem;
+    border-inline-start: 3px solid transparent;
+    border-radius: 0 var(--radius-control) var(--radius-control) 0;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: var(--color-ink-2);
+    text-decoration: none;
+  }
+
+  .bylaws-toc-link.is-sub {
+    font-size: 0.78rem;
+    color: var(--color-muted);
+    padding-block: 0.24rem;
+  }
+
+  .bylaws-toc-link:hover,
+  .bylaws-toc-link:focus-visible {
+    background-color: var(--color-well);
+    color: var(--color-ink);
+  }
+
+  /* Use :is() so unsupported :target-current never invalidates .target-current fallback */
+  .bylaws-toc-link:is(:target-current, .target-current) {
+    border-inline-start-color: var(--color-accent);
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent-soft-ink);
+    font-weight: 800;
+  }
+
+  .bylaws-content {
+    min-inline-size: 0;
+    font-size: calc(1rem * var(--font-scale, 1));
+    line-height: 1.75;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+
+  .bylaw-preamble,
+  .bylaw-chapter,
+  .bylaw-section,
+  .bylaw-article {
+    scroll-margin-top: 5.5rem;
+  }
+
+  .bylaw-preamble {
+    padding: 1.25rem 1.35rem;
+    background-color: var(--color-logo-soft);
+    border: var(--rule-hair) solid var(--color-rule);
+    border-inline-start: 4px solid var(--color-logo);
+    margin-block-end: 1.75rem;
+  }
+
+  .bylaw-preamble-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-block-end: 0.65rem;
+  }
+
+  .bylaw-preamble h2 {
+    font-size: 1.08em;
+    font-weight: 800;
+    color: var(--color-ink);
+  }
+
+  .bylaw-history-list {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--color-logo-soft-ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bylaw-history-list li {
+    padding: 0.14rem 0.5rem;
+    background-color: var(--color-sheet);
+    border: var(--rule-hair) solid var(--color-rule);
+    border-radius: var(--radius-sharp);
+  }
+
+  .bylaw-preamble p {
+    font-size: 0.98em;
+    color: var(--color-ink);
+    line-height: 1.8;
+  }
+
+  .bylaw-chapter {
+    margin-block-end: 2rem;
+    background-color: var(--color-sheet);
+    border: var(--rule-hair) solid var(--color-rule);
+    border-block-start: var(--rule-bar) solid var(--color-rule-strong);
+    padding: clamp(1rem, 2.2vw, 1.5rem);
+  }
+
+  .bylaw-chapter-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.45rem 0.75rem;
+    padding-block-end: 0.75rem;
+    margin-block-end: 1rem;
+    border-block-end: var(--rule-hair) solid var(--color-rule);
+  }
+
+  .bylaw-chapter-kicker {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.14rem 0.55rem;
+    background-color: var(--color-accent);
+    color: var(--color-accent-ink);
+    border-radius: var(--radius-sharp);
+    font-size: 0.78rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bylaw-chapter-title {
+    font-size: calc(1.22rem * var(--heading-scale, 1));
+    font-weight: 800;
+    color: var(--color-ink);
+  }
+
+  .bylaw-chapter-count {
+    margin-inline-start: auto;
+    font-size: 0.8rem;
+    color: var(--color-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bylaw-section {
+    margin-block-start: 1.35rem;
+  }
+
+  .bylaw-section-title {
+    font-size: calc(1.02rem * var(--heading-scale, 1));
+    font-weight: 800;
+    color: var(--color-accent);
+    padding-inline-start: 0.65rem;
+    border-inline-start: 3px solid var(--color-accent);
+    margin-block-end: 0.85rem;
+  }
+
+  .bylaw-article {
+    padding-block: 0.95rem;
+    padding-inline: 0.65rem;
+    border-block-end: var(--rule-hair) solid var(--color-rule);
+    border-radius: var(--radius-control);
+    transition: background-color 0.2s ease;
+  }
+
+  .bylaw-article:last-child {
+    border-block-end: 0;
+    padding-block-end: 0.3rem;
+  }
+
+  .bylaw-article:target {
+    background-color: var(--color-accent-soft);
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+
+  .bylaw-article-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-block-end: 0.45rem;
+  }
+
+  .bylaw-article-title {
+    font-size: 1.02em;
+    font-weight: 800;
+    color: var(--color-ink);
+    line-height: 1.45;
+  }
+
+  .bylaw-article-num {
+    color: var(--color-accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bylaw-article-name {
+    margin-inline-start: 0.15rem;
+  }
+
+  .bylaw-anchor-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.22rem;
+    min-block-size: 28px;
+    padding: 0.15rem 0.5rem;
+    border: var(--rule-hair) solid var(--color-rule);
+    border-radius: var(--radius-control);
+    background-color: var(--color-canvas);
+    color: var(--color-muted);
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .bylaw-anchor-btn:hover,
+  .bylaw-anchor-btn:focus-visible,
+  .bylaw-anchor-btn.is-copied {
+    border-color: var(--color-accent);
+    background-color: var(--color-accent);
+    color: var(--color-accent-ink);
+  }
+
+  .bylaw-article-body {
+    display: grid;
+    gap: 0.55rem;
+    color: var(--color-ink-2);
+  }
+
+  .bylaw-para-block {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .bylaw-para {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+  }
+
+  .bylaw-para-marker {
+    flex-shrink: 0;
+    font-weight: 800;
+    color: var(--color-accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bylaw-para-text {
+    flex: 1;
+    min-inline-size: 0;
+  }
+
+  .bylaw-lead-bold,
+  .bylaw-item-bold {
+    color: var(--color-ink);
+    font-weight: 800;
+  }
+
+  .bylaw-items {
+    list-style: none;
+    display: grid;
+    gap: 0.35rem;
+    padding-inline-start: 1.15rem;
+  }
+
+  .bylaw-item-line {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+  }
+
+  .bylaw-item-num {
+    flex-shrink: 0;
+    min-inline-size: 1.35rem;
+    font-weight: 700;
+    color: var(--color-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bylaw-item-text {
+    flex: 1;
+    min-inline-size: 0;
+  }
+
+  .bylaw-subitems {
+    list-style: none;
+    display: grid;
+    gap: 0.25rem;
+    padding-inline-start: 1.9rem;
+    margin-block-start: 0.3rem;
+  }
+
+  .bylaw-subitems li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-size: 0.94em;
+  }
+
+  .bylaw-subitem-marker {
+    flex-shrink: 0;
+    font-weight: 700;
+    color: var(--color-accent);
+  }
+
+  .bylaw-editorial-note {
+    display: inline-block;
+    margin-inline-start: 0.35rem;
+    padding: 0.05rem 0.42rem;
+    border-radius: var(--radius-sharp);
+    background-color: var(--color-well);
+    border: var(--rule-hair) solid var(--color-rule);
+    font-size: 0.78em;
+    color: var(--color-muted);
+    vertical-align: baseline;
+  }
+
+  .bylaw-attachments {
+    margin-block-start: 1.35rem;
+    padding-block-start: 1rem;
+    border-block-start: var(--rule-hair) dashed var(--color-rule-ui);
+  }
+
+  .bylaw-attachment-list {
+    list-style: none;
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .bylaw-attachment-item {
+    padding: 0.7rem 0.9rem;
+    background-color: var(--color-well);
+    border-radius: var(--radius-control);
+    font-size: 0.92em;
+    color: var(--color-ink-2);
+  }
+
+  .bylaw-attachment-item strong {
+    color: var(--color-ink);
+    margin-inline-end: 0.35rem;
+  }
+
+  mark.bylaws-mark {
+    background-color: var(--color-grant-soft);
+    color: var(--color-ink);
+    padding: 0 0.12rem;
+    border-radius: var(--radius-sharp);
+    font-weight: 700;
+  }
+
+  .bylaws-no-results {
+    padding: 2rem 1.25rem;
+    text-align: center;
+    background-color: var(--color-sheet);
+    border: var(--rule-hair) solid var(--color-rule);
+    border-radius: var(--radius-sheet);
+    display: grid;
+    justify-items: center;
+    gap: 0.75rem;
+    color: var(--color-muted);
+  }
 }
 
 @layer responsive {
+  @container main-panel (inline-size < 980px) {
+    .bylaws-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .bylaws-sidebar {
+      position: static;
+      max-block-size: none;
+    }
+
+    .bylaw-quorum-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .bylaw-flow-steps {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
   @container main-panel (inline-size < 780px) {
+    .bylaws-diagram-scroll-hint {
+      display: block;
+    }
+
     .portal-grid,
     .archive-list,
-    .archive-older-document-list {
+    .archive-older-document-list,
+    .bylaws-callout-grid,
+    .bylaws-dual-panel,
+    .bylaw-tracks,
+    .bylaw-dept-grid {
       grid-template-columns: 1fr;
+    }
+
+    .bylaw-rank-steps,
+    .bylaw-flow-steps {
+      grid-template-columns: 1fr;
+    }
+
+    .bylaw-chain-arrow {
+      display: none;
+    }
+
+    .bylaw-dept-row {
+      grid-template-columns: 1fr;
+      gap: 0.15rem;
     }
 
     .archive-category-nav {
@@ -5091,11 +6160,42 @@
       font-size: clamp(0.75rem, 3.3vw, 0.85rem);
       white-space: nowrap;
     }
+
+    .bylaw-chapter {
+      padding: 0.9rem 0.8rem;
+    }
+
+    .bylaw-article {
+      padding-inline: 0.35rem;
+    }
   }
 }
 
 @layer print {
   @media print {
+    .bylaws-layout {
+      display: block !important;
+    }
+
+    .bylaws-document,
+    .bylaws-document .bylaw-chapter,
+    .bylaws-document .bylaw-preamble {
+      background: #ffffff !important;
+      color: #111111 !important;
+      border-color: #cccccc !important;
+    }
+
+    .bylaws-document .bylaw-article {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .bylaws-document .bylaw-article-num,
+    .bylaws-document .bylaw-section-title,
+    .bylaws-document .bylaw-para-marker {
+      color: #002fa7 !important;
+    }
+
     .statement-container.print-light-surface {
       border: 0 !important;
       border-top: 1px solid #111111 !important;

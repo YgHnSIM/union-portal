@@ -18,6 +18,12 @@ import type {
 } from '../domain/types.js';
 import { findMarkdownSyntaxResidues, renderMomMarkdown, type TocItem } from './mom-renderer.js';
 import {
+  type BylawsDocument,
+  buildBylawsFullHtml,
+  buildBylawsGuideHtml,
+  loadBylawsDocument,
+} from './bylaws.js';
+import {
   type AssetManifest,
   SITE_BASE_URL,
   assetHref,
@@ -32,6 +38,7 @@ import {
   renderArchiveCategoryNav,
   renderDocumentToolsWidget,
   renderPageShell,
+  renderUnionSubnav,
 } from './shell.js';
 import {
   inspectStatementFragment,
@@ -467,10 +474,10 @@ function buildPortalHomeHtml(
       <article class="portal-card" data-axis="union">
         <div>
           <span class="portal-card-kicker">UNION · 조합</span>
-          <h3>지부별 조직 통계 및 공개 임원</h3>
-          <p>지부별 조합원 통계와 현 임기 임원 현황을 안내합니다.</p>
+          <h3>지부별 조직 통계 · 임원 · 규약</h3>
+          <p>지부별 조합원 통계, 현 임기 임원 현황과 조합 규약을 안내합니다.</p>
         </div>
-        <a class="portal-card-link" href="union/index.html">조합 현황 이동 →</a>
+        <a class="portal-card-link" href="union/index.html">조합 안내 이동 →</a>
       </article>
     </div>
   </section>
@@ -2407,14 +2414,16 @@ function buildAccountingPages(
   };
 }
 
-function buildUnionPage(
+function buildUnionPages(
   outDir: string,
   orgSummary: OrgSummaryJson,
   officialsJson: PublicOfficialsJson,
+  bylawsDoc: BylawsDocument | null,
   currentYm: string,
   assets: AssetManifest,
   baseUrl: string,
-): void {
+): number {
+  let pages = 0;
   const route = 'union/index.html';
   const prefix = computePrefixForRoute(route);
 
@@ -2515,11 +2524,31 @@ function buildUnionPage(
     })
     .join('\n    ');
 
+  const bylawsSectionHtml = bylawsDoc
+    ? `
+  <section class="section-band" aria-labelledby="sec-union-bylaws">
+    <div class="section-head">
+      <h2 id="sec-union-bylaws">3. 노동조합 규약 안내</h2>
+      <span class="section-sub">${escapeHtml(bylawsDoc.meta.enactedOn.replace(/-/g, '.'))} 제정 · ${escapeHtml(bylawsDoc.meta.amendedOn.replace(/-/g, '.'))} 개정</span>
+    </div>
+    <div class="union-bylaws-banner">
+      <div>
+        <h3>조합 운영의 근간이 되는 규약과 핵심 체계를 확인하세요</h3>
+        <p>총 ${bylawsDoc.chapters.length}장 ${bylawsDoc.allArticles.filter((a) => a.chapterNumber < 99).length}개 조항(부칙 ${bylawsDoc.addenda.articles.length}조·별첨 ${bylawsDoc.addenda.attachments.length}건)의 기관 구성, 의결정족수, 권리·의무, 단체교섭·쟁의·징계 절차를 시각화 자료와 검색 가능한 전문으로 제공합니다.</p>
+      </div>
+      <div class="portal-actions">
+        <a class="btn small" href="bylaws-guide.html">규약 한눈에 보기 →</a>
+        <a class="btn secondary small" href="bylaws.html">규약 전문 읽기</a>
+      </div>
+    </div>
+  </section>`
+    : '';
+
   const bodyHtml = `
   <header class="page-masthead">
     <div>
       <h1>노동조합 조직 및 임원 현황</h1>
-      <p class="lead">지부별 조합원 현황과 현 임기 임원 안내입니다.</p>
+      <p class="lead">지부별 조합원 현황과 현 임기 임원, 조합 규약 안내입니다.</p>
     </div>
     <div class="masthead-meta">
       <span class="data-stamp">활동 조합원 ${orgSummary.totalActive}명 · 기준월 ${escapeHtml(currentYm)}</span>
@@ -2547,22 +2576,41 @@ function buildUnionPage(
     <div class="officials-grid">
       ${officialCards || '<p class="muted">현재 등록된 현직 공개 직책 임원이 없습니다.</p>'}
     </div>
-  </section>`;
+  </section>
+  ${bylawsSectionHtml}`;
 
   writeOutFile(
     outDir,
     route,
     renderPageShell({
       title: '조합 조직·임원 현황',
-      description: '우체국물류지원단 물류노동조합 지부별 조합원 통계 및 현 임기 임원 안내',
+      description: '우체국물류지원단 물류노동조합 지부별 조합원 통계, 현 임기 임원 및 규약 안내',
       activeNav: 'union',
       route,
       prefix,
       baseUrl,
       assets,
+      subnavHtml: bylawsDoc ? renderUnionSubnav('', 'org') : undefined,
       bodyHtml,
     }),
   );
+  pages += 1;
+
+  if (bylawsDoc) {
+    writeOutFile(
+      outDir,
+      'union/bylaws-guide.html',
+      buildBylawsGuideHtml(bylawsDoc, assets, baseUrl),
+    );
+    writeOutFile(
+      outDir,
+      'union/bylaws.html',
+      buildBylawsFullHtml(bylawsDoc, assets, baseUrl),
+    );
+    pages += 2;
+  }
+
+  return pages;
 }
 
 function buildSitemapXml(
@@ -2571,6 +2619,7 @@ function buildSitemapXml(
   listedDocs: DocumentRecordV3[],
   months: string[],
   years: number[],
+  hasBylaws: boolean,
 ): void {
   const routes = [
     'index.html',
@@ -2584,6 +2633,7 @@ function buildSitemapXml(
     ...months.map((m) => `accounting/reports/monthly/${m}.html`),
     ...years.map((y) => `accounting/reports/annual/${y}.html`),
     'union/index.html',
+    ...(hasBylaws ? ['union/bylaws-guide.html', 'union/bylaws.html'] : []),
   ];
 
   const entries = routes
@@ -2695,8 +2745,17 @@ export async function buildSite(options: BuildSiteOptions): Promise<BuildSiteRes
     baseUrl,
   );
 
-  // 4. Union Page
-  buildUnionPage(outDir, orgSummary, officialsJson, currentYm, assets, baseUrl);
+  // 4. Union Pages (Organization + Bylaws Guide + Bylaws Full Text)
+  const bylawsDoc = loadBylawsDocument(projectRoot);
+  const unionPages = buildUnionPages(
+    outDir,
+    orgSummary,
+    officialsJson,
+    bylawsDoc,
+    currentYm,
+    assets,
+    baseUrl,
+  );
 
   // 5. Meta files (.nojekyll, robots.txt, sitemap.xml)
   const months = [...new Set(entries.map((r) => r.ym).filter(Boolean))].sort();
@@ -2707,7 +2766,7 @@ export async function buildSite(options: BuildSiteOptions): Promise<BuildSiteRes
     'robots.txt',
     `User-agent: *\nAllow: /\nSitemap: ${baseUrl}/sitemap.xml\n`,
   );
-  buildSitemapXml(outDir, baseUrl, graph.listedDocuments, months, years);
+  buildSitemapXml(outDir, baseUrl, graph.listedDocuments, months, years, Boolean(bylawsDoc));
 
   const pagesWritten =
     1 +
@@ -2715,7 +2774,7 @@ export async function buildSite(options: BuildSiteOptions): Promise<BuildSiteRes
     detailCounts.published +
     detailCounts.unlisted +
     accStats.pages +
-    1;
+    unionPages;
 
   return {
     outDir,

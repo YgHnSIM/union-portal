@@ -8,6 +8,7 @@ export const SITE_BASE_URL = 'https://yghnsim.github.io/union-portal';
 
 export type TopAxis = 'home' | 'archive' | 'accounting' | 'union';
 export type AccountingSection = 'dashboard' | 'ledger' | 'coa' | 'reports';
+export type UnionSection = 'org' | 'bylaws-guide' | 'bylaws';
 
 export interface AssetManifest {
   hashes: Map<string, string>;
@@ -277,6 +278,24 @@ export function renderAccountingSubnav(
     })
     .join('\n    ');
   return `<nav class="section-subnav no-print" aria-label="회계 섹션 메뉴">\n    ${links}\n  </nav>`;
+}
+
+export function renderUnionSubnav(
+  prefixToUnion: string,
+  active: UnionSection,
+): string {
+  const items: Array<{ key: UnionSection; label: string; href: string }> = [
+    { key: 'org', label: '조직·임원 현황', href: `${prefixToUnion}index.html` },
+    { key: 'bylaws-guide', label: '규약 한눈에 보기', href: `${prefixToUnion}bylaws-guide.html` },
+    { key: 'bylaws', label: '규약 전문', href: `${prefixToUnion}bylaws.html` },
+  ];
+  const links = items
+    .map((it) => {
+      const cur = it.key === active ? ' aria-current="page"' : '';
+      return `<a href="${escapeAttr(it.href)}"${cur}>${escapeHtml(it.label)}</a>`;
+    })
+    .join('\n    ');
+  return `<nav class="section-subnav no-print" aria-label="조합 안내 섹션 메뉴">\n    ${links}\n  </nav>`;
 }
 
 export function renderArchiveCategoryNav(

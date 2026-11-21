@@ -374,7 +374,7 @@
 
   function setupToc() {
     const article = documentArticle();
-    if (!article) return;
+    if (!article || article.dataset.skipAutoToc === 'true') return;
     let toc = article.querySelector('.document-toc');
     if (toc && !toc.querySelector('.document-toc-sections')) {
       toc.remove();
