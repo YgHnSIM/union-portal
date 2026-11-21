@@ -91,6 +91,18 @@
       "createdAt": "2026-11-20"
     },
     {
+      "docId": "mom:202610",
+      "txId": "HQ-2026-103",
+      "relationNote": "10월 정기 운영위원회 식사",
+      "createdAt": "2026-11-21"
+    },
+    {
+      "docId": "mom:202610",
+      "txId": "HQ-2026-104",
+      "relationNote": "10월 정기 운영위원회 다과",
+      "createdAt": "2026-11-21"
+    },
+    {
       "docId": "statement:성명서_20260921",
       "txId": "HQ-2026-097",
       "relationNote": "중노위 재심 승소 성명서 포스터 출력",
