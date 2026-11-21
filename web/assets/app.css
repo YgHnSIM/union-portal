@@ -3454,19 +3454,29 @@
    Unified Union Portal: Portal Home, Archive, Document, Statements & Union
    ========================================================================== */
 @layer archive {
-  /* Secondary sub-navigation inside /accounting/ */
+  /* Secondary sub-navigation inside /accounting/ and /union/ */
   .section-subnav {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0.4rem;
     margin-block-end: 1.15rem;
     padding-block-end: 0.75rem;
     border-block-end: var(--rule-hair) solid var(--color-rule);
+    overflow-x: auto;
+    scroll-snap-type: inline proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .section-subnav::-webkit-scrollbar {
+    display: none;
   }
 
   .section-subnav a {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
     min-block-size: 36px;
     padding-block: 0.3rem;
     padding-inline: 0.85rem;
@@ -3477,6 +3487,8 @@
     font-size: 0.86rem;
     font-weight: 600;
     text-decoration: none;
+    white-space: nowrap;
+    scroll-snap-align: start;
   }
 
   .section-subnav a:hover,
@@ -6145,6 +6157,17 @@
   }
 
   @container main-panel (inline-size < 560px) {
+    .section-subnav {
+      gap: 0.35rem;
+    }
+
+    .section-subnav a {
+      flex: 1 0 auto;
+      padding-block: 0.3rem;
+      padding-inline: clamp(0.45rem, 2.2vw, 0.72rem);
+      font-size: clamp(0.75rem, 3.2vw, 0.84rem);
+    }
+
     .portal-hero {
       padding: 1.05rem 0.95rem;
     }
