@@ -555,13 +555,27 @@ export async function validateSite(
   const hasBylawsLaw = fs.existsSync(
     path.join(projectRoot, '_source', 'union', 'bylaws-law.json'),
   );
-  if (hasBylawsLaw) {
-    const bylawsLawBuilt = path.join(siteDir, 'union', 'bylaws-law.html');
-    if (!fs.existsSync(bylawsLawBuilt)) {
-      errors.push('unlisted 문서 HTML이 빌드되지 않았습니다: union/bylaws-law.html');
+  const hasBylawsRevision = fs.existsSync(
+    path.join(projectRoot, '_source', 'union', 'bylaws-revision.json'),
+  );
+  const unlistedUnionRoutes: string[] = [];
+  if (hasBylawsLaw) unlistedUnionRoutes.push('union/bylaws-law.html');
+  if (hasBylawsRevision) {
+    unlistedUnionRoutes.push(
+      'union/bylaws-revision-diff.html',
+      'union/bylaws-revision-full.html',
+    );
+  }
+  const unlistedUnionSet = new Set(unlistedUnionRoutes);
+
+  for (const unlRoute of unlistedUnionRoutes) {
+    const builtPath = path.join(siteDir, ...unlRoute.split('/'));
+    if (!fs.existsSync(builtPath)) {
+      errors.push(`unlisted 문서 HTML이 빌드되지 않았습니다: ${unlRoute}`);
     }
-    if (sitemapContent.includes('bylaws-law.html')) {
-      errors.push('unlisted 문서가 sitemap.xml에 노출되었습니다: union/bylaws-law.html');
+    const baseName = path.posix.basename(unlRoute);
+    if (sitemapContent.includes(baseName)) {
+      errors.push(`unlisted 문서가 sitemap.xml에 노출되었습니다: ${unlRoute}`);
     }
   }
 
@@ -614,18 +628,21 @@ export async function validateSite(
     }
 
     const doc = docByRoute.get(relPosix);
-    if (doc?.workflow.visibility === 'unlisted' || relPosix === 'union/bylaws-law.html') {
+    if (doc?.workflow.visibility === 'unlisted' || unlistedUnionSet.has(relPosix)) {
       const robots = (extracted.robotsContent ?? '').replace(/\s+/g, '');
       if (robots !== 'noindex,follow') {
         errors.push(`${relPosix}: unlisted 문서는 robots="noindex,follow" 여야 합니다.`);
       }
     }
 
-    if (hasBylawsLaw && relPosix !== 'union/bylaws-law.html') {
-      if (extracted.links.some((lk) => lk.value.includes('bylaws-law.html'))) {
-        errors.push(
-          `${relPosix}: 공개 페이지에 unlisted 문서(union/bylaws-law.html) 링크가 포함되었습니다.`,
-        );
+    if (!unlistedUnionSet.has(relPosix)) {
+      for (const unlRoute of unlistedUnionRoutes) {
+        const unlBase = path.posix.basename(unlRoute);
+        if (extracted.links.some((lk) => lk.value.includes(unlBase))) {
+          errors.push(
+            `${relPosix}: 공개 페이지에 unlisted 문서(${unlRoute}) 링크가 포함되었습니다.`,
+          );
+        }
       }
     }
 

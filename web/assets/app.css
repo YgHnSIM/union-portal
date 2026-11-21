@@ -6569,6 +6569,350 @@
     color: var(--color-muted);
     font-variant-numeric: tabular-nums;
   }
+
+  /* ==========================================================================
+     Unlisted Bylaws Revision Suite Navigation, Side-by-Side Diff & Full Draft
+     ========================================================================== */
+  .unlisted-suite-nav {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 0.45rem;
+    margin-block-end: 1.2rem;
+    padding-block-end: 0.35rem;
+    border-block-end: var(--rule-hair) solid var(--color-rule);
+    scrollbar-width: thin;
+    scroll-snap-type: inline proximity;
+  }
+
+  .unlisted-suite-link {
+    position: relative;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    scroll-snap-align: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.52rem 0.9rem;
+    border: var(--rule-hair) solid var(--color-rule);
+    border-radius: var(--radius-control);
+    background-color: var(--color-sheet);
+    color: var(--color-ink-2);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .unlisted-suite-link:hover,
+  .unlisted-suite-link:focus-visible {
+    background-color: var(--color-well);
+    border-color: var(--color-rule-ui);
+    color: var(--color-ink);
+  }
+
+  .unlisted-suite-link.active,
+  .unlisted-suite-link[aria-current="page"] {
+    background-color: var(--color-accent-soft);
+    border-color: var(--color-accent);
+    color: var(--color-accent-soft-ink);
+  }
+
+  .unlisted-suite-link.active::after,
+  .unlisted-suite-link[aria-current="page"]::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 -1px;
+    border-block-end: 3px solid var(--color-accent);
+  }
+
+  .unlisted-suite-step {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 800;
+    opacity: 0.78;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rev-change-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.14rem 0.5rem;
+    border-radius: var(--radius-sharp);
+    font-size: 0.73rem;
+    font-weight: 800;
+    white-space: nowrap;
+    border: var(--rule-hair) solid transparent;
+  }
+
+  .rev-change-badge[data-change-type="substantive"] {
+    background-color: var(--color-expense-soft);
+    color: var(--color-expense);
+    border-color: var(--color-expense);
+  }
+
+  .rev-change-badge[data-change-type="renumbered"] {
+    background-color: var(--color-grant-soft);
+    color: var(--color-grant);
+    border-color: var(--color-grant);
+  }
+
+  .rev-change-badge[data-change-type="wording"] {
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent-soft-ink);
+    border-color: var(--color-accent);
+  }
+
+  .rev-change-badge[data-change-type="unchanged"] {
+    background-color: var(--color-income-soft);
+    color: var(--color-income);
+    border-color: var(--color-income);
+  }
+
+  .rev-cross-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-block-start: 0.55rem;
+  }
+
+  .rev-cross-chip {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 26px;
+    padding: 0.14rem 0.52rem;
+    border: var(--rule-hair) solid var(--color-rule);
+    border-radius: var(--radius-sharp);
+    background-color: var(--color-canvas);
+    color: var(--color-ink-2);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .rev-cross-chip.is-primary {
+    background-color: var(--color-accent-soft);
+    border-color: var(--color-accent);
+    color: var(--color-accent-soft-ink);
+  }
+
+  .rev-cross-chip.is-law {
+    background-color: var(--color-grant-soft);
+    border-color: var(--color-grant);
+    color: var(--color-grant);
+  }
+
+  .rev-cross-chip:hover,
+  .rev-cross-chip:focus-visible {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-accent-ink);
+  }
+
+  .rev-toolbar-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    margin-block-start: 0.65rem;
+  }
+
+  .rev-toolbar-row .bylaws-topic-bar {
+    margin-block-start: 0;
+  }
+
+  .rev-jump-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    margin-block-start: 0.7rem;
+  }
+
+  .rev-jump-label {
+    font-size: 0.76rem;
+    font-weight: 800;
+    color: var(--color-muted);
+    margin-inline-end: 0.25rem;
+  }
+
+  .rev-diff-group {
+    margin-block-start: 1.75rem;
+    scroll-margin-top: 5rem;
+  }
+
+  .rev-diff-group-title {
+    font-size: 1.12rem;
+    font-weight: 800;
+    color: var(--color-ink);
+    margin-block-end: 0.6rem;
+    padding-block-end: 0.35rem;
+    border-block-end: 2px solid var(--color-rule-ui);
+  }
+
+  .rev-diff-wrap {
+    overflow-x: auto;
+    overflow-y: visible;
+    max-inline-size: 100%;
+    max-block-size: none;
+    scrollbar-gutter: auto;
+    container: table-box / inline-size;
+    border: var(--rule-hair) solid var(--color-rule);
+    background-color: var(--color-sheet);
+  }
+
+  .rev-diff-row[hidden],
+  .rev-diff-group[hidden] {
+    display: none !important;
+  }
+
+  .rev-diff-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.86rem;
+    line-height: 1.62;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+    --label-1: "조항 · 개정 구분";
+    --label-2: "현행 규약";
+    --label-3: "개정안 시안";
+    --label-4: "개정 사유 · 법령 근거";
+  }
+
+  .rev-diff-table thead {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 1;
+  }
+
+  .rev-diff-table thead th {
+    background-color: var(--color-well);
+    color: var(--color-ink);
+    font-weight: 800;
+    text-align: start;
+    padding: 0.65rem 0.75rem;
+    border-block-end: 2px solid var(--color-rule-ui);
+    white-space: nowrap;
+  }
+
+  .rev-diff-table thead th:nth-child(1) { width: 20%; }
+  .rev-diff-table thead th:nth-child(2) { width: 28%; }
+  .rev-diff-table thead th:nth-child(3) { width: 30%; }
+  .rev-diff-table thead th:nth-child(4) { width: 22%; }
+
+  .rev-diff-row > th,
+  .rev-diff-row > td {
+    vertical-align: top;
+    padding: 0.85rem 0.75rem;
+    border-block-end: var(--rule-hair) solid var(--color-rule);
+  }
+
+  .rev-diff-row:last-child > th,
+  .rev-diff-row:last-child > td {
+    border-block-end: 0;
+  }
+
+  .rev-diff-row {
+    scroll-margin-top: 5rem;
+  }
+
+  .rev-diff-row:target > th,
+  .rev-diff-row:target > td,
+  .bylaws-revision-full-page .bylaw-article:target,
+  .bylaws-revision-full-page .bylaw-preamble:target,
+  .bylaws-revision-full-page .rev-attachment-item:target,
+  .bylaws-law-page .law-cmp-card:target {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+    background-color: color-mix(in srgb, var(--color-accent-soft) 35%, var(--color-sheet));
+  }
+
+  .rev-cell-meta {
+    text-align: start;
+    font-weight: 400;
+    background-color: var(--color-canvas);
+    border-inline-end: var(--rule-hair) solid var(--color-rule);
+  }
+
+  .rev-cell-revised {
+    background-color: color-mix(in srgb, var(--color-accent-soft) 20%, var(--color-sheet));
+    color: var(--color-ink);
+    border-inline: var(--rule-hair) solid var(--color-rule);
+  }
+
+  .rev-cell-reason {
+    color: var(--color-ink-2);
+    font-size: 0.83rem;
+  }
+
+  .rev-row-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.45rem;
+  }
+
+  .rev-row-title {
+    color: var(--color-ink);
+    font-size: 0.9rem;
+    font-weight: 800;
+  }
+
+  .rev-prev-ref {
+    margin-block-start: 0.25rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--color-muted);
+  }
+
+  .rev-line-para,
+  .rev-line-item,
+  .rev-line-plain {
+    margin-block: 0.2rem;
+  }
+
+  .rev-line-para:first-child,
+  .rev-line-item:first-child,
+  .rev-line-plain:first-child {
+    margin-block-start: 0;
+  }
+
+  .rev-article-tools {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+
+  .rev-attachment-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    margin-block-end: 0.35rem;
+  }
+
+  .rev-reason-note {
+    margin-block-start: 0.65rem;
+    padding: 0.55rem 0.75rem;
+    background-color: var(--color-well);
+    border-inline-start: 3px solid var(--color-accent);
+    font-size: 0.82rem;
+    color: var(--color-ink-2);
+    line-height: 1.55;
+  }
+
+  .rev-reason-note strong {
+    color: var(--color-ink);
+  }
+
+  .hide-rev-notes .rev-reason-note {
+    display: none;
+  }
+
+
 }
 
 @layer responsive {
@@ -6701,6 +7045,86 @@
       padding-inline: 0.35rem;
     }
   }
+
+  @container table-box (inline-size < 760px) {
+    .rev-diff-wrap {
+      border: 0;
+      background-color: transparent;
+      overflow: visible;
+    }
+
+    .rev-diff-table,
+    .rev-diff-table thead,
+    .rev-diff-table tbody,
+    .rev-diff-table tr,
+    .rev-diff-table th,
+    .rev-diff-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .rev-diff-table tr[hidden],
+    .rev-diff-table .rev-diff-row[hidden] {
+      display: none !important;
+    }
+
+    .rev-diff-table thead {
+      display: none;
+    }
+
+    .rev-diff-table .rev-diff-row {
+      margin-block-end: 0.95rem;
+      border: var(--rule-hair) solid var(--color-rule-ui);
+      border-radius: var(--radius-sheet);
+      overflow: clip;
+      background-color: var(--color-sheet);
+    }
+
+    .rev-diff-table .rev-diff-row:last-child {
+      margin-block-end: 0;
+    }
+
+    .rev-diff-table tbody th.rev-cell-meta {
+      position: static;
+      background-color: var(--color-well);
+      color: var(--color-ink);
+      border-inline-end: 0;
+      border-block-end: var(--rule-hair) solid var(--color-rule-ui);
+    }
+
+    .rev-diff-table tbody td {
+      display: block;
+      text-align: start;
+      border-inline: 0;
+      padding: 0.68rem 0.78rem;
+    }
+
+    .rev-diff-table tbody td.rev-cell-revised {
+      background-color: color-mix(in srgb, var(--color-accent-soft) 20%, var(--color-sheet));
+    }
+
+    .rev-diff-table tbody td::before {
+      display: block;
+      font-size: 0.74rem;
+      font-weight: 800;
+      color: var(--color-muted);
+      text-align: start;
+      margin-block-end: 0.28rem;
+    }
+
+    .rev-diff-table tbody td:nth-child(2)::before {
+      content: var(--label-2);
+    }
+
+    .rev-diff-table tbody td:nth-child(3)::before {
+      content: var(--label-3);
+      color: var(--color-accent);
+    }
+
+    .rev-diff-table tbody td:nth-child(4)::before {
+      content: var(--label-4);
+    }
+  }
 }
 
 @layer print {
@@ -6719,9 +7143,22 @@
 
     .bylaws-document .bylaw-article,
     .bylaws-law-page .law-cmp-card,
-    .bylaws-law-page .law-tft-card {
+    .bylaws-law-page .law-tft-card,
+    .bylaws-revision-page .rev-diff-row,
+    .bylaws-revision-page .rev-attachment-item {
       break-inside: avoid;
       page-break-inside: avoid;
+    }
+
+    .bylaws-revision-page,
+    .bylaws-revision-page .rev-diff-wrap,
+    .bylaws-revision-page .rev-cell-meta,
+    .bylaws-revision-page .rev-cell-revised,
+    .bylaws-revision-page .rev-reason-note,
+    .bylaws-revision-page .law-disclaimer {
+      background: #ffffff !important;
+      color: #111111 !important;
+      border-color: #cccccc !important;
     }
 
     .bylaws-law-page,

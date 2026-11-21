@@ -11,6 +11,11 @@ import {
   buildBylawsLawHtml,
   loadBylawsLawDocument,
 } from '../src/site/bylaws-law.js';
+import {
+  buildBylawsRevisionDiffHtml,
+  buildBylawsRevisionFullHtml,
+  loadBylawsRevisionDocument,
+} from '../src/site/bylaws-revision.js';
 import type { AssetManifest } from '../src/site/shell.js';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -125,4 +130,105 @@ test('규약·노조법 비교 분석 정본(_source/union/bylaws-law.json)과 �
       `비교 페이지가 참조하는 앵커 #${refId} 가 규약 전문 HTML에 존재하지 않습니다.`,
     );
   }
+});
+
+test('규약 개정안 정본(_source/union/bylaws-revision.json)·교차검수 4대 보완·3종 미등재 스위트 앵커 무결성을 검증한다', () => {
+  const bylawsDoc = loadBylawsDocument(REPO_ROOT);
+  const lawDoc = loadBylawsLawDocument(REPO_ROOT);
+  const revDoc = loadBylawsRevisionDocument(REPO_ROOT);
+  assert.ok(bylawsDoc);
+  assert.ok(lawDoc);
+  assert.ok(revDoc, 'bylaws-revision.json 이 로드되어야 합니다.');
+
+  assert.equal(revDoc.chapters.length, 12);
+  const revBodyArts = revDoc.chapters.flatMap((ch) => [
+    ...(ch.articles ?? []),
+    ...(ch.sections?.flatMap((s) => s.articles) ?? []),
+  ]);
+  assert.equal(revBodyArts.length, 59);
+  assert.equal(revDoc.addenda.articles.length, 3);
+  assert.equal(revDoc.addenda.attachments.length, 3);
+
+  // 교차 검수 4건 자구 검증
+  const art21 = revBodyArts.find((a) => a.id === 'art-21');
+  const art37 = revBodyArts.find((a) => a.id === 'art-37');
+  const art53 = revBodyArts.find((a) => a.id === 'art-53');
+  const art57 = revBodyArts.find((a) => a.id === 'art-57');
+  assert.ok(art21 && art37 && art53 && art57);
+
+  const art21Joined = art21.revisedLines.join(' ');
+  assert.ok(!art21Joined.includes('또는 제2호'), '제21조②에 제1항제2호가 포함되어서는 안 됩니다.');
+  assert.ok(art21Joined.includes('제1항제1호에 따른 소집 요구'));
+
+  assert.ok(
+    art37.revisedLines[0]!.includes(
+      '이내에 전체 조합원에게 공표하고 차기 총회(또는 대의원대회)의 승인을 얻어야 하며',
+    ),
+    '제37조①은 공표 후 차기 총회 승인 구조여야 합니다.',
+  );
+
+  assert.ok(
+    art53.revisedLines[0]!.includes('임원 및 운영위원에 대한 징계는 총회의 결의로 행한다.'),
+    '제53조① 단서는 총회 결의로 유지되어야 합니다.',
+  );
+  assert.ok(!art53.revisedLines[0]!.includes('총회(또는 대의원대회)의 결의로 행한다'));
+
+  assert.ok(
+    art57.revisedLines[0]!.includes(
+      '임원(위원장·수석부위원장·부위원장·회계감사대표위원·사무국장) 및 지부장 등 대표자가 규약을 위반하였을 때',
+    ),
+    '제57조①은 임원 및 지부장 등 대표자로 명확히 한정되어야 합니다.',
+  );
+
+  const fullCurrentHtml = buildBylawsFullHtml(bylawsDoc, EMPTY_ASSETS, 'https://example.test');
+  const lawHtml = buildBylawsLawHtml(lawDoc, EMPTY_ASSETS, 'https://example.test');
+  const revDiffHtml = buildBylawsRevisionDiffHtml(revDoc, EMPTY_ASSETS, 'https://example.test');
+  const revFullHtml = buildBylawsRevisionFullHtml(revDoc, EMPTY_ASSETS, 'https://example.test');
+
+  for (const [name, html] of [
+    ['bylaws-revision-diff.html', revDiffHtml],
+    ['bylaws-revision-full.html', revFullHtml],
+  ] as const) {
+    assert.match(html, /<meta name="robots" content="noindex,follow">/, `${name} robots 메타 확인`);
+    assert.ok(!html.includes('**'), `${name} 에 ** 마크다운 잔재가 남아서는 안 됩니다.`);
+    assert.ok(html.includes('unlisted-suite-nav'), `${name} 에 미등재 스위트 내비게이션이 있어야 합니다.`);
+  }
+
+  // 제9장 제38조(현행 제37조 중복) -> 현행 원문 #art-37-2 매핑 및 신규 별첨3 미링크 확인
+  assert.ok(revDiffHtml.includes('href="bylaws.html#art-37-2"'));
+  assert.ok(!revDiffHtml.includes('href="bylaws.html#attachment-3"'));
+  assert.ok(!revFullHtml.includes('href="bylaws.html#attachment-3"'));
+
+  // 4개 규약 페이지(#id) 전수 100% 상호 앵커 검증
+  const collectIds = (html: string): Set<string> => {
+    const ids = new Set<string>();
+    for (const m of html.matchAll(/\sid="([^"]+)"/g)) ids.add(m[1]!);
+    return ids;
+  };
+  const idsByPage: Record<string, Set<string>> = {
+    'bylaws.html': collectIds(fullCurrentHtml),
+    'bylaws-law.html': collectIds(lawHtml),
+    'bylaws-revision-diff.html': collectIds(revDiffHtml),
+    'bylaws-revision-full.html': collectIds(revFullHtml),
+  };
+
+  let totalCrossChecked = 0;
+  for (const [sourceName, sourceHtml] of [
+    ['bylaws-law.html', lawHtml],
+    ['bylaws-revision-diff.html', revDiffHtml],
+    ['bylaws-revision-full.html', revFullHtml],
+  ] as const) {
+    for (const m of sourceHtml.matchAll(
+      /href="(bylaws\.html|bylaws-law\.html|bylaws-revision-diff\.html|bylaws-revision-full\.html)#([^"]+)"/g,
+    )) {
+      const targetPage = m[1]!;
+      const targetAnchor = m[2]!;
+      totalCrossChecked += 1;
+      assert.ok(
+        idsByPage[targetPage]?.has(targetAnchor),
+        `${sourceName} 의 링크 ${targetPage}#${targetAnchor} 대상 ID가 존재하지 않습니다.`,
+      );
+    }
+  }
+  assert.ok(totalCrossChecked >= 150, `상호 앵커 링크 검증 수가 충분해야 합니다 (${totalCrossChecked}개).`);
 });

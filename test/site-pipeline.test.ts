@@ -476,19 +476,29 @@ test('buildSite, validateSite(--ci), 프라이버시 누출 차단 및 generateR
     const bylawsGuidePath = path.join(siteDir, 'union', 'bylaws-guide.html');
     const bylawsFullPath = path.join(siteDir, 'union', 'bylaws.html');
     const bylawsLawPath = path.join(siteDir, 'union', 'bylaws-law.html');
+    const bylawsRevDiffPath = path.join(siteDir, 'union', 'bylaws-revision-diff.html');
+    const bylawsRevFullPath = path.join(siteDir, 'union', 'bylaws-revision-full.html');
     const bylawsGuideHtml = await fs.readFile(bylawsGuidePath, 'utf8');
     const bylawsFullHtml = await fs.readFile(bylawsFullPath, 'utf8');
     const bylawsLawHtml = await fs.readFile(bylawsLawPath, 'utf8');
+    const bylawsRevDiffHtml = await fs.readFile(bylawsRevDiffPath, 'utf8');
+    const bylawsRevFullHtml = await fs.readFile(bylawsRevFullPath, 'utf8');
     assert.match(bylawsGuideHtml, /노동조합 규약 한눈에 보기/);
     assert.match(bylawsFullHtml, /id="art-37-2"/);
     assert.match(bylawsLawHtml, /noindex,follow/);
     assert.match(bylawsLawHtml, /조합 규약 · 현행 노조법 비교 분석/);
+    assert.match(bylawsRevDiffHtml, /noindex,follow/);
+    assert.match(bylawsRevDiffHtml, /unlisted-suite-nav/);
+    assert.match(bylawsRevFullHtml, /noindex,follow/);
+    assert.match(bylawsRevFullHtml, /unlisted-suite-nav/);
     assert.ok(sitemap.includes('union/bylaws-guide.html'));
     assert.ok(sitemap.includes('union/bylaws.html'));
-    assert.ok(!sitemap.includes('bylaws-law.html'));
-    assert.ok(!unionHtml.includes('bylaws-law.html'));
-    assert.ok(!bylawsGuideHtml.includes('bylaws-law.html'));
-    assert.ok(!bylawsFullHtml.includes('bylaws-law.html'));
+    for (const unlistedName of ['bylaws-law.html', 'bylaws-revision-diff.html', 'bylaws-revision-full.html']) {
+      assert.ok(!sitemap.includes(unlistedName), `sitemap.xml must exclude ${unlistedName}`);
+      assert.ok(!unionHtml.includes(unlistedName), `union/index.html must exclude ${unlistedName}`);
+      assert.ok(!bylawsGuideHtml.includes(unlistedName), `union/bylaws-guide.html must exclude ${unlistedName}`);
+      assert.ok(!bylawsFullHtml.includes(unlistedName), `union/bylaws.html must exclude ${unlistedName}`);
+    }
 
     // CI validate passes on clean site
     const ciPass = await validateSite({
@@ -538,6 +548,46 @@ test('buildSite, validateSite(--ci), 프라이버시 누출 차단 및 generateR
       ),
     );
     await fs.writeFile(bylawsLawPath, bylawsLawHtml, 'utf8');
+
+    // Inject link to unlisted bylaws-revision-diff.html into public /union/index.html -> MUST fail CI check
+    await fs.writeFile(
+      unionPath,
+      unionHtml.replace('</main>', '<a href="bylaws-revision-diff.html">대비표</a></main>'),
+      'utf8',
+    );
+    const ciFailPublicLinkDiff = await validateSite({
+      projectRoot: tmpDir,
+      ci: true,
+      salt: TEST_SALT,
+      currentYm: '2026-05',
+    });
+    assert.equal(ciFailPublicLinkDiff.ok, false);
+    assert.ok(
+      ciFailPublicLinkDiff.errors.some(
+        (e) => e.includes('union/index.html') && e.includes('bylaws-revision-diff.html'),
+      ),
+    );
+    await fs.writeFile(unionPath, unionHtml, 'utf8');
+
+    // Inject personal name into /union/bylaws-revision-full.html -> MUST fail CI check (strict Zero-PII)
+    await fs.writeFile(
+      bylawsRevFullPath,
+      bylawsRevFullHtml.replace('</main>', '<p>홍길동</p></main>'),
+      'utf8',
+    );
+    const ciFailRevFull = await validateSite({
+      projectRoot: tmpDir,
+      ci: true,
+      salt: TEST_SALT,
+      currentYm: '2026-05',
+    });
+    assert.equal(ciFailRevFull.ok, false);
+    assert.ok(
+      ciFailRevFull.errors.some(
+        (e) => e.includes('union/bylaws-revision-full.html') && e.includes('홍*동'),
+      ),
+    );
+    await fs.writeFile(bylawsRevFullPath, bylawsRevFullHtml, 'utf8');
 
     // Inject personal name into /union/bylaws.html -> MUST fail CI check (strict Zero-PII)
     await fs.writeFile(

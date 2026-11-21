@@ -10,6 +10,7 @@ import {
   renderPageShell,
   renderUnionSubnav,
 } from './shell.js';
+import { renderUnlistedBylawsSuiteNav } from './bylaws-revision.js';
 
 export type LawDiagnosisSeverity = 'risk' | 'recommend' | 'caution' | 'aligned';
 
@@ -77,6 +78,8 @@ export interface BylawsLawComparison {
   lawSummary: string;
   analysis: string;
   references: LawReferenceEntry[];
+  revisionDiffId?: string;
+  revisionArtId?: string;
 }
 
 export interface TftChecklistItem {
@@ -87,6 +90,8 @@ export interface TftChecklistItem {
   basis: string;
   currentDraft: string;
   proposedDraft: string;
+  revisionDiffId?: string;
+  revisionArtId?: string;
 }
 
 export interface ChapterMappingItem {
@@ -171,6 +176,25 @@ function renderBylawRefChip(ref: BylawRefLink): string {
 function renderSeverityBadge(severity: LawDiagnosisSeverity): string {
   const meta = SEVERITY_META[severity];
   return `<span class="law-severity-badge" data-severity="${escapeAttr(severity)}">${escapeHtml(meta.label)}</span>`;
+}
+
+function renderLawRevisionCrossLinksHtml(
+  revisionDiffId?: string,
+  revisionArtId?: string,
+): string {
+  if (!revisionDiffId && !revisionArtId) return '';
+  const chips: string[] = [];
+  if (revisionDiffId) {
+    chips.push(
+      `<a class="rev-cross-chip is-primary" href="${escapeAttr(`bylaws-revision-diff.html#${revisionDiffId}`)}" title="신·구조문대비표 해당 조항으로 이동">개정 대비표 →</a>`,
+    );
+  }
+  if (revisionArtId) {
+    chips.push(
+      `<a class="rev-cross-chip" href="${escapeAttr(`bylaws-revision-full.html#${revisionArtId}`)}" title="개정안 전문 해당 조항으로 이동">개정안 전문 →</a>`,
+    );
+  }
+  return `<div class="rev-cross-links no-print">${chips.join('')}</div>`;
 }
 
 export function buildBylawsLawHtml(
@@ -290,7 +314,7 @@ export function buildBylawsLawHtml(
           </details>`
           : '';
 
-      return `<article class="law-cmp-card" id="${escapeAttr(cmp.id)}" data-severity="${escapeAttr(cmp.severity)}" data-topic="${escapeAttr(cmp.topic)}">
+      return `<article class="law-cmp-card" id="${escapeAttr(cmp.id)}" tabindex="-1" data-severity="${escapeAttr(cmp.severity)}" data-topic="${escapeAttr(cmp.topic)}">
         <header class="law-cmp-head">
           <div class="law-cmp-badges">
             ${renderSeverityBadge(cmp.severity)}
@@ -319,6 +343,7 @@ export function buildBylawsLawHtml(
           <p>${escapeHtml(cmp.analysis)}</p>
         </div>
         ${refsHtml}
+        ${renderLawRevisionCrossLinksHtml(cmp.revisionDiffId, cmp.revisionArtId)}
       </article>`;
     })
     .join('\n');
@@ -345,6 +370,7 @@ export function buildBylawsLawHtml(
             <p>${escapeHtml(item.proposedDraft)}</p>
           </div>
         </div>
+        ${renderLawRevisionCrossLinksHtml(item.revisionDiffId, item.revisionArtId)}
       </article>`,
     )
     .join('\n');
@@ -371,6 +397,7 @@ export function buildBylawsLawHtml(
         <button type="button" class="btn secondary small" data-action="print">회의 자료 인쇄</button>
       </div>
     </div>
+    ${renderUnlistedBylawsSuiteNav('law')}
 
     <header class="page-masthead">
       <div>

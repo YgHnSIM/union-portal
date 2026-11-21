@@ -29,6 +29,12 @@ import {
   loadBylawsLawDocument,
 } from './bylaws-law.js';
 import {
+  type BylawsRevisionDocument,
+  buildBylawsRevisionDiffHtml,
+  buildBylawsRevisionFullHtml,
+  loadBylawsRevisionDocument,
+} from './bylaws-revision.js';
+import {
   type AssetManifest,
   SITE_BASE_URL,
   assetHref,
@@ -2425,6 +2431,7 @@ function buildUnionPages(
   officialsJson: PublicOfficialsJson,
   bylawsDoc: BylawsDocument | null,
   bylawsLawDoc: BylawsLawDocument | null,
+  bylawsRevisionDoc: BylawsRevisionDocument | null,
   currentYm: string,
   assets: AssetManifest,
   baseUrl: string,
@@ -2616,7 +2623,7 @@ function buildUnionPages(
     pages += 2;
   }
 
-  // Unlisted comparison page (excluded from sitemap.xml and public union links)
+  // Unlisted comparison & revision suite (excluded from sitemap.xml and public union links)
   if (bylawsLawDoc) {
     writeOutFile(
       outDir,
@@ -2624,6 +2631,20 @@ function buildUnionPages(
       buildBylawsLawHtml(bylawsLawDoc, assets, baseUrl),
     );
     pages += 1;
+  }
+
+  if (bylawsRevisionDoc) {
+    writeOutFile(
+      outDir,
+      'union/bylaws-revision-diff.html',
+      buildBylawsRevisionDiffHtml(bylawsRevisionDoc, assets, baseUrl),
+    );
+    writeOutFile(
+      outDir,
+      'union/bylaws-revision-full.html',
+      buildBylawsRevisionFullHtml(bylawsRevisionDoc, assets, baseUrl),
+    );
+    pages += 2;
   }
 
   return pages;
@@ -2761,15 +2782,17 @@ export async function buildSite(options: BuildSiteOptions): Promise<BuildSiteRes
     baseUrl,
   );
 
-  // 4. Union Pages (Organization + Bylaws Guide + Bylaws Full Text + Unlisted Bylaws-Law Comparison)
+  // 4. Union Pages (Organization + Bylaws Guide + Bylaws Full Text + Unlisted Review Suite)
   const bylawsDoc = loadBylawsDocument(projectRoot);
   const bylawsLawDoc = loadBylawsLawDocument(projectRoot);
+  const bylawsRevisionDoc = loadBylawsRevisionDocument(projectRoot);
   const unionPages = buildUnionPages(
     outDir,
     orgSummary,
     officialsJson,
     bylawsDoc,
     bylawsLawDoc,
+    bylawsRevisionDoc,
     currentYm,
     assets,
     baseUrl,
