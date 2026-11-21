@@ -232,3 +232,90 @@ test('규약 개정안 정본(_source/union/bylaws-revision.json)·교차검수 
   }
   assert.ok(totalCrossChecked >= 150, `상호 앵커 링크 검증 수가 충분해야 합니다 (${totalCrossChecked}개).`);
 });
+
+test('다회차 심의 스키마·우선순위·초기시안 대비 회의수정안·누적 회의록 렌더링과 JSON 내장을 검증한다', () => {
+  const revDoc = loadBylawsRevisionDocument(REPO_ROOT);
+  assert.ok(revDoc);
+
+  assert.ok(revDoc.meta.deliberationStatusLabels);
+  assert.ok(revDoc.meta.targetWaveLabels);
+  assert.equal(revDoc.meta.deliberationStatusLabels.confirmed_revision, '개정 잠정확정');
+  assert.equal(revDoc.meta.targetWaveLabels['wave-1'], '1차 상정(차기 대의원대회)');
+
+  const allItems = [
+    revDoc.preamble,
+    ...revDoc.chapters.flatMap((ch) => [
+      ...(ch.articles ?? []),
+      ...(ch.sections?.flatMap((s) => s.articles) ?? []),
+    ]),
+    ...revDoc.addenda.articles,
+    ...revDoc.addenda.attachments,
+  ];
+  assert.equal(allItems.length, 66);
+
+  const prioCounts = { P1: 0, P2: 0, P3: 0 };
+  for (const item of allItems) {
+    assert.ok(item.deliberation, `${item.id} 에 deliberation 필드가 있어야 합니다.`);
+    assert.equal(item.deliberation.status, 'pending');
+    assert.equal(item.deliberation.targetWave, 'unassigned');
+    if (item.deliberation.tftPriority) {
+      prioCounts[item.deliberation.tftPriority] += 1;
+    }
+  }
+  assert.deepEqual(prioCounts, { P1: 4, P2: 10, P3: 6 });
+
+  // 회의에서 제30조를 수정·잠정확정하고 회의록을 누적한 시나리오 검증
+  const cloned = structuredClone(revDoc);
+  const ch6 = cloned.chapters.find((c) => c.id === 'ch-6');
+  assert.ok(ch6?.articles);
+  const art30 = ch6.articles.find((a) => a.id === 'art-30');
+  assert.ok(art30);
+  art30.deliberation = {
+    status: 'confirmed_revision',
+    targetWave: 'wave-1',
+    tftPriority: 'P1',
+    workingLines: [
+      '① 임원 및 지부장은 재단법인 우체국물류지원단에 종사하는 조합원 중에서 선출한다(운영위 수정합의).',
+      '② 임원 전원 및 지부장의 임기는 3년으로 한다.',
+    ],
+    meetingLogs: [
+      {
+        meetingId: 'mtg-1',
+        date: '2026-12-10',
+        meetingTitle: '2026-12 정기 운영위원회',
+        speakerRole: '운영위 합의',
+        summary: '수석부위원장·부위원장·사무국장·회계감사 임기 누락 보완 확인',
+        decision: '임기 3년 및 보선 잔여기간 조문 확정',
+        archiveDocId: 'mom:202612',
+      },
+    ],
+    updatedOn: '2026-12-10',
+  };
+
+  const diffHtml = buildBylawsRevisionDiffHtml(cloned, EMPTY_ASSETS, 'https://example.test');
+  const fullHtml = buildBylawsRevisionFullHtml(cloned, EMPTY_ASSETS, 'https://example.test');
+
+  for (const html of [diffHtml, fullHtml]) {
+    assert.ok(html.includes('delib-studio'));
+    assert.ok(html.includes('운영위 수정합의'));
+    assert.ok(html.includes('회의 수정 잠정안'));
+    assert.ok(html.includes('초기 검토 시안(기준안) 원문 대조'));
+    assert.ok(html.includes('2026-12 정기 운영위원회'));
+    assert.ok(html.includes('운영위 합의'));
+    assert.ok(html.includes('임기 3년 및 보선 잔여기간 조문 확정'));
+    assert.ok(html.includes('1차 상정(차기 대의원대회)'));
+    assert.ok(html.includes('mom:202612'));
+
+    const match = html.match(
+      /<script type="application\/json" id="bylaws-revision-data">([\s\S]*?)<\/script>/,
+    );
+    assert.ok(match, '내장 JSON 스크립트 태그가 존재해야 합니다.');
+    const parsed = JSON.parse(
+      match[1]!
+        .replace(/\\u003c/g, '<')
+        .replace(/\\u003e/g, '>')
+        .replace(/\\u0026/g, '&'),
+    );
+    assert.equal(parsed.chapters.length, 12);
+  }
+});

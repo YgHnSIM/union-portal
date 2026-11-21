@@ -12,6 +12,18 @@
       "renumbered": "조 번호 재정렬·자구 정비",
       "wording": "자구·표기 정비",
       "unchanged": "현행 유지"
+    },
+    "deliberationStatusLabels": {
+      "pending": "검토 대기",
+      "scheduled": "차기 의제",
+      "discussing": "논의·보류",
+      "confirmed_revision": "개정 잠정확정",
+      "confirmed_current": "현행유지 확정"
+    },
+    "targetWaveLabels": {
+      "unassigned": "차수 미정",
+      "wave-1": "1차 상정(차기 대의원대회)",
+      "wave-2": "2차 상정(차차기 대의원대회)"
     }
   },
   "preamble": {
@@ -22,7 +34,15 @@
     "currentText": "우체국물류지원단 물류노동조합은 조합원들의 경제적 생활을 보장하고 정치적, 사회적, 문화적 지위를 확립하여 진정한 민주주의 사회의 노동자로서 인간다운 생활을 보장하고자 이 규약을 제정한다.",
     "revisedText": "우체국물류지원단 물류노동조합은 조합원들의 경제적 생활을 보장하고 정치적·사회적·문화적 지위를 확립하여 진정한 민주주의 사회의 노동자로서 인간다운 생활을 보장하고자 이 규약을 제정한다.",
     "currentArtId": "preamble",
-    "lawCmpId": null
+    "lawCmpId": null,
+    "deliberation": {
+      "status": "pending",
+      "targetWave": "unassigned",
+      "tftPriority": null,
+      "workingLines": null,
+      "meetingLogs": [],
+      "updatedOn": null
+    }
   },
   "chapters": [
     {
@@ -44,7 +64,15 @@
             "본 노동조합은 재단법인 우체국물류지원단 물류노동조합(이하 \"조합\"이라 한다)이라 칭한다."
           ],
           "currentArtId": "art-1",
-          "lawCmpId": null
+          "lawCmpId": null,
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-2",
@@ -59,7 +87,15 @@
             "본 조합은 재단법인 우체국물류지원단 내에 종사하는 노동자가 주체가 되어 자주적이고 민주적인 단결을 통해 근로조건의 유지 및 개선과 근로자의 정치적·경제적·사회적 지위 향상을 도모함을 목적으로 한다."
           ],
           "currentArtId": "art-2",
-          "lawCmpId": null
+          "lawCmpId": null,
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-3",
@@ -92,7 +128,15 @@
             "9. 그 밖에 제2조의 목적 달성을 위하여 필요한 사항"
           ],
           "currentArtId": "art-3",
-          "lawCmpId": null
+          "lawCmpId": null,
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-4",
@@ -107,7 +151,15 @@
             "조합의 주된 사무소는 재단법인 우체국물류지원단 본사(서울특별시 광진구 자양로 76 동서울우편집중국)에 둔다. 다만, 부득이한 경우에도 서울특별시 지역 내에 두는 것으로 제한한다."
           ],
           "currentArtId": "art-4",
-          "lawCmpId": "cmp-branch-filing"
+          "lawCmpId": "cmp-branch-filing",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         }
       ]
     },
@@ -130,7 +182,15 @@
             "조합은 재단법인 우체국물류지원단에서 근무하는 노동자 중 「노동조합 및 노동관계조정법」 제2조제2호에 따른 사용자를 제외한 정규직·공무직 및 기간제노동자로 구성한다."
           ],
           "currentArtId": "art-5",
-          "lawCmpId": "cmp-dismissed-member"
+          "lawCmpId": "cmp-dismissed-member",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-6",
@@ -151,7 +211,15 @@
             "3. 조합을 탈퇴하고자 하는 자는 탈퇴서를 조합에 제출하여야 한다."
           ],
           "currentArtId": "art-6",
-          "lawCmpId": null
+          "lawCmpId": null,
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-7",
@@ -174,7 +242,15 @@
             "4. 조합이 정한 비조합원 범위에 해당하게 되었을 때"
           ],
           "currentArtId": "art-7",
-          "lawCmpId": "cmp-dismissed-member"
+          "lawCmpId": "cmp-dismissed-member",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": "P2",
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-8",
@@ -189,7 +265,15 @@
             "조합은 운영위원회 또는 대의원대회의 결의에 따라 지부를 둘 수 있다."
           ],
           "currentArtId": "art-8",
-          "lawCmpId": "cmp-branch-filing"
+          "lawCmpId": "cmp-branch-filing",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         }
       ]
     },
@@ -222,7 +306,15 @@
             "5. 직접 선출한 임원·간부 및 대의원에 대한 불신임권"
           ],
           "currentArtId": "art-9",
-          "lawCmpId": "cmp-rights-dues"
+          "lawCmpId": "cmp-rights-dues",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-10",
@@ -247,7 +339,15 @@
             "5. 조합의 제반 활동에 적극 협력하고 참가할 의무"
           ],
           "currentArtId": "art-10",
-          "lawCmpId": "cmp-rights-dues"
+          "lawCmpId": "cmp-rights-dues",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-11",
@@ -262,7 +362,15 @@
             "정당한 사유 없이 조합비를 납부하지 아니한 조합원은 그 미납 기간 동안 제9조에 따른 권리를 정지한다."
           ],
           "currentArtId": "art-11",
-          "lawCmpId": "cmp-rights-dues"
+          "lawCmpId": "cmp-rights-dues",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-12",
@@ -277,7 +385,15 @@
             "본 조합 소속 조합원은 매월 기본급의 1%에 해당하는 금액을 조합비로 납부하여야 한다. 다만, 조합비는 단체협약에 명시하여 회사에서 일괄적으로 원천 공제할 수 있다."
           ],
           "currentArtId": "art-12",
-          "lawCmpId": "cmp-rights-dues"
+          "lawCmpId": "cmp-rights-dues",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         }
       ]
     },
@@ -308,7 +424,15 @@
             "4. 선거관리위원회"
           ],
           "currentArtId": "art-13",
-          "lawCmpId": "cmp-internal-consistency"
+          "lawCmpId": "cmp-internal-consistency",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         }
       ],
       "sections": [
@@ -331,7 +455,15 @@
                 "② 위원장은 총회의 의장이 된다."
               ],
               "currentArtId": "art-14",
-              "lawCmpId": "cmp-quorum-voting"
+              "lawCmpId": "cmp-quorum-voting",
+              "deliberation": {
+                "status": "pending",
+                "targetWave": "unassigned",
+                "tftPriority": null,
+                "workingLines": null,
+                "meetingLogs": [],
+                "updatedOn": null
+              }
             },
             {
               "id": "art-15",
@@ -384,7 +516,15 @@
                 "③ 위원장은 필요하다고 인정할 때 임시총회를 소집할 수 있다."
               ],
               "currentArtId": "art-15",
-              "lawCmpId": "cmp-quorum-voting"
+              "lawCmpId": "cmp-quorum-voting",
+              "deliberation": {
+                "status": "pending",
+                "targetWave": "unassigned",
+                "tftPriority": null,
+                "workingLines": null,
+                "meetingLogs": [],
+                "updatedOn": null
+              }
             },
             {
               "id": "art-16",
@@ -403,7 +543,15 @@
                 "③ 소집공고 후라도 천재지변 또는 이와 유사한 부득이한 사유가 발생하였을 때는 이를 연기할 수 있으나, 그 사유가 소멸한 때에는 지체 없이 재소집 공고를 하여야 한다."
               ],
               "currentArtId": "art-16",
-              "lawCmpId": "cmp-notice-period"
+              "lawCmpId": "cmp-notice-period",
+              "deliberation": {
+                "status": "pending",
+                "targetWave": "unassigned",
+                "tftPriority": null,
+                "workingLines": null,
+                "meetingLogs": [],
+                "updatedOn": null
+              }
             }
           ]
         },
@@ -426,7 +574,15 @@
                 "② 대의원대회의 소집공고는 회의개최일 7일 전까지 회의장소·일시 및 회의에 부의할 사항을 제시하여 공고하여야 한다."
               ],
               "currentArtId": "art-17",
-              "lawCmpId": "cmp-quorum-voting"
+              "lawCmpId": "cmp-quorum-voting",
+              "deliberation": {
+                "status": "pending",
+                "targetWave": "unassigned",
+                "tftPriority": null,
+                "workingLines": null,
+                "meetingLogs": [],
+                "updatedOn": null
+              }
             },
             {
               "id": "art-18",
@@ -445,7 +601,15 @@
                 "③ 그 밖에 대의원 선출에 관한 세부 사항은 운영위원회에서 결정한다."
               ],
               "currentArtId": "art-18",
-              "lawCmpId": null
+              "lawCmpId": null,
+              "deliberation": {
+                "status": "pending",
+                "targetWave": "unassigned",
+                "tftPriority": null,
+                "workingLines": null,
+                "meetingLogs": [],
+                "updatedOn": null
+              }
             },
             {
               "id": "art-19",
@@ -464,7 +628,15 @@
                 "③ 정기대의원대회에 참석할 대의원은 정기대의원대회 개최일 5일 전까지 선출한다."
               ],
               "currentArtId": "art-19",
-              "lawCmpId": "cmp-officer-term"
+              "lawCmpId": "cmp-officer-term",
+              "deliberation": {
+                "status": "pending",
+                "targetWave": "unassigned",
+                "tftPriority": "P2",
+                "workingLines": null,
+                "meetingLogs": [],
+                "updatedOn": null
+              }
             },
             {
               "id": "art-20",
@@ -479,7 +651,15 @@
                 "대의원대회는 제15조제2항 단서에 따라 반드시 총회의 의결을 거쳐야 하는 사항을 제외하고는 총회와 같은 기능을 수행한다."
               ],
               "currentArtId": "art-20",
-              "lawCmpId": null
+              "lawCmpId": null,
+              "deliberation": {
+                "status": "pending",
+                "targetWave": "unassigned",
+                "tftPriority": null,
+                "workingLines": null,
+                "meetingLogs": [],
+                "updatedOn": null
+              }
             }
           ]
         },
@@ -509,7 +689,15 @@
                 "② 회의소집권자가 없거나 위원장이 제1항제1호에 따른 소집 요구를 정당한 이유 없이 고의로 기피·해태하는 경우에는 조합원(또는 대의원) 3분의 1 이상이 회의에 부의할 사항을 제시하여 행정관청에 소집권자의 지명을 요구할 수 있다."
               ],
               "currentArtId": "art-21",
-              "lawCmpId": "cmp-convener-designation"
+              "lawCmpId": "cmp-convener-designation",
+              "deliberation": {
+                "status": "pending",
+                "targetWave": "unassigned",
+                "tftPriority": "P1",
+                "workingLines": null,
+                "meetingLogs": [],
+                "updatedOn": null
+              }
             },
             {
               "id": "art-22",
@@ -525,7 +713,15 @@
                 "② 제1항에도 불구하고 긴급한 사유가 있고 「노동조합 및 노동관계조정법」 제19조 단서에 따라 허용되는 경우에 한하여 공고기간을 단축할 수 있다."
               ],
               "currentArtId": "art-22",
-              "lawCmpId": "cmp-notice-period"
+              "lawCmpId": "cmp-notice-period",
+              "deliberation": {
+                "status": "pending",
+                "targetWave": "unassigned",
+                "tftPriority": "P1",
+                "workingLines": null,
+                "meetingLogs": [],
+                "updatedOn": null
+              }
             }
           ]
         },
@@ -546,7 +742,15 @@
                 "운영위원회는 총회(대의원대회) 다음가는 의결기관으로서 위원장·수석부위원장·부위원장·사무국장·각 지부장 및 본조 간부 등으로 구성하며, 위원의 임기는 대의원의 임기에 준한다."
               ],
               "currentArtId": "art-23",
-              "lawCmpId": "cmp-internal-consistency"
+              "lawCmpId": "cmp-internal-consistency",
+              "deliberation": {
+                "status": "pending",
+                "targetWave": "unassigned",
+                "tftPriority": null,
+                "workingLines": null,
+                "meetingLogs": [],
+                "updatedOn": null
+              }
             },
             {
               "id": "art-24",
@@ -568,7 +772,15 @@
                 "② 제1항제2호 및 제3호의 경우 위원장은 요청을 받은 날부터 3일 이내에 운영위원회를 소집하여야 한다."
               ],
               "currentArtId": "art-24",
-              "lawCmpId": "cmp-internal-consistency"
+              "lawCmpId": "cmp-internal-consistency",
+              "deliberation": {
+                "status": "pending",
+                "targetWave": "unassigned",
+                "tftPriority": null,
+                "workingLines": null,
+                "meetingLogs": [],
+                "updatedOn": null
+              }
             },
             {
               "id": "art-25",
@@ -613,7 +825,15 @@
                 "15. 그 밖에 조합 운영에 관한 중요한 사항"
               ],
               "currentArtId": "art-25",
-              "lawCmpId": "cmp-internal-consistency"
+              "lawCmpId": "cmp-internal-consistency",
+              "deliberation": {
+                "status": "pending",
+                "targetWave": "unassigned",
+                "tftPriority": null,
+                "workingLines": null,
+                "meetingLogs": [],
+                "updatedOn": null
+              }
             }
           ]
         }
@@ -639,7 +859,15 @@
             "② 조합이 특정 조합원에 관한 사항(징계·제재·불신임 등)을 의결할 경우에는 해당 조합원은 그 의결에 관한 표결권이 없다."
           ],
           "currentArtId": "art-26",
-          "lawCmpId": "cmp-quorum-voting"
+          "lawCmpId": "cmp-quorum-voting",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": "P3",
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-27",
@@ -660,7 +888,15 @@
             "② 규약의 제정·변경과 임원의 선거·해임에 관한 사항은 조합원의 직접·비밀·무기명 투표에 의하여야 한다."
           ],
           "currentArtId": "art-27",
-          "lawCmpId": "cmp-quorum-voting"
+          "lawCmpId": "cmp-quorum-voting",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         }
       ]
     },
@@ -693,7 +929,15 @@
             "5. 사무국장 1명"
           ],
           "currentArtId": "art-28",
-          "lawCmpId": "cmp-officer-term"
+          "lawCmpId": "cmp-officer-term",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-29",
@@ -712,7 +956,15 @@
             "③ 임원선거에 관한 세부 사항은 별도의 임원선거규정을 총회(또는 대의원대회)에서 의결하여 시행한다."
           ],
           "currentArtId": "art-29",
-          "lawCmpId": "cmp-quorum-voting"
+          "lawCmpId": "cmp-quorum-voting",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-30",
@@ -730,7 +982,15 @@
             "③ 위원장은 연임할 수 없다. 다만, 차차기 선거에는 출마할 수 있다."
           ],
           "currentArtId": "art-30",
-          "lawCmpId": "cmp-officer-term"
+          "lawCmpId": "cmp-officer-term",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": "P1",
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-31",
@@ -773,7 +1033,15 @@
             "⑤ 위원장은 조합 회계의 투명성 제고를 위하여 필요하다고 인정하거나 운영위원회의 결의 또는 조합원(또는 대의원) 3분의 1 이상의 요구가 있는 경우, 조합원이 아닌 공인회계사 또는 회계법인으로 하여금 제4항에 따른 외부 회계감사를 실시하게 할 수 있다."
           ],
           "currentArtId": "art-31",
-          "lawCmpId": "cmp-finance-disclosure"
+          "lawCmpId": "cmp-finance-disclosure",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": "P2",
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         }
       ]
     },
@@ -816,7 +1084,15 @@
             "10. 보건안전관리국"
           ],
           "currentArtId": "art-32",
-          "lawCmpId": null
+          "lawCmpId": null,
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-33",
@@ -851,7 +1127,15 @@
             "10. 보건안전관리국: 산업재해 예방과 대책 수립 및 직업병·유해위험작업 근로조건 개선에 관한 사항"
           ],
           "currentArtId": "art-33",
-          "lawCmpId": null
+          "lawCmpId": null,
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         }
       ]
     },
@@ -874,7 +1158,15 @@
             "조합의 회계는 일반회계와 특별회계로 구분한다."
           ],
           "currentArtId": "art-34",
-          "lawCmpId": null
+          "lawCmpId": null,
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-35",
@@ -889,7 +1181,15 @@
             "조합의 회계연도는 매년 1월 1일부터 12월 31일까지로 한다."
           ],
           "currentArtId": "art-35",
-          "lawCmpId": "cmp-finance-disclosure"
+          "lawCmpId": "cmp-finance-disclosure",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-36",
@@ -904,7 +1204,15 @@
             "자산의 관리 및 처분은 총회의 의결에 따라야 한다."
           ],
           "currentArtId": "art-36",
-          "lawCmpId": null
+          "lawCmpId": null,
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-37",
@@ -920,7 +1228,15 @@
             "② 조합은 회의록 및 재정에 관한 장부와 서류를 3년간 보존하여야 한다."
           ],
           "currentArtId": "art-37",
-          "lawCmpId": "cmp-finance-disclosure"
+          "lawCmpId": "cmp-finance-disclosure",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": "P2",
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         }
       ]
     },
@@ -943,7 +1259,15 @@
             "조합은 본 규약의 목적 및 사업을 달성하기 위하여 사용자(「노동조합 및 노동관계조정법」 제2조제2호에 따른 사용자를 포함한다)와 근로조건의 결정, 근로조건에 영향을 미치는 사업경영상의 결정, 명백한 단체협약 위반 등에 관한 평화적 교섭이 결렬되었을 때 그 주장을 관철하기 위하여 노동쟁의를 할 수 있다."
           ],
           "currentArtId": "art-37-2",
-          "lawCmpId": "cmp-internal-consistency"
+          "lawCmpId": "cmp-internal-consistency",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": "P2",
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-39",
@@ -966,7 +1290,15 @@
             "4. 총회의 의결 또는 조합원 과반수의 찬성으로 선언하는 경우"
           ],
           "currentArtId": "art-38",
-          "lawCmpId": "cmp-internal-consistency"
+          "lawCmpId": "cmp-internal-consistency",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": "P2",
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-40",
@@ -983,7 +1315,15 @@
             "② 쟁의행위 찬반투표를 실시하는 경우에는 투표의 일시·장소 등 투표에 관한 사항을 기재한 공고문을 투표일 3일 전까지 공고하여야 한다."
           ],
           "currentArtId": "art-39",
-          "lawCmpId": "cmp-multi-union-strike"
+          "lawCmpId": "cmp-multi-union-strike",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": "P2",
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-41",
@@ -1000,7 +1340,15 @@
             "② 조합원은 투표일 공고 이후 언제든지 투표자명부를 열람할 수 있다."
           ],
           "currentArtId": "art-40",
-          "lawCmpId": null
+          "lawCmpId": null,
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-42",
@@ -1019,7 +1367,15 @@
             "③ 조합원은 지정된 투표장소에서 투표용지에 직접 기표하여 투표한다."
           ],
           "currentArtId": "art-41",
-          "lawCmpId": "cmp-multi-union-strike"
+          "lawCmpId": "cmp-multi-union-strike",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-43",
@@ -1038,7 +1394,15 @@
             "③ 제2항에 따라 이의가 신청된 경우 조합은 선거관리위원회(또는 투표에 관하여 권한 있는 기관)를 지체 없이 소집하여 이를 심의·결정하여야 한다."
           ],
           "currentArtId": "art-42",
-          "lawCmpId": null
+          "lawCmpId": null,
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-44",
@@ -1055,7 +1419,15 @@
             "② 위원장은 이해관계인이 투표자명부 및 투표용지의 공개·열람을 요구한 때에는 언제든지 이를 공개하고 열람할 수 있도록 하여야 한다."
           ],
           "currentArtId": "art-43",
-          "lawCmpId": "cmp-multi-union-strike"
+          "lawCmpId": "cmp-multi-union-strike",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": "P2",
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-45",
@@ -1070,7 +1442,15 @@
             "노동쟁의가 발생하거나 발생할 우려가 있을 때 위원장은 즉시 운영위원회를 소집하여 쟁의대책위원회를 구성할 수 있다."
           ],
           "currentArtId": "art-44",
-          "lawCmpId": null
+          "lawCmpId": null,
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-46",
@@ -1091,7 +1471,15 @@
             "3. 운영위원회의 위임·지시사항 및 그 밖에 쟁의에 관한 중요한 사항의 수행"
           ],
           "currentArtId": "art-45",
-          "lawCmpId": null
+          "lawCmpId": null,
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         }
       ]
     },
@@ -1114,7 +1502,15 @@
             "조합은 단체교섭의 당사자가 되며, 위원장이 교섭위원의 장이 된다. 다만, 총회(또는 대의원대회)에서 출석인원 과반수의 동의를 얻어 단체교섭 또는 협약체결 권한을 위임할 수 있으며, 위임한 때에는 지체 없이 그 사실을 상대방에게 통보하여야 한다."
           ],
           "currentArtId": "art-46",
-          "lawCmpId": "cmp-cba-ratification"
+          "lawCmpId": "cmp-cba-ratification",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-48",
@@ -1131,7 +1527,15 @@
             "② 단체교섭위원은 위원장을 포함하여 3명 이상으로 구성한다."
           ],
           "currentArtId": "art-47",
-          "lawCmpId": null
+          "lawCmpId": null,
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-49",
@@ -1146,7 +1550,15 @@
             "단체협약 요구안은 단체교섭위원이 참여하는 운영위원회의 심의를 거쳐 총회(또는 대의원대회)에서 확정한다."
           ],
           "currentArtId": "art-48",
-          "lawCmpId": "cmp-cba-ratification"
+          "lawCmpId": "cmp-cba-ratification",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-50",
@@ -1162,7 +1574,15 @@
             "② 체결된 단체협약은 서면으로 작성하여 당사자 쌍방이 서명 또는 날인하고, 체결일부터 15일 이내에 행정관청에 신고하여야 한다."
           ],
           "currentArtId": "art-49",
-          "lawCmpId": "cmp-cba-ratification"
+          "lawCmpId": "cmp-cba-ratification",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": "P1",
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-51",
@@ -1179,7 +1599,15 @@
             "② 위원장은 노사협의회의 노동자 측 대표위원이 된다."
           ],
           "currentArtId": "art-50",
-          "lawCmpId": "cmp-lmp-council"
+          "lawCmpId": "cmp-lmp-council",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": "P3",
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         }
       ]
     },
@@ -1202,7 +1630,15 @@
             "조합원이 조합의 발전에 현저한 공로가 있다고 인정될 때에는 운영위원회의 추천으로 총회에서 이를 표창할 수 있다."
           ],
           "currentArtId": "art-51",
-          "lawCmpId": null
+          "lawCmpId": null,
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-53",
@@ -1224,7 +1660,15 @@
             "② 징계 의결 시에는 해당 조합원에게 충분한 소명의 기회를 부여하여야 하며, 제26조제2항에 따라 당사자는 해당 의결에 관한 표결권을 가지지 아니한다."
           ],
           "currentArtId": "art-52",
-          "lawCmpId": "cmp-discipline-recusal"
+          "lawCmpId": "cmp-discipline-recusal",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": "P3",
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-54",
@@ -1245,7 +1689,15 @@
             "3. 제명"
           ],
           "currentArtId": "art-53",
-          "lawCmpId": "cmp-discipline-recusal"
+          "lawCmpId": "cmp-discipline-recusal",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-55",
@@ -1260,7 +1712,15 @@
             "조합은 징계 사유의 공정한 조사와 심의를 위하여 총회(또는 대의원대회)의 결의로 징계위원회를 구성할 수 있으며, 징계 절차에 관한 세부 사항은 별도 규정으로 정한다."
           ],
           "currentArtId": "art-54",
-          "lawCmpId": "cmp-discipline-recusal"
+          "lawCmpId": "cmp-discipline-recusal",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": "P3",
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-56",
@@ -1277,7 +1737,15 @@
             "② 위원장은 재심청구를 받은 날부터 2일 이내에 총회(또는 대의원대회)에 재심을 의뢰하여야 한다. 다만, 재심 결정이 있을 때까지 해당 징계 처분의 효력은 유보된다."
           ],
           "currentArtId": "art-55",
-          "lawCmpId": "cmp-discipline-recusal"
+          "lawCmpId": "cmp-discipline-recusal",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-57",
@@ -1294,7 +1762,15 @@
             "② 탄핵은 조합원 3분의 1 이상의 발의로 총회에서 조합원의 직접·비밀·무기명 투표에 의하여 재적조합원 과반수의 출석과 출석조합원 3분의 2 이상의 찬성으로 의결한다."
           ],
           "currentArtId": "art-56",
-          "lawCmpId": "cmp-impeachment-dissolution"
+          "lawCmpId": "cmp-impeachment-dissolution",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": "P3",
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         }
       ]
     },
@@ -1322,7 +1798,15 @@
             "② 조합이 제1항 각 호의 사유로 해산한 때에는 위원장은 해산한 날부터 15일 이내에 행정관청에 이를 신고하여야 한다."
           ],
           "currentArtId": "art-57",
-          "lawCmpId": "cmp-impeachment-dissolution"
+          "lawCmpId": "cmp-impeachment-dissolution",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": "P3",
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         },
         {
           "id": "art-59",
@@ -1339,7 +1823,15 @@
             "② 청산위원회는 조합 재산 및 조합비 청산안을 작성하여 총회의 의결을 얻은 후 청산을 개시한다."
           ],
           "currentArtId": "art-58",
-          "lawCmpId": "cmp-impeachment-dissolution"
+          "lawCmpId": "cmp-impeachment-dissolution",
+          "deliberation": {
+            "status": "pending",
+            "targetWave": "unassigned",
+            "tftPriority": null,
+            "workingLines": null,
+            "meetingLogs": [],
+            "updatedOn": null
+          }
         }
       ]
     }
@@ -1361,7 +1853,15 @@
           "이 규약은 총회에서 의결·통과된 날부터 효력을 발생한다."
         ],
         "currentArtId": "addendum-1",
-        "lawCmpId": null
+        "lawCmpId": null,
+        "deliberation": {
+          "status": "pending",
+          "targetWave": "unassigned",
+          "tftPriority": null,
+          "workingLines": null,
+          "meetingLogs": [],
+          "updatedOn": null
+        }
       },
       {
         "id": "addendum-2",
@@ -1376,7 +1876,15 @@
           "이 규약에서 정하지 아니한 사항은 「노동조합 및 노동관계조정법」 등 노동관계법령과 통상 관례에 따른다."
         ],
         "currentArtId": "addendum-2",
-        "lawCmpId": null
+        "lawCmpId": null,
+        "deliberation": {
+          "status": "pending",
+          "targetWave": "unassigned",
+          "tftPriority": null,
+          "workingLines": null,
+          "meetingLogs": [],
+          "updatedOn": null
+        }
       },
       {
         "id": "addendum-3",
@@ -1391,7 +1899,15 @@
           "이 규약의 해석은 운영위원회의 의결에 따른다. 다만, 긴급을 요하는 경우에는 위원장이 우선 해석하고 차기 운영위원회의 추인을 받아야 한다."
         ],
         "currentArtId": "addendum-3",
-        "lawCmpId": "cmp-internal-consistency"
+        "lawCmpId": "cmp-internal-consistency",
+        "deliberation": {
+          "status": "pending",
+          "targetWave": "unassigned",
+          "tftPriority": "P2",
+          "workingLines": null,
+          "meetingLogs": [],
+          "updatedOn": null
+        }
       }
     ],
     "attachments": [
@@ -1404,7 +1920,15 @@
         "currentText": "본 규약에 대한 재개정은 운영위원회 결의를 통하여 TFT를 조합원 투표를 통하여 결정한다.",
         "revisedText": "본 규약의 개정은 운영위원회 결의로 규약개정 특별위원회(TFT)를 구성하여 개정안을 마련하고, 총회(또는 대의원대회)에서 재적조합원 과반수의 출석과 출석조합원 3분의 2 이상의 찬성(조합원의 직접·비밀·무기명 투표)으로 의결한다.",
         "currentArtId": "attachment-1",
-        "lawCmpId": "cmp-internal-consistency"
+        "lawCmpId": "cmp-internal-consistency",
+        "deliberation": {
+          "status": "pending",
+          "targetWave": "unassigned",
+          "tftPriority": "P2",
+          "workingLines": null,
+          "meetingLogs": [],
+          "updatedOn": null
+        }
       },
       {
         "id": "attachment-2",
@@ -1415,7 +1939,15 @@
         "currentText": "본 규약상 임원 임기 개정안은 25년 12월 5일 개최된 '25 물류노동조합 총회'에서 대의원 평가 및 의결된 사항임을 공시한다.",
         "revisedText": "본 규약상 임원 임기 개정안은 25년 12월 5일 개최된 '25 물류노동조합 총회'에서 대의원 평가 및 의결된 사항임을 공시한다.",
         "currentArtId": "attachment-2",
-        "lawCmpId": null
+        "lawCmpId": null,
+        "deliberation": {
+          "status": "pending",
+          "targetWave": "unassigned",
+          "tftPriority": null,
+          "workingLines": null,
+          "meetingLogs": [],
+          "updatedOn": null
+        }
       },
       {
         "id": "attachment-3",
@@ -1426,7 +1958,15 @@
         "currentText": "(신설)",
         "revisedText": "이 규약 개정안(법령 정합성 보완, 조항 번호 중복 정비 및 자구 수정)은 [2026년 ○월 ○일] 개최된 총회(또는 대의원대회)의 의결을 거쳐 확정·시행한다.",
         "currentArtId": null,
-        "lawCmpId": null
+        "lawCmpId": null,
+        "deliberation": {
+          "status": "pending",
+          "targetWave": "unassigned",
+          "tftPriority": null,
+          "workingLines": null,
+          "meetingLogs": [],
+          "updatedOn": null
+        }
       }
     ]
   }

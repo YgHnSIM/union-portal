@@ -17,6 +17,37 @@ export type BylawsRevisionChangeType =
   | 'wording'
   | 'unchanged';
 
+export type BylawsDeliberationStatus =
+  | 'pending'
+  | 'scheduled'
+  | 'discussing'
+  | 'confirmed_revision'
+  | 'confirmed_current';
+
+export type BylawsTargetWave = 'unassigned' | 'wave-1' | 'wave-2';
+
+export type BylawsTftPriority = 'P1' | 'P2' | 'P3' | null;
+
+export interface BylawsArticleMeetingLog {
+  meetingId: string;
+  date: string;
+  meetingTitle: string;
+  speakerRole: string;
+  summary: string;
+  decision: string;
+  updatedLines?: string[];
+  archiveDocId?: string | null;
+}
+
+export interface BylawsArticleDeliberation {
+  status: BylawsDeliberationStatus;
+  targetWave: BylawsTargetWave;
+  tftPriority: BylawsTftPriority;
+  workingLines: string[] | null;
+  meetingLogs: BylawsArticleMeetingLog[];
+  updatedOn: string | null;
+}
+
 export interface BylawsRevisionMeta {
   title: string;
   subtitle: string;
@@ -26,6 +57,8 @@ export interface BylawsRevisionMeta {
   lawRefNote: string;
   auditedNote: string;
   changeLabels: Record<BylawsRevisionChangeType, string>;
+  deliberationStatusLabels?: Record<BylawsDeliberationStatus, string>;
+  targetWaveLabels?: Record<BylawsTargetWave, string>;
 }
 
 export interface BylawsRevisionPreamble {
@@ -37,6 +70,7 @@ export interface BylawsRevisionPreamble {
   revisedText: string;
   currentArtId: string | null;
   lawCmpId: string | null;
+  deliberation?: BylawsArticleDeliberation;
 }
 
 export interface BylawsRevisionArticle {
@@ -49,6 +83,7 @@ export interface BylawsRevisionArticle {
   revisedLines: string[];
   currentArtId: string | null;
   lawCmpId: string | null;
+  deliberation?: BylawsArticleDeliberation;
 }
 
 export interface BylawsRevisionSection {
@@ -77,6 +112,7 @@ export interface BylawsRevisionAttachment {
   revisedText: string;
   currentArtId: string | null;
   lawCmpId: string | null;
+  deliberation?: BylawsArticleDeliberation;
 }
 
 export interface BylawsRevisionAddenda {
@@ -100,11 +136,33 @@ const CHANGE_ORDER: BylawsRevisionChangeType[] = [
   'unchanged',
 ];
 
+const STATUS_ORDER: BylawsDeliberationStatus[] = [
+  'pending',
+  'scheduled',
+  'discussing',
+  'confirmed_revision',
+  'confirmed_current',
+];
+
 const DEFAULT_CHANGE_LABELS: Record<BylawsRevisionChangeType, string> = {
   substantive: '법령·실질 개정',
   renumbered: '조 번호 재정렬·자구 정비',
   wording: '자구·표기 정비',
   unchanged: '현행 유지',
+};
+
+const DEFAULT_STATUS_LABELS: Record<BylawsDeliberationStatus, string> = {
+  pending: '검토 대기',
+  scheduled: '차기 의제',
+  discussing: '논의·보류',
+  confirmed_revision: '개정 잠정확정',
+  confirmed_current: '현행유지 확정',
+};
+
+const DEFAULT_WAVE_LABELS: Record<BylawsTargetWave, string> = {
+  unassigned: '차수 미정',
+  'wave-1': '1차 상정(차기 대의원대회)',
+  'wave-2': '2차 상정(차차기 대의원대회)',
 };
 
 export function loadBylawsRevisionDocument(
@@ -155,6 +213,23 @@ interface FlattenedRevisionEntry {
   revisedLines: string[];
   currentArtId: string | null;
   lawCmpId: string | null;
+  deliberation: BylawsArticleDeliberation;
+}
+
+function normalizeDeliberation(
+  delib?: BylawsArticleDeliberation,
+): BylawsArticleDeliberation {
+  return {
+    status: delib?.status ?? 'pending',
+    targetWave: delib?.targetWave ?? 'unassigned',
+    tftPriority: delib?.tftPriority ?? null,
+    workingLines:
+      Array.isArray(delib?.workingLines) && delib.workingLines.length > 0
+        ? delib.workingLines
+        : null,
+    meetingLogs: Array.isArray(delib?.meetingLogs) ? delib.meetingLogs : [],
+    updatedOn: delib?.updatedOn ?? null,
+  };
 }
 
 function collectChapterArticles(ch: BylawsRevisionChapter): BylawsRevisionArticle[] {
@@ -180,6 +255,7 @@ function flattenRevisionEntries(doc: BylawsRevisionDocument): FlattenedRevisionE
       revisedLines: [doc.preamble.revisedText],
       currentArtId: doc.preamble.currentArtId,
       lawCmpId: doc.preamble.lawCmpId,
+      deliberation: normalizeDeliberation(doc.preamble.deliberation),
     },
   ];
 
@@ -197,6 +273,7 @@ function flattenRevisionEntries(doc: BylawsRevisionDocument): FlattenedRevisionE
         revisedLines: art.revisedLines,
         currentArtId: art.currentArtId,
         lawCmpId: art.lawCmpId,
+        deliberation: normalizeDeliberation(art.deliberation),
       });
     }
   }
@@ -214,6 +291,7 @@ function flattenRevisionEntries(doc: BylawsRevisionDocument): FlattenedRevisionE
       revisedLines: art.revisedLines,
       currentArtId: art.currentArtId,
       lawCmpId: art.lawCmpId,
+      deliberation: normalizeDeliberation(art.deliberation),
     });
   }
 
@@ -230,6 +308,7 @@ function flattenRevisionEntries(doc: BylawsRevisionDocument): FlattenedRevisionE
       revisedLines: [att.revisedText],
       currentArtId: att.currentArtId,
       lawCmpId: att.lawCmpId,
+      deliberation: normalizeDeliberation(att.deliberation),
     });
   }
 
@@ -251,11 +330,51 @@ function countByChangeType(
   return counts;
 }
 
+function countByDelibStatus(
+  entries: FlattenedRevisionEntry[],
+): Record<BylawsDeliberationStatus, number> {
+  const counts: Record<BylawsDeliberationStatus, number> = {
+    pending: 0,
+    scheduled: 0,
+    discussing: 0,
+    confirmed_revision: 0,
+    confirmed_current: 0,
+  };
+  for (const item of entries) {
+    counts[item.deliberation.status] += 1;
+  }
+  return counts;
+}
+
+function countByPriority(entries: FlattenedRevisionEntry[]): {
+  P1: number;
+  P2: number;
+  P3: number;
+} {
+  const out = { P1: 0, P2: 0, P3: 0 };
+  for (const item of entries) {
+    const p = item.deliberation.tftPriority;
+    if (p) out[p] += 1;
+  }
+  return out;
+}
+
 function changeLabel(
   meta: BylawsRevisionMeta,
   changeType: BylawsRevisionChangeType,
 ): string {
   return meta.changeLabels?.[changeType] ?? DEFAULT_CHANGE_LABELS[changeType];
+}
+
+function statusLabel(
+  meta: BylawsRevisionMeta,
+  status: BylawsDeliberationStatus,
+): string {
+  return meta.deliberationStatusLabels?.[status] ?? DEFAULT_STATUS_LABELS[status];
+}
+
+function waveLabel(meta: BylawsRevisionMeta, wave: BylawsTargetWave): string {
+  return meta.targetWaveLabels?.[wave] ?? DEFAULT_WAVE_LABELS[wave];
 }
 
 function splitArticleHeading(ref: string): { num: string; title: string } {
@@ -279,6 +398,77 @@ function renderLinesHtml(lines: string[]): string {
       return `<p class="bylaw-para rev-line-plain"><span class="bylaw-para-text">${escapeHtml(trimmed)}</span></p>`;
     })
     .join('');
+}
+
+function renderDraftContentHtml(entry: FlattenedRevisionEntry): string {
+  const delib = entry.deliberation;
+  const isKeepCurrent = delib.status === 'confirmed_current';
+  const hasCustomWorking =
+    !isKeepCurrent &&
+    Array.isArray(delib.workingLines) &&
+    delib.workingLines.length > 0;
+  const activeLines = isKeepCurrent
+    ? entry.currentLines
+    : hasCustomWorking
+      ? delib.workingLines!
+      : entry.revisedLines;
+  const originKind = isKeepCurrent
+    ? 'confirmed_current'
+    : hasCustomWorking
+      ? 'working'
+      : 'initial';
+  const originText = isKeepCurrent
+    ? '현행유지 확정본'
+    : hasCustomWorking
+      ? '회의 수정 잠정안'
+      : '초기 검토 시안';
+  const showInitialDetails = isKeepCurrent || hasCustomWorking;
+
+  return `<div class="rev-draft-origin" data-origin-for="${escapeAttr(entry.id)}" data-origin-kind="${escapeAttr(originKind)}">${escapeHtml(originText)}</div>
+    <div class="rev-active-lines" data-active-lines-for="${escapeAttr(entry.id)}">${renderLinesHtml(activeLines)}</div>
+    <details class="rev-initial-draft-details" data-initial-details-for="${escapeAttr(entry.id)}"${showInitialDetails ? '' : ' hidden'}>
+      <summary class="rev-initial-draft-summary">초기 검토 시안(기준안) 원문 대조</summary>
+      <div class="rev-initial-draft-body">${renderLinesHtml(entry.revisedLines)}</div>
+    </details>`;
+}
+
+function renderDelibBadgesHtml(
+  meta: BylawsRevisionMeta,
+  entry: FlattenedRevisionEntry,
+): string {
+  const delib = entry.deliberation;
+  const waveHidden = delib.targetWave === 'unassigned';
+  return `<span class="rev-status-badge" data-delib-status="${escapeAttr(delib.status)}" data-status-badge-for="${escapeAttr(entry.id)}">${escapeHtml(statusLabel(meta, delib.status))}</span>
+    <span class="rev-priority-badge"${delib.tftPriority ? ` data-priority="${escapeAttr(delib.tftPriority)}"` : ' hidden'}>${delib.tftPriority ? `${escapeHtml(delib.tftPriority)} 우선검토` : ''}</span>
+    <span class="rev-wave-badge" data-wave-badge-for="${escapeAttr(entry.id)}" data-target-wave="${escapeAttr(delib.targetWave)}"${waveHidden ? ' hidden' : ''}>${escapeHtml(waveLabel(meta, delib.targetWave))}</span>`;
+}
+
+function renderMeetingLogsListHtml(logs: BylawsArticleMeetingLog[]): string {
+  if (!logs.length) return '';
+  return `<ul class="rev-meeting-log-list">${logs
+    .map(
+      (log) => `<li class="rev-meeting-log-item">
+        <div class="rev-log-meta">
+          <span class="rev-log-date">${escapeHtml(log.date)}</span>
+          <strong class="rev-log-meeting">${escapeHtml(log.meetingTitle)}</strong>
+          <span class="rev-log-role">${escapeHtml(log.speakerRole)}</span>
+          ${log.archiveDocId ? `<span class="rev-log-doc-badge">공식 회의록 ${escapeHtml(log.archiveDocId)}</span>` : ''}
+        </div>
+        ${log.summary ? `<p class="rev-log-summary">${escapeHtml(log.summary)}</p>` : ''}
+        ${log.decision ? `<p class="rev-log-decision"><strong>결정:</strong> ${escapeHtml(log.decision)}</p>` : ''}
+      </li>`,
+    )
+    .join('')}</ul>`;
+}
+
+function renderDelibPanelHtml(entry: FlattenedRevisionEntry): string {
+  const delib = entry.deliberation;
+  return `<div class="rev-delib-panel" data-delib-panel-for="${escapeAttr(entry.id)}">
+    <div class="rev-meeting-logs" data-meeting-logs-for="${escapeAttr(entry.id)}"${delib.meetingLogs.length === 0 ? ' hidden' : ''}>
+      ${renderMeetingLogsListHtml(delib.meetingLogs)}
+    </div>
+    <div class="rev-delib-editor no-print" id="${escapeAttr(`delib-editor-${entry.id}`)}" hidden></div>
+  </div>`;
 }
 
 function renderCrossLinksHtml(
@@ -313,12 +503,19 @@ function renderCrossLinksHtml(
 }
 
 function buildSearchText(entry: FlattenedRevisionEntry): string {
+  const delib = entry.deliberation;
+  const logText = delib.meetingLogs
+    .map((l) => `${l.date} ${l.meetingTitle} ${l.speakerRole} ${l.summary} ${l.decision}`)
+    .join(' ');
   return [
     entry.currentRef,
     entry.revisedRef,
     entry.reason,
     entry.currentLines.join(' '),
     entry.revisedLines.join(' '),
+    (delib.workingLines ?? []).join(' '),
+    delib.tftPriority ?? '',
+    logText,
   ]
     .join(' ')
     .replace(/\s+/g, ' ')
@@ -344,12 +541,128 @@ function renderFilterChipsHtml(
   counts: Record<BylawsRevisionChangeType, number>,
 ): string {
   return `<div class="bylaws-topic-bar" role="group" aria-label="개정 유형 빠른 필터">
-    <button type="button" class="bylaws-topic-chip active" data-rev-filter="all" aria-pressed="true">전체 (${total})</button>
+    <button type="button" class="bylaws-topic-chip active" data-rev-filter="all" aria-pressed="true">유형 전체 (${total})</button>
     ${CHANGE_ORDER.map(
       (key) =>
         `<button type="button" class="bylaws-topic-chip" data-rev-filter="${escapeAttr(key)}" aria-pressed="false">${escapeHtml(changeLabel(meta, key))} (${counts[key]})</button>`,
     ).join('')}
   </div>`;
+}
+
+function renderDeliberationStudioHtml(
+  doc: BylawsRevisionDocument,
+  entries: FlattenedRevisionEntry[],
+): string {
+  const total = entries.length || 1;
+  const statusCounts = countByDelibStatus(entries);
+  const prioCounts = countByPriority(entries);
+
+  const progressSegs = STATUS_ORDER.map((st) => {
+    const pct = ((statusCounts[st] / total) * 100).toFixed(2);
+    return `<div class="delib-progress-seg" data-delib-seg="${escapeAttr(st)}" style="width:${pct}%"></div>`;
+  }).join('');
+
+  const statusCountersHtml = STATUS_ORDER.map(
+    (st) => `<div class="delib-count-pill" data-delib-status="${escapeAttr(st)}">
+      <span>${escapeHtml(statusLabel(doc.meta, st))}</span>
+      <strong data-delib-count="${escapeAttr(st)}">${statusCounts[st]}건</strong>
+    </div>`,
+  ).join('');
+
+  const statusChipsHtml = [
+    `<button type="button" class="bylaws-topic-chip active" data-delib-status-filter="all" aria-pressed="true">상태 전체 (${entries.length})</button>`,
+    ...STATUS_ORDER.map(
+      (st) =>
+        `<button type="button" class="bylaws-topic-chip" data-delib-status-filter="${escapeAttr(st)}" aria-pressed="false">${escapeHtml(statusLabel(doc.meta, st))} (<span data-delib-chip-count="${escapeAttr(st)}">${statusCounts[st]}</span>)</button>`,
+    ),
+  ].join('');
+
+  const priorityChipsHtml = `
+    <button type="button" class="bylaws-topic-chip active" data-delib-priority-filter="all" aria-pressed="true">우선·차수 전체</button>
+    <button type="button" class="bylaws-topic-chip" data-delib-priority-filter="P1" aria-pressed="false">P1 시급 (${prioCounts.P1})</button>
+    <button type="button" class="bylaws-topic-chip" data-delib-priority-filter="P2" aria-pressed="false">P2 권고 (${prioCounts.P2})</button>
+    <button type="button" class="bylaws-topic-chip" data-delib-priority-filter="P3" aria-pressed="false">P3 유의 (${prioCounts.P3})</button>
+    <button type="button" class="bylaws-topic-chip" data-delib-priority-filter="wave-1" aria-pressed="false">1차 상정</button>
+    <button type="button" class="bylaws-topic-chip" data-delib-priority-filter="wave-2" aria-pressed="false">2차 상정</button>
+  `;
+
+  return `<section class="delib-studio no-print" aria-label="다회차 규약 심의 현황판 및 회의 기록 도우미">
+    <div class="delib-studio-head">
+      <div>
+        <h2>다회차 TF·운영위원회 규약 심의 현황</h2>
+        <p class="delib-studio-sub">시안 66건을 여러 차례 정기 운영위·TF 회의에서 의제로 나눠 심의·수정하고 잠정확정분을 모아 최종 상정합니다.</p>
+      </div>
+      <div class="delib-preset-bar" role="group" aria-label="회의 목적별 보기 프리셋">
+        <button type="button" class="btn secondary small active" data-delib-preset="all" aria-pressed="true">전체 심의 현황</button>
+        <button type="button" class="btn secondary small" data-delib-preset="agenda" aria-pressed="false">차기 회의 안건지</button>
+        <button type="button" class="btn secondary small" data-delib-preset="final" aria-pressed="false">최종 의결·대의원대회 발표안</button>
+      </div>
+    </div>
+
+    <div class="delib-progress-track" aria-label="조문별 심의 진행률">
+      <div class="delib-progress-bar">${progressSegs}</div>
+      <div class="delib-counts-row">${statusCountersHtml}</div>
+    </div>
+
+    <div class="delib-filter-rows">
+      <div class="bylaws-topic-bar" role="group" aria-label="조문별 심의 상태 필터">${statusChipsHtml}</div>
+      <div class="bylaws-topic-bar" role="group" aria-label="TF 우선순위 및 상정 차수 필터">${priorityChipsHtml}</div>
+    </div>
+
+    <details class="delib-session-drawer" id="delib-session-drawer">
+      <summary class="delib-session-summary">
+        <span>회의 기록 · 의제 관리 및 정본 JSON/회의자료 내보내기</span>
+        <span class="delib-dirty-pill" id="delib-dirty-pill" hidden>로컬 변경 0건</span>
+      </summary>
+      <div class="delib-session-body">
+        <div class="delib-session-grid">
+          <label>
+            <span>회의 일자</span>
+            <input type="date" id="delib-session-date" value="2026-11-22">
+          </label>
+          <label>
+            <span>회의명</span>
+            <input type="text" id="delib-session-title" placeholder="예: 2026-12 정기 운영위원회 / 규약개정 TF 1차">
+          </label>
+          <label>
+            <span>발언·결의 주체 (직책·기구만 기재)</span>
+            <select id="delib-session-role">
+              <option value="운영위 합의">운영위 합의</option>
+              <option value="규약개정 TF">규약개정 TF</option>
+              <option value="위원장">위원장</option>
+              <option value="수석부위원장">수석부위원장</option>
+              <option value="부위원장">부위원장</option>
+              <option value="사무국장">사무국장</option>
+              <option value="회계감사대표위원">회계감사대표위원</option>
+              <option value="안양지부장">안양지부장</option>
+              <option value="부평지부장">부평지부장</option>
+            </select>
+          </label>
+          <label>
+            <span>공식 회의록 ID (선택)</span>
+            <input type="text" id="delib-session-doc" placeholder="예: mom:202612">
+          </label>
+        </div>
+        <div class="delib-actions-row">
+          <button type="button" class="btn secondary small" id="delib-queue-p1">P1 시급 조문(${prioCounts.P1}건) 차기 의제로 담기</button>
+          <button type="button" class="btn secondary small" id="delib-queue-p1p2">P1·P2 조문(${prioCounts.P1 + prioCounts.P2}건) 차기 의제로 담기</button>
+          <button type="button" class="btn small" id="delib-download-json">정본 JSON 다운로드 (bylaws-revision.json)</button>
+          <button type="button" class="btn secondary small" id="delib-copy-json">정본 JSON 복사</button>
+          <button type="button" class="btn secondary small" id="delib-download-md">현재 필터 조문 회의자료(.md) 다운로드</button>
+          <button type="button" class="btn secondary small" id="delib-clear-local">브라우저 임시변경 초기화</button>
+        </div>
+        <p id="delib-studio-status" class="delib-studio-status" role="status" aria-live="polite">각 조문의 [회의 기록 · 상태] 버튼으로 심의 상태·문구 수정·논의 요지를 기록하세요. 브라우저에 자동 임시 저장되며 [정본 JSON 다운로드]로 저장소에 반영합니다. (개인 실명 입력 금지)</p>
+      </div>
+    </details>
+  </section>`;
+}
+
+function serializeEmbeddedRevisionJson(doc: BylawsRevisionDocument): string {
+  const safeJson = JSON.stringify(doc)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
+  return `<script type="application/json" id="bylaws-revision-data">${safeJson}</script>`;
 }
 
 export function buildBylawsRevisionDiffHtml(
@@ -361,6 +674,7 @@ export function buildBylawsRevisionDiffHtml(
   const prefix = computePrefixForRoute(route);
   const allEntries = flattenRevisionEntries(doc);
   const counts = countByChangeType(allEntries);
+  const statusCounts = countByDelibStatus(allEntries);
 
   const groups: Array<{
     id: string;
@@ -396,14 +710,18 @@ export function buildBylawsRevisionDiffHtml(
       const capId = `diff-cap-${group.id}`;
       const rowsHtml = group.entries
         .map((entry) => {
+          const delib = entry.deliberation;
           const label = changeLabel(doc.meta, entry.changeType);
           const refMoved =
             entry.currentRef !== entry.revisedRef && entry.currentRef !== '(신설)';
-          return `<tr id="${escapeAttr(`diff-${entry.id}`)}" tabindex="-1" class="rev-diff-row" data-rev-item="true" data-change-type="${escapeAttr(entry.changeType)}" data-search="${escapeAttr(buildSearchText(entry))}">
+          return `<tr id="${escapeAttr(`diff-${entry.id}`)}" tabindex="-1" class="rev-diff-row" data-rev-item="true" data-delib-id="${escapeAttr(entry.id)}" data-change-type="${escapeAttr(entry.changeType)}" data-delib-status="${escapeAttr(delib.status)}" data-target-wave="${escapeAttr(delib.targetWave)}" data-tft-priority="${escapeAttr(delib.tftPriority ?? '')}" data-search="${escapeAttr(buildSearchText(entry))}">
             <th scope="row" class="rev-cell-meta">
               <div class="rev-row-head">
                 <strong class="rev-row-title">${escapeHtml(entry.revisedRef)}</strong>
                 <span class="rev-change-badge" data-change-type="${escapeAttr(entry.changeType)}">${escapeHtml(label)}</span>
+              </div>
+              <div class="rev-delib-badges">
+                ${renderDelibBadgesHtml(doc.meta, entry)}
               </div>
               ${
                 refMoved
@@ -412,11 +730,19 @@ export function buildBylawsRevisionDiffHtml(
                     ? `<p class="rev-prev-ref">신설 조항</p>`
                     : ''
               }
+              <div class="rev-meta-actions no-print">
+                <button type="button" class="rev-delib-toggle-btn" data-delib-toggle="${escapeAttr(entry.id)}" aria-expanded="false">회의 기록 · 상태 (${delib.meetingLogs.length})</button>
+              </div>
               ${renderCrossLinksHtml(entry, 'diff')}
             </th>
             <td class="rev-cell-current" data-label="현행 규약">${renderLinesHtml(entry.currentLines)}</td>
-            <td class="rev-cell-revised" data-label="개정안 시안">${renderLinesHtml(entry.revisedLines)}</td>
-            <td class="rev-cell-reason" data-label="개정 사유·법령 근거">${escapeHtml(entry.reason)}</td>
+            <td class="rev-cell-revised" data-label="개정안·잠정확정안">
+              ${renderDraftContentHtml(entry)}
+            </td>
+            <td class="rev-cell-reason" data-label="개정 사유 · 회의 경과">
+              <p class="rev-reason-text">${escapeHtml(entry.reason)}</p>
+              ${renderDelibPanelHtml(entry)}
+            </td>
           </tr>`;
         })
         .join('');
@@ -428,10 +754,10 @@ export function buildBylawsRevisionDiffHtml(
             <caption class="visually-hidden">${escapeHtml(group.heading)} 신·구조문대비표</caption>
             <thead>
               <tr>
-                <th scope="col">조항 · 개정 구분</th>
+                <th scope="col">조항 · 심의 상태</th>
                 <th scope="col">현행 규약</th>
-                <th scope="col">개정안 시안</th>
-                <th scope="col">개정 사유 · 법령 근거</th>
+                <th scope="col">개정안 · 잠정확정안</th>
+                <th scope="col">개정 사유 · 회의 경과</th>
               </tr>
             </thead>
             <tbody>
@@ -446,14 +772,14 @@ export function buildBylawsRevisionDiffHtml(
   const bodyHtml = `
   <article class="document-article bylaws-revision-page bylaws-revision-diff-page" data-document-category="규약 개정안 신·구조문대비표" data-skip-auto-toc="true">
     ${renderUnlistedBanner(
-      '미등재 검토 시안 · noindex',
-      '이 페이지는 규약 개정 TFT·집행부 내부 검토용 <strong>신·구조문대비표</strong> 미등재 시안이며, 포털 메뉴·<code>sitemap.xml</code> 및 공개 규약 화면에서는 링크되지 않습니다.',
+      '미등재 검토·심의 시안 · noindex',
+      '이 페이지는 규약 개정 TFT·정기 운영위원회 다회차 심의용 <strong>신·구조문대비표</strong> 미등재 화면이며, 포털 메뉴·<code>sitemap.xml</code> 및 공개 규약 화면에서는 링크되지 않습니다.',
     )}
     ${renderUnlistedBylawsSuiteNav('diff')}
 
     <header class="page-masthead">
       <div>
-        <h1>규약 신·구조문대비표 (개정안 시안)</h1>
+        <h1>규약 신·구조문대비표 (개정안 시안 · 다회차 심의대장)</h1>
         <p class="lead">${escapeHtml(doc.meta.subtitle)} · ${escapeHtml(doc.meta.auditedNote)}</p>
       </div>
       <div class="masthead-meta">
@@ -469,7 +795,7 @@ export function buildBylawsRevisionDiffHtml(
       <div class="kpi">
         <div class="label">전체 검토 대상</div>
         <div class="value">${allEntries.length}건</div>
-        <div class="sub">전문·본문 59조·부칙 3조·별첨 3건</div>
+        <div class="sub">잠정확정 <span data-delib-kpi="confirmed_revision">${statusCounts.confirmed_revision}</span> · 현행유지 <span data-delib-kpi="confirmed_current">${statusCounts.confirmed_current}</span></div>
       </div>
       <div class="kpi" data-tone="expense">
         <div class="label">법령·실질 개정</div>
@@ -488,13 +814,15 @@ export function buildBylawsRevisionDiffHtml(
       </div>
     </div>
 
-    <section class="bylaws-toolbar no-print" aria-label="대비표 검색 및 필터">
+    ${renderDeliberationStudioHtml(doc, allEntries)}
+
+    <section class="bylaws-toolbar no-print" aria-label="대비표 검색 및 유형 필터">
       <form class="bylaws-search-form" id="rev-diff-search-form" role="search">
-        <label for="rev-diff-search">조항 번호·개정 사유·조문 키워드 검색</label>
+        <label for="rev-diff-search">조항 번호·개정 사유·회의록 키워드 검색</label>
         <div class="bylaws-search-row">
           <div class="archive-search-field">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
-            <input id="rev-diff-search" type="search" placeholder="예: 제21조, 결산, 탄핵, 노조법, 소명" autocomplete="off">
+            <input id="rev-diff-search" type="search" placeholder="예: 제21조, 결산, 탄핵, 노조법, 운영위" autocomplete="off">
             <button type="button" id="rev-diff-search-clear" class="archive-search-clear" hidden>지우기</button>
           </div>
           <button type="submit" class="btn small">검색</button>
@@ -513,21 +841,22 @@ export function buildBylawsRevisionDiffHtml(
     <div class="rev-diff-list" id="rev-diff-list" data-copy-body>
       ${groupsHtml}
       <div class="bylaws-no-results" id="rev-diff-no-results" hidden>
-        <p>검색 조건에 일치하는 대비표 조항이 없습니다.</p>
+        <p>현재 필터·검색 조건에 일치하는 대비표 조항이 없습니다.</p>
         <button type="button" class="btn secondary small" id="rev-diff-reset">전체 조항 보기</button>
       </div>
     </div>
 
     <aside class="law-disclaimer" aria-label="검토 기준 안내">
-      <strong>검토 안내</strong>
-      <p>${escapeHtml(doc.meta.lawRefNote)} · ${escapeHtml(doc.meta.auditedNote)}. 본 시안은 조합원 총회 또는 대의원대회 의결 전까지 공식 효력이 없는 내부 검토용 초안입니다.</p>
+      <strong>검토 및 의결 절차 안내</strong>
+      <p>${escapeHtml(doc.meta.lawRefNote)} · ${escapeHtml(doc.meta.auditedNote)}. 각 조문은 TF·운영위원회 다회차 심의를 거쳐 잠정확정 후 최종 TF/운영위 의결을 통해 대의원대회(또는 총회) 특별결의로 최종 확정됩니다.</p>
     </aside>
+    ${serializeEmbeddedRevisionJson(doc)}
   </article>
   ${renderDocumentToolsWidget()}`;
 
   return renderPageShell({
     title: '규약 신·구조문대비표 (개정안 시안)',
-    description: `${doc.meta.title} 신·구조문대비표. 현행 규약과 개정안 시안, 개정 사유 및 노조법 비교 분석 교차 참조를 제공합니다.`,
+    description: `${doc.meta.title} 신·구조문대비표. 현행 규약과 개정안 시안, 다회차 회의 심의 상태 및 노조법 비교 분석 교차 참조를 제공합니다.`,
     activeNav: 'union',
     route,
     prefix,
@@ -551,35 +880,44 @@ function renderRevisionFullArticleHtml(
 ): string {
   const { num, title } = splitArticleHeading(art.revisedRef);
   const label = changeLabel(doc.meta, art.changeType);
-  const searchData = [
-    art.currentRef,
-    art.revisedRef,
-    art.reason,
-    art.revisedLines.join(' '),
-  ]
-    .join(' ')
-    .replace(/\s+/g, ' ')
-    .toLowerCase();
+  const delib = normalizeDeliberation(art.deliberation);
+  const entry: FlattenedRevisionEntry = {
+    id: art.id,
+    chapterId,
+    groupHeading: '',
+    currentRef: art.currentRef,
+    revisedRef: art.revisedRef,
+    changeType: art.changeType,
+    reason: art.reason,
+    currentLines: art.currentLines,
+    revisedLines: art.revisedLines,
+    currentArtId: art.currentArtId,
+    lawCmpId: art.lawCmpId,
+    deliberation: delib,
+  };
 
   const noteHtml =
     art.changeType !== 'unchanged'
       ? `<p class="rev-reason-note"><strong>정비 요지${art.currentRef !== art.revisedRef ? ` (현행 ${escapeHtml(art.currentRef)})` : ''}:</strong> ${escapeHtml(art.reason)}</p>`
       : '';
 
-  return `<article class="bylaw-article" id="${escapeAttr(art.id)}" tabindex="-1" data-rev-item="true" data-chapter-id="${escapeAttr(chapterId)}"${sectionId ? ` data-section-id="${escapeAttr(sectionId)}"` : ''} data-change-type="${escapeAttr(art.changeType)}" data-search="${escapeAttr(searchData)}">
+  return `<article class="bylaw-article" id="${escapeAttr(art.id)}" tabindex="-1" data-rev-item="true" data-delib-id="${escapeAttr(art.id)}" data-chapter-id="${escapeAttr(chapterId)}"${sectionId ? ` data-section-id="${escapeAttr(sectionId)}"` : ''} data-change-type="${escapeAttr(art.changeType)}" data-delib-status="${escapeAttr(delib.status)}" data-target-wave="${escapeAttr(delib.targetWave)}" data-tft-priority="${escapeAttr(delib.tftPriority ?? '')}" data-search="${escapeAttr(buildSearchText(entry))}">
     <header class="bylaw-article-head">
       <h3>
         <span class="bylaw-article-num">${escapeHtml(num)}</span>${title ? `<span class="bylaw-article-title">(${escapeHtml(title)})</span>` : ''}
       </h3>
       <div class="rev-article-tools">
         <span class="rev-change-badge" data-change-type="${escapeAttr(art.changeType)}">${escapeHtml(label)}</span>
+        ${renderDelibBadgesHtml(doc.meta, entry)}
+        <button type="button" class="rev-delib-toggle-btn no-print" data-delib-toggle="${escapeAttr(art.id)}" aria-expanded="false">회의 기록 · 상태 (${delib.meetingLogs.length})</button>
         <button type="button" class="bylaw-anchor-btn no-print" data-rev-copy-id="${escapeAttr(art.id)}" data-rev-copy-ref="${escapeAttr(art.revisedRef)}" aria-label="${escapeAttr(art.revisedRef)} 링크 복사" title="조항 링크 복사">#</button>
       </div>
     </header>
     <div class="bylaw-article-body">
-      ${renderLinesHtml(art.revisedLines)}
+      ${renderDraftContentHtml(entry)}
       ${noteHtml}
-      ${renderCrossLinksHtml(art, 'full')}
+      ${renderDelibPanelHtml(entry)}
+      ${renderCrossLinksHtml(entry, 'full')}
     </div>
   </article>`;
 }
@@ -594,6 +932,7 @@ export function buildBylawsRevisionFullHtml(
   const allEntries = flattenRevisionEntries(doc);
   const counts = countByChangeType(allEntries);
 
+  const preambleEntry = allEntries[0]!;
   const tocItems: string[] = [
     `<li class="bylaw-toc-item"><a class="bylaws-toc-link" href="#preamble">전문</a></li>`,
   ];
@@ -652,15 +991,32 @@ export function buildBylawsRevisionFullHtml(
       ${doc.addenda.attachments
         .map((att) => {
           const label = changeLabel(doc.meta, att.changeType);
-          const searchData = `${att.currentRef} ${att.revisedRef} ${att.reason} ${att.revisedText}`.toLowerCase();
-          return `<li id="${escapeAttr(att.id)}" tabindex="-1" class="bylaw-attachment-item rev-attachment-item" data-rev-item="true" data-chapter-id="${escapeAttr(doc.addenda.id)}" data-change-type="${escapeAttr(att.changeType)}" data-search="${escapeAttr(searchData)}">
+          const delib = normalizeDeliberation(att.deliberation);
+          const attEntry: FlattenedRevisionEntry = {
+            id: att.id,
+            chapterId: doc.addenda.id,
+            groupHeading: doc.addenda.heading,
+            currentRef: att.currentRef,
+            revisedRef: att.revisedRef,
+            changeType: att.changeType,
+            reason: att.reason,
+            currentLines: [att.currentText],
+            revisedLines: [att.revisedText],
+            currentArtId: att.currentArtId,
+            lawCmpId: att.lawCmpId,
+            deliberation: delib,
+          };
+          return `<li id="${escapeAttr(att.id)}" tabindex="-1" class="bylaw-attachment-item rev-attachment-item" data-rev-item="true" data-delib-id="${escapeAttr(att.id)}" data-chapter-id="${escapeAttr(doc.addenda.id)}" data-change-type="${escapeAttr(att.changeType)}" data-delib-status="${escapeAttr(delib.status)}" data-target-wave="${escapeAttr(delib.targetWave)}" data-tft-priority="${escapeAttr(delib.tftPriority ?? '')}" data-search="${escapeAttr(buildSearchText(attEntry))}">
             <div class="rev-attachment-head">
               <strong>${escapeHtml(att.revisedRef)}</strong>
               <span class="rev-change-badge" data-change-type="${escapeAttr(att.changeType)}">${escapeHtml(label)}</span>
+              ${renderDelibBadgesHtml(doc.meta, attEntry)}
+              <button type="button" class="rev-delib-toggle-btn no-print" data-delib-toggle="${escapeAttr(att.id)}" aria-expanded="false">회의 기록 · 상태 (${delib.meetingLogs.length})</button>
             </div>
-            <p>${escapeHtml(att.revisedText)}</p>
+            ${renderDraftContentHtml(attEntry)}
             <p class="rev-reason-note"><strong>정비 요지:</strong> ${escapeHtml(att.reason)}</p>
-            ${renderCrossLinksHtml(att, 'full')}
+            ${renderDelibPanelHtml(attEntry)}
+            ${renderCrossLinksHtml(attEntry, 'full')}
           </li>`;
         })
         .join('')}
@@ -670,8 +1026,8 @@ export function buildBylawsRevisionFullHtml(
   const bodyHtml = `
   <article class="document-article bylaws-document bylaws-revision-page bylaws-revision-full-page" data-document-category="규약 개정안 전문 시안" data-skip-auto-toc="true">
     ${renderUnlistedBanner(
-      '미등재 검토 시안 · noindex',
-      '이 페이지는 규약 개정 TFT·집행부 내부 검토용 <strong>개정안 전문 시안</strong>이며, 포털 메뉴·<code>sitemap.xml</code> 및 공개 규약 화면에서는 링크되지 않습니다.',
+      '미등재 검토·심의 시안 · noindex',
+      '이 페이지는 규약 개정 TFT·정기 운영위원회 다회차 심의용 <strong>개정안 전문 시안</strong>이며, 포털 메뉴·<code>sitemap.xml</code> 및 공개 규약 화면에서는 링크되지 않습니다.',
     )}
     ${renderUnlistedBylawsSuiteNav('full')}
 
@@ -689,13 +1045,15 @@ export function buildBylawsRevisionFullHtml(
       </div>
     </header>
 
-    <section class="bylaws-toolbar no-print" aria-label="개정안 전문 검색 및 필터">
+    ${renderDeliberationStudioHtml(doc, allEntries)}
+
+    <section class="bylaws-toolbar no-print" aria-label="개정안 전문 검색 및 유형 필터">
       <form class="bylaws-search-form" id="rev-full-search-form" role="search">
-        <label for="rev-full-search">조항 번호 또는 키워드 검색</label>
+        <label for="rev-full-search">조항 번호·개정 사유·회의록 키워드 검색</label>
         <div class="bylaws-search-row">
           <div class="archive-search-field">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
-            <input id="rev-full-search" type="search" placeholder="예: 제30조, 38조, 결산, 탄핵, 소명" autocomplete="off">
+            <input id="rev-full-search" type="search" placeholder="예: 제30조, 38조, 결산, 탄핵, 운영위" autocomplete="off">
             <button type="button" id="rev-full-search-clear" class="archive-search-clear" hidden>지우기</button>
           </div>
           <button type="submit" class="btn small">검색</button>
@@ -724,14 +1082,19 @@ export function buildBylawsRevisionFullHtml(
       </aside>
 
       <div class="bylaws-content" id="rev-full-content" data-copy-body>
-        <section class="bylaw-preamble" id="preamble" tabindex="-1" data-rev-item="true" data-chapter-id="preamble" data-change-type="${escapeAttr(doc.preamble.changeType)}" data-search="${escapeAttr(`${doc.preamble.label} ${doc.preamble.revisedText} ${doc.preamble.reason}`.toLowerCase())}">
+        <section class="bylaw-preamble" id="preamble" tabindex="-1" data-rev-item="true" data-delib-id="preamble" data-chapter-id="preamble" data-change-type="${escapeAttr(doc.preamble.changeType)}" data-delib-status="${escapeAttr(preambleEntry.deliberation.status)}" data-target-wave="${escapeAttr(preambleEntry.deliberation.targetWave)}" data-tft-priority="${escapeAttr(preambleEntry.deliberation.tftPriority ?? '')}" data-search="${escapeAttr(buildSearchText(preambleEntry))}">
           <div class="bylaw-preamble-meta">
             <h2>${escapeHtml(doc.preamble.label)}</h2>
-            <span class="rev-change-badge" data-change-type="${escapeAttr(doc.preamble.changeType)}">${escapeHtml(changeLabel(doc.meta, doc.preamble.changeType))}</span>
+            <div class="rev-article-tools">
+              <span class="rev-change-badge" data-change-type="${escapeAttr(doc.preamble.changeType)}">${escapeHtml(changeLabel(doc.meta, doc.preamble.changeType))}</span>
+              ${renderDelibBadgesHtml(doc.meta, preambleEntry)}
+              <button type="button" class="rev-delib-toggle-btn no-print" data-delib-toggle="preamble" aria-expanded="false">회의 기록 · 상태 (${preambleEntry.deliberation.meetingLogs.length})</button>
+            </div>
           </div>
-          <p>${escapeHtml(doc.preamble.revisedText)}</p>
+          ${renderDraftContentHtml(preambleEntry)}
           <p class="rev-reason-note"><strong>정비 요지:</strong> ${escapeHtml(doc.preamble.reason)}</p>
-          ${renderCrossLinksHtml(doc.preamble, 'full')}
+          ${renderDelibPanelHtml(preambleEntry)}
+          ${renderCrossLinksHtml(preambleEntry, 'full')}
         </section>
 
         ${chaptersHtml}
@@ -748,17 +1111,18 @@ export function buildBylawsRevisionFullHtml(
         </section>
 
         <div class="bylaws-no-results" id="rev-full-no-results" hidden>
-          <p>검색 조건에 일치하는 조항이 없습니다.</p>
+          <p>현재 필터·검색 조건에 일치하는 조항이 없습니다.</p>
           <button type="button" class="btn secondary small" id="rev-full-reset">전체 조항 보기</button>
         </div>
       </div>
     </div>
+    ${serializeEmbeddedRevisionJson(doc)}
   </article>
   ${renderDocumentToolsWidget()}`;
 
   return renderPageShell({
     title: doc.meta.title,
-    description: `${doc.meta.title}. ${doc.meta.lawRefNote} 기준으로 자구와 조항 번호를 정비한 전문 시안입니다.`,
+    description: `${doc.meta.title}. ${doc.meta.lawRefNote} 기준으로 자구·조항 번호를 정비하고 다회차 회의 심의 결과를 누적 관리하는 전문 시안입니다.`,
     activeNav: 'union',
     route,
     prefix,

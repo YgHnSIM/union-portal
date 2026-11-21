@@ -6777,8 +6777,8 @@
     overflow-wrap: anywhere;
     --label-1: "조항 · 개정 구분";
     --label-2: "현행 규약";
-    --label-3: "개정안 시안";
-    --label-4: "개정 사유 · 법령 근거";
+    --label-3: "개정안 · 잠정확정안";
+    --label-4: "개정 사유 · 회의 경과";
   }
 
   .rev-diff-table thead {
@@ -6912,7 +6912,461 @@
     display: none;
   }
 
+  /* ==========================================================================
+     Multi-Meeting Bylaws Deliberation Studio & Article Meeting Ledger
+     ========================================================================== */
+  .delib-studio {
+    margin-block-end: 1.2rem;
+    padding: 1rem 1.15rem;
+    background-color: var(--color-sheet);
+    border: var(--rule-hair) solid var(--color-rule-ui);
+    border-top: var(--rule-bar) solid var(--color-accent);
+    display: grid;
+    gap: 0.85rem;
+  }
 
+  .delib-studio-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+  }
+
+  .delib-studio-head h2 {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--color-ink);
+  }
+
+  .delib-studio-sub {
+    margin-block-start: 0.22rem;
+    font-size: 0.82rem;
+    color: var(--color-ink-2);
+    line-height: 1.5;
+  }
+
+  .delib-preset-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .delib-preset-bar .btn.active,
+  .delib-preset-bar .btn[aria-pressed="true"] {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-accent-ink);
+  }
+
+  .delib-progress-track {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .delib-progress-bar {
+    display: flex;
+    block-size: 10px;
+    inline-size: 100%;
+    overflow: hidden;
+    background-color: var(--color-well);
+    border: var(--rule-hair) solid var(--color-rule);
+    border-radius: var(--radius-sharp);
+  }
+
+  .delib-progress-seg[data-delib-seg="pending"] { background-color: var(--color-rule-ui); }
+  .delib-progress-seg[data-delib-seg="scheduled"] { background-color: var(--color-grant); }
+  .delib-progress-seg[data-delib-seg="discussing"] { background-color: var(--color-expense); }
+  .delib-progress-seg[data-delib-seg="confirmed_revision"] { background-color: var(--color-accent); }
+  .delib-progress-seg[data-delib-seg="confirmed_current"] { background-color: var(--color-income); }
+
+  .delib-counts-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.75rem;
+  }
+
+  .delib-count-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.2rem 0.58rem;
+    border: var(--rule-hair) solid var(--color-rule);
+    border-radius: var(--radius-sharp);
+    background-color: var(--color-canvas);
+    font-size: 0.78rem;
+    color: var(--color-ink-2);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .delib-count-pill strong {
+    color: var(--color-ink);
+    font-weight: 800;
+  }
+
+  .delib-filter-rows {
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .delib-filter-rows .bylaws-topic-bar {
+    margin-block-start: 0;
+  }
+
+  .delib-session-drawer {
+    border: var(--rule-hair) solid var(--color-rule);
+    border-radius: var(--radius-control);
+    background-color: var(--color-canvas);
+  }
+
+  .delib-session-summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0.58rem 0.85rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: var(--color-accent);
+  }
+
+  .delib-session-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .delib-dirty-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.12rem 0.5rem;
+    border-radius: var(--radius-sharp);
+    background-color: var(--color-expense-soft);
+    color: var(--color-expense);
+    border: var(--rule-hair) solid var(--color-expense);
+    font-size: 0.74rem;
+    font-weight: 800;
+  }
+
+  .delib-session-body {
+    padding: 0.85rem;
+    border-block-start: var(--rule-hair) solid var(--color-rule);
+    background-color: var(--color-sheet);
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .delib-session-grid,
+  .rev-editor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0.55rem 0.7rem;
+  }
+
+  .delib-session-grid label,
+  .rev-editor-form label {
+    display: grid;
+    gap: 0.22rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--color-ink-2);
+  }
+
+  .delib-session-grid input,
+  .delib-session-grid select,
+  .rev-editor-form input,
+  .rev-editor-form select,
+  .rev-editor-form textarea {
+    width: 100%;
+    padding: 0.38rem 0.55rem;
+    border: var(--rule-hair) solid var(--color-rule-ui);
+    border-radius: var(--radius-control);
+    background-color: var(--color-sheet);
+    color: var(--color-ink);
+    font: inherit;
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  .delib-actions-row,
+  .rev-editor-inline-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+  }
+
+  .delib-studio-status {
+    font-size: 0.8rem;
+    color: var(--color-ink-2);
+    line-height: 1.5;
+  }
+
+  .delib-studio-status.is-error,
+  .rev-editor-error {
+    color: var(--color-expense);
+    font-weight: 700;
+  }
+
+  .rev-delib-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    margin-block-start: 0.35rem;
+  }
+
+  .rev-article-tools .rev-delib-badges,
+  .rev-attachment-head .rev-status-badge {
+    margin-block-start: 0;
+  }
+
+  .rev-status-badge,
+  .rev-priority-badge,
+  .rev-wave-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.12rem 0.46rem;
+    border-radius: var(--radius-sharp);
+    font-size: 0.72rem;
+    font-weight: 800;
+    white-space: nowrap;
+    border: var(--rule-hair) solid transparent;
+  }
+
+  .rev-status-badge[data-delib-status="pending"] {
+    background-color: var(--color-well);
+    color: var(--color-muted);
+    border-color: var(--color-rule-ui);
+  }
+
+  .rev-status-badge[data-delib-status="scheduled"] {
+    background-color: var(--color-grant-soft);
+    color: var(--color-grant);
+    border-color: var(--color-grant);
+  }
+
+  .rev-status-badge[data-delib-status="discussing"] {
+    background-color: var(--color-expense-soft);
+    color: var(--color-expense);
+    border-color: var(--color-expense);
+  }
+
+  .rev-status-badge[data-delib-status="confirmed_revision"] {
+    background-color: var(--color-accent);
+    color: var(--color-accent-ink);
+    border-color: var(--color-accent);
+  }
+
+  .rev-status-badge[data-delib-status="confirmed_current"] {
+    background-color: var(--color-income-soft);
+    color: var(--color-income);
+    border-color: var(--color-income);
+  }
+
+  .rev-priority-badge {
+    background-color: var(--color-ink);
+    color: var(--color-sheet);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rev-priority-badge[data-priority="P1"] {
+    background-color: var(--color-expense);
+    color: #ffffff;
+  }
+
+  .rev-priority-badge[data-priority="P2"] {
+    background-color: var(--color-grant);
+    color: #ffffff;
+  }
+
+  .rev-wave-badge {
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent-soft-ink);
+    border-color: var(--color-accent);
+  }
+
+  .rev-meta-actions {
+    margin-block-start: 0.45rem;
+  }
+
+  .rev-delib-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 26px;
+    padding: 0.16rem 0.55rem;
+    border: var(--rule-hair) solid var(--color-rule-ui);
+    border-radius: var(--radius-control);
+    background-color: var(--color-sheet);
+    color: var(--color-ink);
+    font: inherit;
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .rev-delib-toggle-btn:hover,
+  .rev-delib-toggle-btn:focus-visible,
+  .rev-delib-toggle-btn[aria-expanded="true"] {
+    background-color: var(--color-accent-soft);
+    border-color: var(--color-accent);
+    color: var(--color-accent-soft-ink);
+  }
+
+  .rev-draft-origin {
+    display: inline-flex;
+    align-items: center;
+    justify-self: start;
+    width: fit-content;
+    margin-block-end: 0.35rem;
+    padding: 0.08rem 0.42rem;
+    border-radius: var(--radius-sharp);
+    font-size: 0.71rem;
+    font-weight: 800;
+    background-color: var(--color-well);
+    color: var(--color-muted);
+    border: var(--rule-hair) solid var(--color-rule);
+  }
+
+  .rev-draft-origin[data-origin-kind="working"] {
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent-soft-ink);
+    border-color: var(--color-accent);
+  }
+
+  .rev-draft-origin[data-origin-kind="confirmed_current"] {
+    background-color: var(--color-income-soft);
+    color: var(--color-income);
+    border-color: var(--color-income);
+  }
+
+  .rev-initial-draft-details {
+    margin-block-start: 0.55rem;
+    border: var(--rule-hair) dashed var(--color-rule-ui);
+    border-radius: var(--radius-control);
+    background-color: var(--color-canvas);
+  }
+
+  .rev-initial-draft-summary {
+    cursor: pointer;
+    padding: 0.32rem 0.58rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-muted);
+  }
+
+  .rev-initial-draft-body {
+    padding: 0.45rem 0.65rem;
+    border-block-start: var(--rule-hair) dashed var(--color-rule);
+    font-size: 0.82rem;
+    color: var(--color-ink-2);
+  }
+
+  .rev-delib-panel {
+    margin-block-start: 0.55rem;
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .rev-meeting-log-list {
+    list-style: none;
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .rev-meeting-log-item {
+    padding: 0.5rem 0.65rem;
+    border: var(--rule-hair) solid var(--color-rule);
+    border-inline-start: 3px solid var(--color-grant);
+    background-color: var(--color-canvas);
+    font-size: 0.79rem;
+    line-height: 1.5;
+  }
+
+  .rev-log-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.45rem;
+    margin-block-end: 0.25rem;
+  }
+
+  .rev-log-date {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    color: var(--color-muted);
+  }
+
+  .rev-log-meeting {
+    color: var(--color-ink);
+    font-size: 0.79rem;
+  }
+
+  .rev-log-role,
+  .rev-log-doc-badge {
+    display: inline-flex;
+    padding: 0.06rem 0.38rem;
+    border-radius: var(--radius-sharp);
+    font-size: 0.7rem;
+    font-weight: 700;
+    background-color: var(--color-well);
+    color: var(--color-ink-2);
+    border: var(--rule-hair) solid var(--color-rule);
+  }
+
+  .rev-log-delete-btn {
+    margin-inline-start: auto;
+    padding: 0.08rem 0.38rem;
+    border: var(--rule-hair) solid var(--color-rule-ui);
+    border-radius: var(--radius-sharp);
+    background: transparent;
+    color: var(--color-expense);
+    font: inherit;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .rev-log-summary {
+    color: var(--color-ink-2);
+  }
+
+  .rev-log-decision {
+    margin-block-start: 0.18rem;
+    color: var(--color-ink);
+  }
+
+  .rev-delib-editor {
+    padding: 0.7rem 0.8rem;
+    border: var(--rule-hair) solid var(--color-accent);
+    border-radius: var(--radius-control);
+    background-color: var(--color-canvas);
+  }
+
+  .rev-editor-form {
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  .rev-editor-draft-box,
+  .rev-editor-log-box {
+    display: grid;
+    gap: 0.4rem;
+    padding-block-start: 0.55rem;
+    border-block-start: var(--rule-hair) solid var(--color-rule);
+  }
+
+  .rev-editor-log-head {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--color-ink);
+  }
+
+  [hidden] {
+    display: none !important;
+  }
 }
 
 @layer responsive {
@@ -7155,6 +7609,7 @@
     .bylaws-revision-page .rev-cell-meta,
     .bylaws-revision-page .rev-cell-revised,
     .bylaws-revision-page .rev-reason-note,
+    .bylaws-revision-page .rev-meeting-log-item,
     .bylaws-revision-page .law-disclaimer {
       background: #ffffff !important;
       color: #111111 !important;
