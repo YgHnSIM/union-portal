@@ -282,7 +282,7 @@ export function renderAccountingSubnav(
 
 export function renderUnionSubnav(
   prefixToUnion: string,
-  active: UnionSection,
+  active: UnionSection | null,
 ): string {
   const items: Array<{ key: UnionSection; label: string; href: string }> = [
     { key: 'org', label: '조직·임원 현황', href: `${prefixToUnion}index.html` },
@@ -291,7 +291,7 @@ export function renderUnionSubnav(
   ];
   const links = items
     .map((it) => {
-      const cur = it.key === active ? ' aria-current="page"' : '';
+      const cur = active !== null && it.key === active ? ' aria-current="page"' : '';
       return `<a href="${escapeAttr(it.href)}"${cur}>${escapeHtml(it.label)}</a>`;
     })
     .join('\n    ');

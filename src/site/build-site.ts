@@ -24,6 +24,11 @@ import {
   loadBylawsDocument,
 } from './bylaws.js';
 import {
+  type BylawsLawDocument,
+  buildBylawsLawHtml,
+  loadBylawsLawDocument,
+} from './bylaws-law.js';
+import {
   type AssetManifest,
   SITE_BASE_URL,
   assetHref,
@@ -2419,6 +2424,7 @@ function buildUnionPages(
   orgSummary: OrgSummaryJson,
   officialsJson: PublicOfficialsJson,
   bylawsDoc: BylawsDocument | null,
+  bylawsLawDoc: BylawsLawDocument | null,
   currentYm: string,
   assets: AssetManifest,
   baseUrl: string,
@@ -2610,6 +2616,16 @@ function buildUnionPages(
     pages += 2;
   }
 
+  // Unlisted comparison page (excluded from sitemap.xml and public union links)
+  if (bylawsLawDoc) {
+    writeOutFile(
+      outDir,
+      'union/bylaws-law.html',
+      buildBylawsLawHtml(bylawsLawDoc, assets, baseUrl),
+    );
+    pages += 1;
+  }
+
   return pages;
 }
 
@@ -2745,13 +2761,15 @@ export async function buildSite(options: BuildSiteOptions): Promise<BuildSiteRes
     baseUrl,
   );
 
-  // 4. Union Pages (Organization + Bylaws Guide + Bylaws Full Text)
+  // 4. Union Pages (Organization + Bylaws Guide + Bylaws Full Text + Unlisted Bylaws-Law Comparison)
   const bylawsDoc = loadBylawsDocument(projectRoot);
+  const bylawsLawDoc = loadBylawsLawDocument(projectRoot);
   const unionPages = buildUnionPages(
     outDir,
     orgSummary,
     officialsJson,
     bylawsDoc,
+    bylawsLawDoc,
     currentYm,
     assets,
     baseUrl,

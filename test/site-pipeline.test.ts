@@ -475,12 +475,20 @@ test('buildSite, validateSite(--ci), 프라이버시 누출 차단 및 generateR
     // /union/bylaws-guide.html & /union/bylaws.html are built and indexed in sitemap
     const bylawsGuidePath = path.join(siteDir, 'union', 'bylaws-guide.html');
     const bylawsFullPath = path.join(siteDir, 'union', 'bylaws.html');
+    const bylawsLawPath = path.join(siteDir, 'union', 'bylaws-law.html');
     const bylawsGuideHtml = await fs.readFile(bylawsGuidePath, 'utf8');
     const bylawsFullHtml = await fs.readFile(bylawsFullPath, 'utf8');
+    const bylawsLawHtml = await fs.readFile(bylawsLawPath, 'utf8');
     assert.match(bylawsGuideHtml, /노동조합 규약 한눈에 보기/);
     assert.match(bylawsFullHtml, /id="art-37-2"/);
+    assert.match(bylawsLawHtml, /noindex,follow/);
+    assert.match(bylawsLawHtml, /조합 규약 · 현행 노조법 비교 분석/);
     assert.ok(sitemap.includes('union/bylaws-guide.html'));
     assert.ok(sitemap.includes('union/bylaws.html'));
+    assert.ok(!sitemap.includes('bylaws-law.html'));
+    assert.ok(!unionHtml.includes('bylaws-law.html'));
+    assert.ok(!bylawsGuideHtml.includes('bylaws-law.html'));
+    assert.ok(!bylawsFullHtml.includes('bylaws-law.html'));
 
     // CI validate passes on clean site
     const ciPass = await validateSite({
@@ -490,6 +498,46 @@ test('buildSite, validateSite(--ci), 프라이버시 누출 차단 및 generateR
       currentYm: '2026-05',
     });
     assert.equal(ciPass.ok, true, ciPass.errors.join('\n'));
+
+    // Inject link to unlisted bylaws-law.html into public /union/index.html -> MUST fail CI check
+    await fs.writeFile(
+      unionPath,
+      unionHtml.replace('</main>', '<a href="bylaws-law.html">법령비교</a></main>'),
+      'utf8',
+    );
+    const ciFailPublicLinkLaw = await validateSite({
+      projectRoot: tmpDir,
+      ci: true,
+      salt: TEST_SALT,
+      currentYm: '2026-05',
+    });
+    assert.equal(ciFailPublicLinkLaw.ok, false);
+    assert.ok(
+      ciFailPublicLinkLaw.errors.some(
+        (e) => e.includes('union/index.html') && e.includes('bylaws-law.html'),
+      ),
+    );
+    await fs.writeFile(unionPath, unionHtml, 'utf8');
+
+    // Inject personal name into /union/bylaws-law.html -> MUST fail CI check (strict Zero-PII)
+    await fs.writeFile(
+      bylawsLawPath,
+      bylawsLawHtml.replace('</main>', '<p>홍길동</p></main>'),
+      'utf8',
+    );
+    const ciFailBylawsLaw = await validateSite({
+      projectRoot: tmpDir,
+      ci: true,
+      salt: TEST_SALT,
+      currentYm: '2026-05',
+    });
+    assert.equal(ciFailBylawsLaw.ok, false);
+    assert.ok(
+      ciFailBylawsLaw.errors.some(
+        (e) => e.includes('union/bylaws-law.html') && e.includes('홍*동'),
+      ),
+    );
+    await fs.writeFile(bylawsLawPath, bylawsLawHtml, 'utf8');
 
     // Inject personal name into /union/bylaws.html -> MUST fail CI check (strict Zero-PII)
     await fs.writeFile(

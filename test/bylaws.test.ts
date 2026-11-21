@@ -7,6 +7,10 @@ import {
   buildBylawsGuideHtml,
   loadBylawsDocument,
 } from '../src/site/bylaws.js';
+import {
+  buildBylawsLawHtml,
+  loadBylawsLawDocument,
+} from '../src/site/bylaws-law.js';
 import type { AssetManifest } from '../src/site/shell.js';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -86,6 +90,39 @@ test('규약 개괄 페이지의 모든 조항·장 앵커 링크가 규약 전�
     assert.ok(
       fullIds.has(refId),
       `개괄 페이지가 참조하는 앵커 #${refId} 가 규약 전문 HTML에 존재하지 않습니다.`,
+    );
+  }
+});
+
+test('규약·노조법 비교 분석 정본(_source/union/bylaws-law.json)과 미등재 HTML 앵커 무결성을 검증한다', () => {
+  const bylawsDoc = loadBylawsDocument(REPO_ROOT);
+  const lawDoc = loadBylawsLawDocument(REPO_ROOT);
+  assert.ok(bylawsDoc);
+  assert.ok(lawDoc, 'bylaws-law.json 이 로드되어야 합니다.');
+
+  assert.equal(lawDoc.amendment2026Highlights.length, 3);
+  assert.equal(lawDoc.mandatoryItems.length, 15);
+  assert.equal(lawDoc.comparisons.length, 14);
+  assert.equal(lawDoc.tftChecklist.length, 7);
+  assert.equal(lawDoc.chapterMapping.length, 13);
+
+  const lawHtml = buildBylawsLawHtml(lawDoc, EMPTY_ASSETS, 'https://example.test');
+  const fullHtml = buildBylawsFullHtml(bylawsDoc, EMPTY_ASSETS, 'https://example.test');
+
+  assert.match(lawHtml, /<meta name="robots" content="noindex,follow">/);
+  assert.ok(!lawHtml.includes('**'), '비교 페이지 HTML에 ** 마크다운 잔재가 남아서는 안 됩니다.');
+
+  const fullIds = new Set<string>();
+  for (const m of fullHtml.matchAll(/\sid="([^"]+)"/g)) {
+    fullIds.add(m[1]!);
+  }
+
+  const refs = [...lawHtml.matchAll(/href="bylaws\.html#([^"]+)"/g)].map((m) => m[1]!);
+  assert.ok(refs.length >= 30, `비교 페이지에 충분한 규약 조항·장 참조 링크가 있어야 합니다 (${refs.length}개).`);
+  for (const refId of refs) {
+    assert.ok(
+      fullIds.has(refId),
+      `비교 페이지가 참조하는 앵커 #${refId} 가 규약 전문 HTML에 존재하지 않습니다.`,
     );
   }
 });

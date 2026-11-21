@@ -552,6 +552,19 @@ export async function validateSite(
     }
   }
 
+  const hasBylawsLaw = fs.existsSync(
+    path.join(projectRoot, '_source', 'union', 'bylaws-law.json'),
+  );
+  if (hasBylawsLaw) {
+    const bylawsLawBuilt = path.join(siteDir, 'union', 'bylaws-law.html');
+    if (!fs.existsSync(bylawsLawBuilt)) {
+      errors.push('unlisted 문서 HTML이 빌드되지 않았습니다: union/bylaws-law.html');
+    }
+    if (sitemapContent.includes('bylaws-law.html')) {
+      errors.push('unlisted 문서가 sitemap.xml에 노출되었습니다: union/bylaws-law.html');
+    }
+  }
+
   // Active union officials allowlist (for /union/index.html: strictly our union's active members)
   const activeOfficialNames = new Set(
     officialsJson.officials
@@ -601,10 +614,18 @@ export async function validateSite(
     }
 
     const doc = docByRoute.get(relPosix);
-    if (doc?.workflow.visibility === 'unlisted') {
+    if (doc?.workflow.visibility === 'unlisted' || relPosix === 'union/bylaws-law.html') {
       const robots = (extracted.robotsContent ?? '').replace(/\s+/g, '');
       if (robots !== 'noindex,follow') {
         errors.push(`${relPosix}: unlisted 문서는 robots="noindex,follow" 여야 합니다.`);
+      }
+    }
+
+    if (hasBylawsLaw && relPosix !== 'union/bylaws-law.html') {
+      if (extracted.links.some((lk) => lk.value.includes('bylaws-law.html'))) {
+        errors.push(
+          `${relPosix}: 공개 페이지에 unlisted 문서(union/bylaws-law.html) 링크가 포함되었습니다.`,
+        );
       }
     }
 
