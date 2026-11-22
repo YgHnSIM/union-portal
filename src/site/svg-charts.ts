@@ -129,11 +129,11 @@ export function renderMonthlyFlowSvg(
 ): string {
   const pal = palette(opts);
   const hideTitle = Boolean(opts?.hideTitle);
-  const w = 840;
-  const h = hideTitle ? 316 : 340;
-  const ml = 62;
-  const mr = 64;
-  const mt = hideTitle ? 34 : 56;
+  const w = 640;
+  const h = hideTitle ? 296 : 326;
+  const ml = 54;
+  const mr = 54;
+  const mt = hideTitle ? 38 : 66;
   const mb = 42;
   const pw = w - ml - mr;
   const ph = h - mt - mb;
@@ -142,7 +142,7 @@ export function renderMonthlyFlowSvg(
     return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(title)}" style="font-family: sans-serif;">
   <title>${esc(title)}</title>
   <rect x="0" y="0" width="${w}" height="${h}" fill="${pal.sheet}"/>
-  ${hideTitle ? '' : `<text x="${w / 2}" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="${pal.ink}">${esc(title)}</text>`}
+  ${hideTitle ? '' : `<text x="${w / 2}" y="28" text-anchor="middle" font-size="16" font-weight="700" fill="${pal.ink}">${esc(title)}</text>`}
   <text x="${w / 2}" y="${h / 2}" text-anchor="middle" font-size="14" fill="${pal.tick}">표시할 데이터가 없습니다</text>
 </svg>`;
   }
@@ -158,13 +158,13 @@ export function renderMonthlyFlowSvg(
     const balTick = Math.round((maxBal * ratio) / 10000).toLocaleString('ko-KR');
     gridLines.push(
       `<line x1="${ml}" y1="${y.toFixed(1)}" x2="${w - mr}" y2="${y.toFixed(1)}" stroke="${pal.grid}" stroke-dasharray="4 3"/>`,
-      `<text x="${ml - 8}" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="${pal.tick}">${flowTick}</text>`,
-      `<text x="${w - mr + 8}" y="${(y + 4).toFixed(1)}" text-anchor="start" font-size="11" fill="${pal.cobalt}">${balTick}</text>`,
+      `<text x="${ml - 8}" y="${(y + 4.5).toFixed(1)}" text-anchor="end" font-size="12.5" fill="${pal.tick}">${flowTick}</text>`,
+      `<text x="${w - mr + 8}" y="${(y + 4.5).toFixed(1)}" text-anchor="start" font-size="12.5" fill="${pal.cobalt}">${balTick}</text>`,
     );
   }
 
   const slotW = pw / points.length;
-  const barW = Math.min(20, Math.max(6, slotW * 0.28));
+  const barW = Math.min(20, Math.max(6, slotW * 0.3));
   const gap = Math.min(4, barW * 0.25);
 
   const bars: string[] = [];
@@ -187,37 +187,37 @@ export function renderMonthlyFlowSvg(
     const yBal = mt + ph - Math.max(0, Math.min(1, p.endBal / maxBal)) * ph;
     lineCoords.push(`${cx.toFixed(1)},${yBal.toFixed(1)}`);
     dots.push(
-      `<circle cx="${cx.toFixed(1)}" cy="${yBal.toFixed(1)}" r="4" fill="${pal.cobalt}" stroke="${pal.sheet}" stroke-width="1.5"><title>${esc(p.label)} 잔액: ${Math.round(p.endBal).toLocaleString('ko-KR')}원</title></circle>`,
-      `<text x="${cx.toFixed(1)}" y="${Math.max(mt + 12, yBal - 9).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="700" fill="${pal.cobalt}">${fmtManVal(p.endBal)}</text>`,
+      `<circle cx="${cx.toFixed(1)}" cy="${yBal.toFixed(1)}" r="4.5" fill="${pal.cobalt}" stroke="${pal.sheet}" stroke-width="1.5"><title>${esc(p.label)} 잔액: ${Math.round(p.endBal).toLocaleString('ko-KR')}원</title></circle>`,
+      `<text x="${cx.toFixed(1)}" y="${Math.max(mt + 13, yBal - 10).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="${pal.cobalt}">${fmtManVal(p.endBal)}</text>`,
     );
 
     const showLabel = points.length <= 12 || idx % 2 === 0 || idx === points.length - 1;
     if (showLabel) {
       xLabels.push(
-        `<text x="${cx.toFixed(1)}" y="${h - 14}" text-anchor="middle" font-size="11" fill="${pal.tick}">${esc(p.label)}</text>`,
+        `<text x="${cx.toFixed(1)}" y="${h - 14}" text-anchor="middle" font-size="12.5" font-weight="600" fill="${pal.tick}">${esc(p.label)}</text>`,
       );
     }
   });
 
   const desc = `${points.length}개 기간의 수입·지출 및 기말 잔액 추이 (단위: 만원)`;
-  const legendY = hideTitle ? 6 : 14;
+  const legendY = hideTitle ? 8 : 38;
   return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(title)}" style="font-family: sans-serif;">
   <title>${esc(title)}</title>
   <desc>${esc(desc)}</desc>
   <rect x="0" y="0" width="${w}" height="${h}" fill="${pal.sheet}"/>
-  ${hideTitle ? '' : `<text x="${ml}" y="26" font-size="15" font-weight="700" fill="${pal.ink}">${esc(title)} (단위: 만원)</text>`}
-  <g font-size="11.5" fill="${pal.ink}">
-    <rect x="${w - 246}" y="${legendY}" width="12" height="12" rx="2" fill="${pal.inc}"/>
-    <text x="${w - 230}" y="${legendY + 10}">수입</text>
-    <rect x="${w - 190}" y="${legendY}" width="12" height="12" rx="2" fill="${pal.exp}"/>
-    <text x="${w - 174}" y="${legendY + 10}">지출</text>
-    <circle cx="${w - 126}" cy="${legendY + 6}" r="4.5" fill="${pal.cobalt}"/>
-    <text x="${w - 116}" y="${legendY + 10}">기말잔액</text>
+  ${hideTitle ? '' : `<text x="${ml}" y="24" font-size="16" font-weight="700" fill="${pal.ink}">${esc(title)} (단위: 만원)</text>`}
+  <g font-size="13" font-weight="600" fill="${pal.ink}">
+    <rect x="${w - 252}" y="${legendY}" width="13" height="13" rx="2" fill="${pal.inc}"/>
+    <text x="${w - 234}" y="${legendY + 11}">수입</text>
+    <rect x="${w - 190}" y="${legendY}" width="13" height="13" rx="2" fill="${pal.exp}"/>
+    <text x="${w - 172}" y="${legendY + 11}">지출</text>
+    <circle cx="${w - 120}" cy="${legendY + 6.5}" r="5" fill="${pal.cobalt}"/>
+    <text x="${w - 109}" y="${legendY + 11}">기말잔액</text>
   </g>
   ${gridLines.join('\n  ')}
   <line x1="${ml}" y1="${mt + ph}" x2="${w - mr}" y2="${mt + ph}" stroke="${pal.tick}"/>
   ${bars.join('\n  ')}
-  <polyline fill="none" stroke="${pal.cobalt}" stroke-width="2.4" stroke-linejoin="round" points="${lineCoords.join(' ')}"/>
+  <polyline fill="none" stroke="${pal.cobalt}" stroke-width="2.6" stroke-linejoin="round" points="${lineCoords.join(' ')}"/>
   ${dots.join('\n  ')}
   ${xLabels.join('\n  ')}
 </svg>`;
@@ -230,24 +230,24 @@ export function renderActivityBarsSvg(
 ): string {
   const pal = palette(opts);
   const hideTitle = Boolean(opts?.hideTitle);
-  const w = 720;
+  const w = 560;
 
   if (items.length === 0) {
     const h = hideTitle ? 140 : 180;
     return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(title)}" style="font-family: sans-serif;">
   <title>${esc(title)}</title>
   <rect x="0" y="0" width="${w}" height="${h}" fill="${pal.sheet}"/>
-  ${hideTitle ? '' : `<text x="16" y="28" font-size="15" font-weight="700" fill="${pal.ink}">${esc(title)}</text>`}
-  <text x="${w / 2}" y="${Math.round(h / 2) + 4}" text-anchor="middle" font-size="13.5" fill="${pal.tick}">해당 기간 지출 내역이 없습니다</text>
+  ${hideTitle ? '' : `<text x="16" y="28" font-size="16" font-weight="700" fill="${pal.ink}">${esc(title)}</text>`}
+  <text x="${w / 2}" y="${Math.round(h / 2) + 4}" text-anchor="middle" font-size="14" fill="${pal.tick}">해당 기간 지출 내역이 없습니다</text>
 </svg>`;
   }
 
-  const rowH = 34;
+  const rowH = 38;
   const mt = hideTitle ? 12 : 52;
   const mb = 18;
   const h = mt + items.length * rowH + mb;
-  const ml = 195;
-  const mr = 138;
+  const ml = 164;
+  const mr = 136;
   const pw = w - ml - mr;
   const maxVal = niceMax(Math.max(...items.map((it) => it.value), 0));
   const defaultPalette = [
@@ -265,15 +265,15 @@ export function renderActivityBarsSvg(
     const y = mt + idx * rowH;
     const barW = Math.max(2, (it.value / maxVal) * pw);
     const fill = it.color ?? defaultPalette[idx % defaultPalette.length] ?? pal.cobalt;
-    const rawLabel = it.label.length > 18 ? `${it.label.slice(0, 17)}…` : it.label;
+    const rawLabel = it.label.length > 13 ? `${it.label.slice(0, 12)}…` : it.label;
     const valStr =
       it.pct !== undefined
         ? `${fmtManVal(it.value)}만원 (${it.pct.toFixed(1)}%)`
         : `${fmtManVal(it.value)}만원`;
     return `<g>
-    <text x="${ml - 10}" y="${y + 19}" text-anchor="end" font-size="12" fill="${pal.ink}"><title>${esc(it.label)}</title>${esc(rawLabel)}</text>
-    <rect x="${ml}" y="${y + 5}" width="${barW.toFixed(1)}" height="20" rx="3" fill="${fill}"><title>${esc(it.label)}: ${Math.round(it.value).toLocaleString('ko-KR')}원</title></rect>
-    <text x="${(ml + barW + 8).toFixed(1)}" y="${y + 19}" font-size="11.5" font-weight="600" fill="${pal.tick}">${esc(valStr)}</text>
+    <text x="${ml - 10}" y="${y + 21}" text-anchor="end" font-size="13.5" font-weight="600" fill="${pal.ink}"><title>${esc(it.label)}</title>${esc(rawLabel)}</text>
+    <rect x="${ml}" y="${y + 5}" width="${barW.toFixed(1)}" height="22" rx="3" fill="${fill}"><title>${esc(it.label)}: ${Math.round(it.value).toLocaleString('ko-KR')}원</title></rect>
+    <text x="${(ml + barW + 8).toFixed(1)}" y="${y + 21}" font-size="13" font-weight="700" fill="${pal.tick}">${esc(valStr)}</text>
   </g>`;
   });
 
@@ -281,7 +281,7 @@ export function renderActivityBarsSvg(
   <title>${esc(title)}</title>
   <desc>${esc(title)} 상위 ${items.length}개 항목</desc>
   <rect x="0" y="0" width="${w}" height="${h}" fill="${pal.sheet}"/>
-  ${hideTitle ? '' : `<text x="16" y="28" font-size="15" font-weight="700" fill="${pal.ink}">${esc(title)}</text>`}
+  ${hideTitle ? '' : `<text x="16" y="28" font-size="16" font-weight="700" fill="${pal.ink}">${esc(title)}</text>`}
   <line x1="${ml}" y1="${mt - 6}" x2="${ml}" y2="${h - mb}" stroke="${pal.grid}"/>
   ${rows.join('\n  ')}
 </svg>`;
@@ -294,12 +294,13 @@ export function renderUnitComparisonSvg(
 ): string {
   const pal = palette(opts);
   const hideTitle = Boolean(opts?.hideTitle);
-  const w = 780;
-  const h = hideTitle ? 298 : 320;
-  const ml = 58;
-  const mr = 24;
-  const mt = hideTitle ? 42 : 64;
-  const mb = 42;
+  const compact = groups.length <= 4;
+  const w = compact ? 500 : 640;
+  const h = hideTitle ? 286 : 316;
+  const ml = 48;
+  const mr = 20;
+  const mt = hideTitle ? 42 : 72;
+  const mb = 44;
   const pw = w - ml - mr;
   const ph = h - mt - mb;
 
@@ -307,7 +308,7 @@ export function renderUnitComparisonSvg(
     return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(title)}" style="font-family: sans-serif;">
   <title>${esc(title)}</title>
   <rect x="0" y="0" width="${w}" height="${h}" fill="${pal.sheet}"/>
-  <text x="${w / 2}" y="${h / 2}" text-anchor="middle" font-size="14" fill="${pal.tick}">표시할 비교 데이터가 없습니다</text>
+  <text x="${w / 2}" y="${h / 2}" text-anchor="middle" font-size="15" fill="${pal.tick}">표시할 비교 데이터가 없습니다</text>
 </svg>`;
   }
 
@@ -315,12 +316,13 @@ export function renderUnitComparisonSvg(
   const maxVal = niceMax(Math.max(...allVals, 1));
 
   const legendSeries = groups[0]?.series ?? [];
-  const legendStart = Math.max(ml, w - mr - legendSeries.length * 135);
-  const legendY = hideTitle ? 10 : 18;
+  const legendStep = compact ? 132 : 148;
+  const legendStart = Math.max(ml, w - mr - legendSeries.length * legendStep);
+  const legendY = hideTitle ? 10 : 40;
   const legendHtml = legendSeries
     .map((s, idx) => {
-      const lx = legendStart + idx * 135;
-      return `<rect x="${lx}" y="${legendY}" width="12" height="12" rx="2" fill="${esc(s.color)}"/><text x="${lx + 17}" y="${legendY + 10}" font-size="11.5" fill="${pal.ink}">${esc(s.name)}</text>`;
+      const lx = legendStart + idx * legendStep;
+      return `<rect x="${lx}" y="${legendY}" width="13" height="13" rx="2" fill="${esc(s.color)}"/><text x="${lx + 18}" y="${legendY + 11}" font-size="13.5" font-weight="600" fill="${pal.ink}">${esc(s.name)}</text>`;
     })
     .join('\n  ');
 
@@ -333,7 +335,7 @@ export function renderUnitComparisonSvg(
       : Math.round(maxVal * ratio).toLocaleString('ko-KR');
     gridLines.push(
       `<line x1="${ml}" y1="${y.toFixed(1)}" x2="${w - mr}" y2="${y.toFixed(1)}" stroke="${pal.grid}" stroke-dasharray="4 3"/>`,
-      `<text x="${ml - 8}" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="${pal.tick}">${tickNum}</text>`,
+      `<text x="${ml - 8}" y="${(y + 4.5).toFixed(1)}" text-anchor="end" font-size="13" fill="${pal.tick}">${tickNum}</text>`,
     );
   }
 
@@ -341,34 +343,37 @@ export function renderUnitComparisonSvg(
   const groupHtml = groups.map((g, gi) => {
     const gx = ml + gi * slotW;
     const count = Math.max(1, g.series.length);
-    const barW = Math.min(34, (slotW * 0.7) / count);
-    const totalBarsW = count * barW + (count - 1) * 4;
+    const barW = Math.min(compact ? 38 : 26, (slotW * 0.7) / count);
+    const barGap = compact ? 6 : 4;
+    const totalBarsW = count * barW + (count - 1) * barGap;
     const startX = gx + (slotW - totalBarsW) / 2;
 
     const bars = g.series
       .map((s, si) => {
-        const x = startX + si * (barW + 4);
+        const x = startX + si * (barW + barGap);
         const bh = Math.max(0, (s.value / maxVal) * ph);
         const y = mt + ph - bh;
         const valText =
           s.value >= 10000 ? `${Math.round(s.value / 10000).toLocaleString('ko-KR')}` : `${s.value}`;
+        const valFont = compact ? '14' : '12';
         const labelSvg =
           s.value > 0
-            ? `\n        <text x="${(x + barW / 2).toFixed(1)}" y="${Math.max(mt + 11, y - 5).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="600" fill="${pal.ink}">${valText}</text>`
+            ? `\n        <text x="${(x + barW / 2).toFixed(1)}" y="${Math.max(mt + 13, y - 6).toFixed(1)}" text-anchor="middle" font-size="${valFont}" font-weight="700" fill="${pal.ink}">${valText}</text>`
             : '';
         return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="2" fill="${esc(s.color)}"><title>${esc(g.label)} ${esc(s.name)}: ${s.value.toLocaleString('ko-KR')}</title></rect>${labelSvg}`;
       })
       .join('\n  ');
 
+    const xFont = compact ? '14.5' : '12.5';
     return `${bars}
-    <text x="${(gx + slotW / 2).toFixed(1)}" y="${h - 14}" text-anchor="middle" font-size="12" font-weight="600" fill="${pal.ink}">${esc(g.label)}</text>`;
+    <text x="${(gx + slotW / 2).toFixed(1)}" y="${h - 14}" text-anchor="middle" font-size="${xFont}" font-weight="700" fill="${pal.ink}">${esc(g.label)}</text>`;
   });
 
   return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(title)}" style="font-family: sans-serif;">
   <title>${esc(title)}</title>
   <desc>${esc(title)} 그룹별 비교 막대 차트</desc>
   <rect x="0" y="0" width="${w}" height="${h}" fill="${pal.sheet}"/>
-  ${hideTitle ? '' : `<text x="${ml}" y="28" font-size="15" font-weight="700" fill="${pal.ink}">${esc(title)}</text>`}
+  ${hideTitle ? '' : `<text x="${ml}" y="25" font-size="16.5" font-weight="700" fill="${pal.ink}">${esc(title)}</text>`}
   ${legendHtml}
   ${gridLines.join('\n  ')}
   <line x1="${ml}" y1="${mt + ph}" x2="${w - mr}" y2="${mt + ph}" stroke="${pal.tick}"/>
