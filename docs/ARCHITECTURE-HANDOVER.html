@@ -1,0 +1,3049 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="text-scale" content="scale">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Crect width='36' height='36' rx='6' fill='%23002fa7'/%3E%3Crect x='7' y='8' width='22' height='3.5' fill='%23fff'/%3E%3Crect x='7' y='15' width='14' height='3' fill='%23fff'/%3E%3Crect x='7' y='21' width='22' height='3' fill='%23fff'/%3E%3C/svg%3E">
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('handover-color-scheme');
+        if (stored === 'light' || stored === 'dark') {
+          document.querySelector('meta[name="color-scheme"]').content = stored;
+        }
+      } catch (_) {}
+    })();
+  </script>
+  <title>union-portal 아키텍처·모듈·인수인계 종합 해설서 — 우체국물류지원단 물류노동조합</title>
+  <meta name="description" content="비개발자 노동조합 집행부 및 웹 관리자를 위한 union-portal 전체 아키텍처, 4대 시스템 다이어그램, 3대 도메인, 13개 DB 테이블, 전체 코드 모듈 사전 및 실무 운영 인수인계 종합 해설서">
+  <style>
+    @layer reset, tokens, layout, components, diagrams, responsive, print;
+
+    @layer reset {
+      *, *::before, *::after { box-sizing: border-box; }
+      body, h1, h2, h3, h4, p, ul, ol, dl, dd, figure, figcaption, blockquote, pre { margin: 0; }
+      ul, ol { padding-left: 1.35rem; }
+      img, svg { max-width: 100%; height: auto; }
+      button, input, select { font: inherit; color: inherit; }
+      [hidden] { display: none !important; }
+    }
+
+    @layer tokens {
+      :root {
+        color-scheme: light dark;
+        --reader-scale: 1;
+
+        /* Hallmark Ledger × Modern Civic Palette (Light / Dark) */
+        --stone-canvas-light: #f2f6f9;
+        --stone-sheet-light: #ffffff;
+        --stone-well-light: #e3ecf3;
+        --stone-hover-light: #d7e4ef;
+        --ink-strong-light: #0d1b2a;
+        --ink-body-light: #1e2d3d;
+        --ink-muted-light: #4a5d73;
+        --rule-hair-light: #c8d6e2;
+        --rule-ui-light: #5c738a;
+        --rule-bar-light: #12354e;
+        --header-bg-light: rgba(255, 255, 255, 0.95);
+        --thead-bg-light: #e3ecf3;
+        --code-bg-light: #eef3f8;
+        --code-ink-light: #0d283d;
+
+        --stone-canvas-dark: #09131c;
+        --stone-sheet-dark: #101f2e;
+        --stone-well-dark: #172c40;
+        --stone-hover-dark: #1e374f;
+        --ink-strong-dark: #f0f5f9;
+        --ink-body-dark: #d5e4f0;
+        --ink-muted-dark: #9bb3c9;
+        --rule-hair-dark: #27435c;
+        --rule-ui-dark: #7492ad;
+        --rule-bar-dark: #c5d9eb;
+        --header-bg-dark: rgba(16, 31, 46, 0.95);
+        --thead-bg-dark: #163047;
+        --code-bg-dark: #0b1824;
+        --code-ink-dark: #d5e7f7;
+
+        --sig-accent-light: #002fa7;
+        --sig-accent-dark: #8ab4ff;
+        --sig-accent-ink-light: #ffffff;
+        --sig-accent-ink-dark: #061428;
+        --sig-cobalt-light: #516db2;
+        --sig-cobalt-dark: #85a1eb;
+        --sig-cobalt-soft-light: #e8eef9;
+        --sig-cobalt-soft-dark: #1b2846;
+
+        --sig-income-light: #2b6e31;
+        --sig-income-soft-light: #e5f3e6;
+        --sig-income-dark: #78cf80;
+        --sig-income-soft-dark: #132e16;
+
+        --sig-expense-light: #b32d20;
+        --sig-expense-soft-light: #fbeae8;
+        --sig-expense-dark: #ff8e83;
+        --sig-expense-soft-dark: #381815;
+
+        --sig-grant-light: #96600a;
+        --sig-grant-soft-light: #fbf1de;
+        --sig-grant-dark: #f0ba5c;
+        --sig-grant-soft-dark: #33240d;
+
+        /* Fallback defaults (light) */
+        --bg-canvas: var(--stone-canvas-light);
+        --bg-sheet: var(--stone-sheet-light);
+        --bg-well: var(--stone-well-light);
+        --bg-hover: var(--stone-hover-light);
+        --ink-strong: var(--ink-strong-light);
+        --ink-body: var(--ink-body-light);
+        --ink-muted: var(--ink-muted-light);
+        --rule-hair: var(--rule-hair-light);
+        --rule-ui: var(--rule-ui-light);
+        --rule-bar: var(--rule-bar-light);
+        --header-bg: var(--header-bg-light);
+        --thead-bg: var(--thead-bg-light);
+        --code-bg: var(--code-bg-light);
+        --code-ink: var(--code-ink-light);
+
+        --color-accent: var(--sig-accent-light);
+        --color-accent-ink: var(--sig-accent-ink-light);
+        --color-cobalt: var(--sig-cobalt-light);
+        --color-cobalt-soft: var(--sig-cobalt-soft-light);
+        --color-income: var(--sig-income-light);
+        --color-income-soft: var(--sig-income-soft-light);
+        --color-expense: var(--sig-expense-light);
+        --color-expense-soft: var(--sig-expense-soft-light);
+        --color-grant: var(--sig-grant-light);
+        --color-grant-soft: var(--sig-grant-soft-light);
+
+        --font-sans: "Pretendard Variable", "Pretendard", "SUIT", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, -apple-system, sans-serif;
+        --font-mono: ui-monospace, "Cascadia Code", "Consolas", monospace;
+        --radius-sharp: 2px;
+        --radius-control: 4px;
+        --radius-sheet: 6px;
+        --scrollbar-track: #e6eef5;
+        --scrollbar-thumb: #698096;
+      }
+
+      :root:has(> head > meta[name="color-scheme"][content="dark"]) {
+        color-scheme: dark;
+      }
+      :root:has(> head > meta[name="color-scheme"][content="light"]) {
+        color-scheme: light;
+      }
+
+      @supports not (color: light-dark(white, black)) {
+        @media (prefers-color-scheme: dark) {
+          :root:not(:has(> head > meta[name="color-scheme"][content="light"])) {
+            --bg-canvas: var(--stone-canvas-dark);
+            --bg-sheet: var(--stone-sheet-dark);
+            --bg-well: var(--stone-well-dark);
+            --bg-hover: var(--stone-hover-dark);
+            --ink-strong: var(--ink-strong-dark);
+            --ink-body: var(--ink-body-dark);
+            --ink-muted: var(--ink-muted-dark);
+            --rule-hair: var(--rule-hair-dark);
+            --rule-ui: var(--rule-ui-dark);
+            --rule-bar: var(--rule-bar-dark);
+            --header-bg: var(--header-bg-dark);
+            --thead-bg: var(--thead-bg-dark);
+            --code-bg: var(--code-bg-dark);
+            --code-ink: var(--code-ink-dark);
+            --color-accent: var(--sig-accent-dark);
+            --color-accent-ink: var(--sig-accent-ink-dark);
+            --color-cobalt: var(--sig-cobalt-dark);
+            --color-cobalt-soft: var(--sig-cobalt-soft-dark);
+            --color-income: var(--sig-income-dark);
+            --color-income-soft: var(--sig-income-soft-dark);
+            --color-expense: var(--sig-expense-dark);
+            --color-expense-soft: var(--sig-expense-soft-dark);
+            --color-grant: var(--sig-grant-dark);
+            --color-grant-soft: var(--sig-grant-soft-dark);
+            --scrollbar-track: #101f2e;
+            --scrollbar-thumb: #7492ad;
+          }
+        }
+
+        :root:has(> head > meta[name="color-scheme"][content="dark"]) {
+          --bg-canvas: var(--stone-canvas-dark);
+          --bg-sheet: var(--stone-sheet-dark);
+          --bg-well: var(--stone-well-dark);
+          --bg-hover: var(--stone-hover-dark);
+          --ink-strong: var(--ink-strong-dark);
+          --ink-body: var(--ink-body-dark);
+          --ink-muted: var(--ink-muted-dark);
+          --rule-hair: var(--rule-hair-dark);
+          --rule-ui: var(--rule-ui-dark);
+          --rule-bar: var(--rule-bar-dark);
+          --header-bg: var(--header-bg-dark);
+          --thead-bg: var(--thead-bg-dark);
+          --code-bg: var(--code-bg-dark);
+          --code-ink: var(--code-ink-dark);
+          --color-accent: var(--sig-accent-dark);
+          --color-accent-ink: var(--sig-accent-ink-dark);
+          --color-cobalt: var(--sig-cobalt-dark);
+          --color-cobalt-soft: var(--sig-cobalt-soft-dark);
+          --color-income: var(--sig-income-dark);
+          --color-income-soft: var(--sig-income-soft-dark);
+          --color-expense: var(--sig-expense-dark);
+          --color-expense-soft: var(--sig-expense-soft-dark);
+          --color-grant: var(--sig-grant-dark);
+          --color-grant-soft: var(--sig-grant-soft-dark);
+          --scrollbar-track: #101f2e;
+          --scrollbar-thumb: #7492ad;
+        }
+      }
+
+      @supports (color: light-dark(white, black)) {
+        :root {
+          --bg-canvas: light-dark(var(--stone-canvas-light), var(--stone-canvas-dark));
+          --bg-sheet: light-dark(var(--stone-sheet-light), var(--stone-sheet-dark));
+          --bg-well: light-dark(var(--stone-well-light), var(--stone-well-dark));
+          --bg-hover: light-dark(var(--stone-hover-light), var(--stone-hover-dark));
+          --ink-strong: light-dark(var(--ink-strong-light), var(--ink-strong-dark));
+          --ink-body: light-dark(var(--ink-body-light), var(--ink-body-dark));
+          --ink-muted: light-dark(var(--ink-muted-light), var(--ink-muted-dark));
+          --rule-hair: light-dark(var(--rule-hair-light), var(--rule-hair-dark));
+          --rule-ui: light-dark(var(--rule-ui-light), var(--rule-ui-dark));
+          --rule-bar: light-dark(var(--rule-bar-light), var(--rule-bar-dark));
+          --header-bg: light-dark(var(--header-bg-light), var(--header-bg-dark));
+          --thead-bg: light-dark(var(--thead-bg-light), var(--thead-bg-dark));
+          --code-bg: light-dark(var(--code-bg-light), var(--code-bg-dark));
+          --code-ink: light-dark(var(--code-ink-light), var(--code-ink-dark));
+          --color-accent: light-dark(var(--sig-accent-light), var(--sig-accent-dark));
+          --color-accent-ink: light-dark(var(--sig-accent-ink-light), var(--sig-accent-ink-dark));
+          --color-cobalt: light-dark(var(--sig-cobalt-light), var(--sig-cobalt-dark));
+          --color-cobalt-soft: light-dark(var(--sig-cobalt-soft-light), var(--sig-cobalt-soft-dark));
+          --color-income: light-dark(var(--sig-income-light), var(--sig-income-dark));
+          --color-income-soft: light-dark(var(--sig-income-soft-light), var(--sig-income-soft-dark));
+          --color-expense: light-dark(var(--sig-expense-light), var(--sig-expense-dark));
+          --color-expense-soft: light-dark(var(--sig-expense-soft-light), var(--sig-expense-soft-dark));
+          --color-grant: light-dark(var(--sig-grant-light), var(--sig-grant-dark));
+          --color-grant-soft: light-dark(var(--sig-grant-soft-light), var(--sig-grant-soft-dark));
+          --scrollbar-track: light-dark(#e6eef5, #101f2e);
+          --scrollbar-thumb: light-dark(#698096, #7492ad);
+        }
+      }
+
+      :root {
+        scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+        accent-color: var(--color-accent);
+      }
+
+      @supports not (scrollbar-color: auto) {
+        ::-webkit-scrollbar { width: 12px; height: 12px; }
+        ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); }
+      }
+    }
+
+    @layer layout {
+      body {
+        font-family: var(--font-sans);
+        background: var(--bg-canvas);
+        color: var(--ink-body);
+        line-height: 1.72;
+        word-break: keep-all;
+        overflow-wrap: anywhere;
+      }
+
+      .visually-hidden:where(:not(:focus-within, :active)) {
+        position: absolute !important;
+        clip-path: inset(50%) !important;
+        overflow: hidden !important;
+        width: 1px !important;
+        height: 1px !important;
+        margin: -1px !important;
+        padding: 0 !important;
+        border: 0 !important;
+        white-space: nowrap !important;
+      }
+
+      .skip-link:focus {
+        position: fixed;
+        top: 0.75rem;
+        left: 0.75rem;
+        z-index: 1000;
+        padding: 0.65rem 1rem;
+        background: var(--color-accent);
+        color: var(--color-accent-ink);
+        border-radius: var(--radius-control);
+        font-weight: 700;
+        text-decoration: none;
+        outline: 3px solid var(--ink-strong);
+        outline-offset: 2px;
+      }
+
+      :where(a:any-link, button, input, select, summary, [tabindex]):focus-visible {
+        outline: 3px solid var(--color-accent);
+        outline-offset: 2px;
+      }
+
+      .top-bar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: var(--header-bg);
+        backdrop-filter: blur(8px);
+        border-bottom: 2px solid var(--rule-bar);
+      }
+
+      .top-bar-inner {
+        max-width: 1380px;
+        margin: 0 auto;
+        padding: 0.65rem clamp(1rem, 2.5vw, 2rem);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem 1.25rem;
+      }
+
+      .brand-lockup {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        min-width: 0;
+      }
+
+      .brand-mark {
+        width: 2rem;
+        height: 2rem;
+        flex-shrink: 0;
+      }
+
+      .brand-title {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.25;
+      }
+
+      .brand-title strong {
+        font-size: 0.95rem;
+        color: var(--ink-strong);
+      }
+
+      .brand-title span {
+        font-size: 0.78rem;
+        color: var(--ink-muted);
+      }
+
+      .top-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .search-group {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        min-width: 0;
+        flex: 1 1 auto;
+      }
+
+      .search-group input[type="search"] {
+        min-height: 2.25rem;
+        padding: 0.3rem 0.65rem;
+        border: 1px solid var(--rule-ui);
+        border-radius: var(--radius-control);
+        background: var(--bg-sheet);
+        color: var(--ink-strong);
+        width: min(100%, 15rem);
+        min-width: 0;
+        font-size: 0.88rem;
+      }
+
+      .ctrl-btn {
+        min-height: 2.25rem;
+        min-width: 2.25rem;
+        padding: 0.35rem 0.75rem;
+        border: 1px solid var(--rule-ui);
+        border-radius: var(--radius-control);
+        background: var(--bg-sheet);
+        color: var(--ink-strong);
+        font-size: 0.84rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+      }
+
+      .ctrl-btn:hover { background: var(--bg-hover); }
+      .ctrl-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+      .ctrl-btn.primary {
+        background: var(--color-accent);
+        color: var(--color-accent-ink);
+        border-color: var(--color-accent);
+      }
+
+      .scale-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+
+      .scale-readout {
+        font-size: 0.8rem;
+        font-variant-numeric: tabular-nums;
+        color: var(--ink-muted);
+        min-width: 3rem;
+        text-align: center;
+      }
+
+      .page-shell {
+        max-width: 1380px;
+        margin: 0 auto;
+        padding: 1.5rem clamp(1rem, 2.5vw, 2rem) 4rem;
+        display: grid;
+        grid-template-columns: 270px minmax(0, 1fr);
+        gap: 2rem;
+        align-items: start;
+      }
+
+      .toc-sidebar {
+        position: sticky;
+        top: 5rem;
+        max-height: calc(100dvh - 6rem);
+        overflow-y: auto;
+        background: var(--bg-sheet);
+        border: 1px solid var(--rule-hair);
+        border-top: 3px solid var(--rule-bar);
+        padding: 1rem;
+      }
+
+      .toc-summary {
+        display: none;
+        list-style: none;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.92rem;
+        color: var(--ink-strong);
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        min-height: 2.5rem;
+      }
+
+      .toc-summary::-webkit-details-marker { display: none; }
+
+      .toc-summary-hint {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--color-accent);
+        background: var(--color-cobalt-soft);
+        padding: 0.18rem 0.55rem;
+        border-radius: var(--radius-control);
+        flex-shrink: 0;
+      }
+
+      .toc-drawer[open] .toc-summary-hint::before { content: "접기 ▲"; }
+      .toc-drawer:not([open]) .toc-summary-hint::before { content: "펼치기 ▼"; }
+
+      .toc-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.65rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--rule-hair);
+      }
+
+      .toc-head strong {
+        font-size: 0.9rem;
+        color: var(--ink-strong);
+      }
+
+      .toc-list {
+        list-style: none;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+      }
+
+      .toc-list a {
+        display: block;
+        padding: 0.4rem 0.55rem;
+        font-size: 0.83rem;
+        line-height: 1.35;
+        color: var(--ink-body);
+        text-decoration: none;
+        border-left: 3px solid transparent;
+        border-radius: 0 var(--radius-control) var(--radius-control) 0;
+      }
+
+      .toc-list a:hover {
+        background: var(--bg-well);
+        color: var(--ink-strong);
+      }
+
+      .toc-list a[aria-current="location"] {
+        background: var(--color-cobalt-soft);
+        border-left-color: var(--color-accent);
+        color: var(--ink-strong);
+        font-weight: 700;
+      }
+
+      .doc-main {
+        min-width: 0;
+        container-type: inline-size;
+        font-size: calc(1rem * var(--reader-scale, 1));
+      }
+
+      .doc-sheet {
+        min-width: 0;
+        background: var(--bg-sheet);
+        border: 1px solid var(--rule-hair);
+        border-top: 4px solid var(--rule-bar);
+        padding: clamp(1.25rem, 3vw, 2.75rem);
+      }
+
+      .back-to-top {
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        z-index: 40;
+        min-height: 44px;
+        min-width: 44px;
+        padding: 0.5rem 0.9rem;
+        border: 1px solid var(--color-accent);
+        border-radius: 999px;
+        background: var(--color-accent);
+        color: var(--color-accent-ink);
+        font-size: 0.84rem;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+      }
+    }
+
+    @layer components {
+      .hero-header {
+        border-bottom: 2px solid var(--rule-bar);
+        padding-bottom: 1.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .hero-kicker {
+        display: inline-block;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: var(--color-accent);
+        background: var(--color-cobalt-soft);
+        padding: 0.2rem 0.6rem;
+        border-radius: var(--radius-sharp);
+        margin-bottom: 0.75rem;
+      }
+
+      .hero-header h1 {
+        font-size: clamp(1.42rem, 1.12rem + 1.3vw, 2.15rem);
+        line-height: 1.3;
+        color: var(--ink-strong);
+        margin-bottom: 0.75rem;
+      }
+
+      .hero-header h1 code {
+        white-space: nowrap;
+        font-size: 0.82em;
+      }
+
+      .hero-lead {
+        font-size: 1.05em;
+        color: var(--ink-body);
+        max-width: 72ch;
+        margin-bottom: 1.25rem;
+      }
+
+      .kpi-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.25rem), 1fr));
+        gap: 1px;
+        background: var(--rule-hair);
+        border: 1px solid var(--rule-hair);
+        margin: 1.25rem 0;
+      }
+
+      .kpi {
+        background: var(--bg-sheet);
+        padding: 0.9rem 1rem;
+        border-top: 3px solid var(--rule-bar);
+        min-width: 0;
+      }
+      .kpi[data-tone="income"] { border-top-color: var(--color-income); }
+      .kpi[data-tone="expense"] { border-top-color: var(--color-expense); }
+      .kpi[data-tone="grant"] { border-top-color: var(--color-grant); }
+      .kpi[data-tone="accent"] { border-top-color: var(--color-accent); }
+
+      .kpi .label {
+        font-size: 0.8rem;
+        color: var(--ink-muted);
+        margin-bottom: 0.25rem;
+      }
+
+      .kpi .value {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: var(--ink-strong);
+        font-variant-numeric: tabular-nums lining-nums;
+      }
+
+      .kpi .sub {
+        font-size: 0.78rem;
+        color: var(--ink-muted);
+        margin-top: 0.2rem;
+      }
+
+      .search-status-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.65rem 1rem;
+        background: var(--bg-well);
+        border: 1px solid var(--rule-hair);
+        border-left: 4px solid var(--color-accent);
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+      }
+
+      .chapter-section {
+        padding-top: 2.25rem;
+        margin-top: 2.25rem;
+        border-top: 2px solid var(--rule-hair);
+        scroll-margin-top: 4.75rem;
+      }
+
+      .chapter-section:first-of-type {
+        border-top: none;
+        padding-top: 0;
+        margin-top: 0;
+      }
+
+      .chapter-section.is-search-dimmed {
+        display: none;
+      }
+
+      .chapter-badge {
+        display: inline-block;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--ink-muted);
+        text-transform: uppercase;
+        margin-bottom: 0.25rem;
+      }
+
+      .chapter-section h2 {
+        font-size: clamp(1.28rem, 1.05rem + 0.8vw, 1.65rem);
+        line-height: 1.32;
+        color: var(--ink-strong);
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--rule-bar);
+        margin-bottom: 1.15rem;
+      }
+
+      .chapter-section h3 {
+        font-size: 1.14em;
+        color: var(--ink-strong);
+        margin: 1.6rem 0 0.75rem;
+        padding-left: 0.65rem;
+        border-left: 4px solid var(--color-cobalt);
+      }
+
+      .chapter-section h4 {
+        font-size: 1.02em;
+        color: var(--ink-strong);
+        margin: 1.1rem 0 0.45rem;
+      }
+
+      p + p, p + ul, p + ol, ul + p, ol + p {
+        margin-top: 0.75rem;
+      }
+
+      li { margin-bottom: 0.35rem; }
+
+      code {
+        font-family: var(--font-mono);
+        font-size: 0.88em;
+        background: var(--code-bg);
+        color: var(--code-ink);
+        padding: 0.12em 0.38em;
+        border-radius: var(--radius-sharp);
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+
+      .code-card {
+        position: relative;
+        min-width: 0;
+        margin: 1rem 0;
+        border: 1px solid var(--rule-hair);
+        border-left: 4px solid var(--rule-bar);
+        background: var(--code-bg);
+      }
+
+      .code-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.45rem 0.75rem;
+        border-bottom: 1px solid var(--rule-hair);
+        background: var(--bg-well);
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--ink-strong);
+      }
+
+      .copy-code-btn {
+        min-height: 1.85rem;
+        padding: 0.2rem 0.6rem;
+        border: 1px solid var(--rule-ui);
+        border-radius: var(--radius-control);
+        background: var(--bg-sheet);
+        color: var(--ink-strong);
+        font-size: 0.76rem;
+        font-weight: 600;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+
+      .copy-code-btn:hover { background: var(--bg-hover); }
+
+      pre.code-body {
+        padding: 0.9rem 1rem;
+        overflow-x: auto;
+        font-family: var(--font-mono);
+        font-size: 0.84em;
+        line-height: 1.55;
+        color: var(--code-ink);
+        white-space: pre;
+      }
+
+      .callout {
+        padding: 0.95rem 1.15rem;
+        margin: 1.15rem 0;
+        border: 1px solid var(--rule-hair);
+        border-left: 4px solid var(--color-accent);
+        background: var(--bg-well);
+      }
+      .callout[data-tone="income"] { border-left-color: var(--color-income); background: var(--color-income-soft); }
+      .callout[data-tone="expense"] { border-left-color: var(--color-expense); background: var(--color-expense-soft); }
+      .callout[data-tone="grant"] { border-left-color: var(--color-grant); background: var(--color-grant-soft); }
+
+      .callout-title {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.45rem;
+        font-weight: 800;
+        color: var(--ink-strong);
+        margin-bottom: 0.35rem;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.14rem 0.5rem;
+        font-size: 0.76rem;
+        font-weight: 700;
+        border-radius: var(--radius-sharp);
+        border: 1px solid currentColor;
+        white-space: normal;
+        line-height: 1.35;
+        max-width: 100%;
+      }
+      .pill.safe { color: var(--color-income); background: var(--color-income-soft); }
+      .pill.danger { color: var(--color-expense); background: var(--color-expense-soft); }
+      .pill.warn { color: var(--color-grant); background: var(--color-grant-soft); }
+      .pill.info { color: var(--color-accent); background: var(--color-cobalt-soft); }
+
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      .info-card {
+        border: 1px solid var(--rule-hair);
+        border-top: 3px solid var(--color-cobalt);
+        background: var(--bg-sheet);
+        padding: 1rem;
+        min-height: 8rem;
+      }
+
+      .info-card h4 { margin-top: 0; color: var(--ink-strong); }
+
+      /* Accessible Responsive Tables */
+      .table-wrapper {
+        overflow: auto;
+        max-inline-size: 100%;
+        max-block-size: min(620px, 78dvh);
+        margin: 1rem 0 1.4rem;
+        border: 1px solid var(--rule-hair);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.88em;
+        line-height: 1.5;
+      }
+
+      th, td {
+        padding: 0.55rem 0.75rem;
+        border-right: 1px solid var(--rule-hair);
+        border-bottom: 1px solid var(--rule-hair);
+        vertical-align: top;
+        text-align: left;
+      }
+
+      th:last-child, td:last-child { border-right: 0; }
+
+      caption {
+        caption-side: top;
+        text-align: left;
+        font-weight: 700;
+        font-size: 0.88em;
+        color: var(--ink-strong);
+        padding: 0.55rem 0.75rem;
+        background: var(--bg-well);
+        border-bottom: 1px solid var(--rule-hair);
+      }
+
+      thead {
+        position: sticky;
+        inset-block-start: 0;
+        z-index: 2;
+      }
+
+      thead th {
+        background: var(--thead-bg);
+        color: var(--ink-strong);
+        border-bottom: 2px solid var(--rule-bar);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      tbody th {
+        position: sticky;
+        inset-inline-start: 0;
+        z-index: 1;
+        background: var(--bg-sheet);
+        color: var(--ink-strong);
+        font-weight: 700;
+      }
+
+      tbody tr:hover td, tbody tr:hover th {
+        background: var(--bg-well);
+      }
+
+      td.num {
+        text-align: right;
+        font-variant-numeric: tabular-nums lining-nums;
+        white-space: nowrap;
+      }
+      td.ctr { text-align: center; }
+
+      .checklist {
+        list-style: none;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        margin: 1rem 0;
+      }
+
+      .checklist li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.65rem;
+        padding: 0.75rem 0.9rem;
+        border: 1px solid var(--rule-hair);
+        background: var(--bg-sheet);
+      }
+
+      .checklist input[type="checkbox"] {
+        width: 1.25rem;
+        height: 1.25rem;
+        margin-top: 0.15rem;
+        flex-shrink: 0;
+        cursor: pointer;
+      }
+
+      details.faq-item {
+        border: 1px solid var(--rule-hair);
+        margin-bottom: 0.65rem;
+        background: var(--bg-sheet);
+      }
+
+      details.faq-item summary {
+        padding: 0.75rem 1rem;
+        font-weight: 700;
+        color: var(--ink-strong);
+        cursor: pointer;
+        background: var(--bg-well);
+        list-style-position: inside;
+      }
+
+      details.faq-item[open] summary {
+        border-bottom: 1px solid var(--rule-hair);
+      }
+
+      .faq-body {
+        padding: 0.85rem 1rem;
+      }
+
+      mark.search-hit {
+        background: var(--color-grant-soft);
+        color: var(--ink-strong);
+        padding: 0 0.15em;
+        border-bottom: 2px solid var(--color-grant);
+      }
+    }
+
+    @layer diagrams {
+      .diagram-figure {
+        margin: 1.25rem 0 1.75rem;
+        border: 1px solid var(--rule-hair);
+        background: var(--bg-sheet);
+        padding: 1rem;
+      }
+
+      .diagram-figure figcaption {
+        font-size: 0.9em;
+        font-weight: 700;
+        color: var(--ink-strong);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.45rem;
+        border-bottom: 1px solid var(--rule-hair);
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 0.4rem;
+      }
+
+      .diagram-scroll-hint {
+        display: none;
+        margin: 0 0 0.45rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--ink-muted);
+      }
+
+      .diagram-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 0.25rem;
+      }
+
+      .diagram-scroll:focus-visible {
+        outline: 2px solid var(--rule-bar);
+        outline-offset: 2px;
+      }
+
+      .arch-svg {
+        display: block;
+        width: 100%;
+        min-width: 720px;
+        height: auto;
+        font-family: var(--font-sans);
+      }
+    }
+
+    @layer responsive {
+      @media (max-width: 980px) {
+        .page-shell {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 1.25rem;
+        }
+        .toc-sidebar {
+          position: static;
+          max-height: none;
+        }
+        .toc-head {
+          display: none;
+        }
+        .toc-summary {
+          display: flex;
+        }
+        .toc-drawer[open] .toc-drawer-body {
+          margin-top: 0.65rem;
+        }
+        .toc-list {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+          gap: 0.3rem;
+        }
+        .back-to-top {
+          right: 0.85rem;
+          bottom: 0.85rem;
+        }
+      }
+
+      @media (max-width: 780px) {
+        .diagram-scroll-hint {
+          display: block;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .top-bar {
+          position: static;
+        }
+        .top-controls {
+          width: 100%;
+        }
+        .search-group {
+          flex: 1 1 100%;
+        }
+        .search-group input[type="search"] {
+          width: 100%;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .page-shell {
+          padding: 0.65rem 0.5rem 3.5rem;
+          gap: 0.75rem;
+        }
+        .doc-sheet {
+          padding: 1.15rem 0.95rem;
+        }
+        .toc-sidebar {
+          padding: 0.65rem 0.85rem;
+        }
+        .callout {
+          padding: 0.8rem 0.9rem;
+        }
+        .diagram-figure {
+          padding: 0.75rem;
+        }
+        pre.code-body {
+          padding: 0.75rem;
+          font-size: 0.82em;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .kpi-strip {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .kpi:last-child:nth-child(odd) {
+          grid-column: 1 / -1;
+        }
+      }
+
+      @media (max-width: 320px) {
+        .kpi-strip {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      @container (width < 640px) {
+        .table-wrapper {
+          max-block-size: none;
+          overflow: visible;
+          border: 0;
+        }
+        table, caption, tbody, tr, th, td {
+          display: block;
+          width: 100%;
+        }
+        thead {
+          display: none;
+        }
+        caption {
+          padding: 0.6rem 0.75rem;
+          margin-bottom: 0.65rem;
+          background: var(--bg-well);
+          border: 1px solid var(--rule-hair);
+          border-left: 4px solid var(--rule-bar);
+          text-align: left;
+          font-weight: 700;
+          color: var(--ink-strong);
+        }
+        tbody tr {
+          margin-block-end: 0.9rem;
+          border: 1px solid var(--rule-hair);
+          border-top: 3px solid var(--rule-bar);
+          background: var(--bg-sheet);
+        }
+        tbody th {
+          position: static;
+          display: block;
+          background: var(--bg-well);
+          border-right: 0;
+          border-bottom: 1px solid var(--rule-hair);
+          padding: 0.65rem 0.8rem;
+          text-align: left;
+        }
+        tbody td {
+          display: block;
+          text-align: left;
+          border-right: 0;
+          border-bottom: 1px solid var(--rule-hair);
+          padding: 0.55rem 0.8rem;
+          white-space: normal;
+          overflow-wrap: anywhere;
+          word-break: keep-all;
+        }
+        tbody tr td:last-child {
+          border-bottom: 0;
+        }
+        tbody td::before {
+          content: attr(data-label);
+          display: block;
+          font-size: 0.76rem;
+          font-weight: 700;
+          color: var(--ink-muted);
+          margin-bottom: 0.22rem;
+        }
+        td.num, td.ctr {
+          text-align: left;
+          white-space: normal;
+        }
+      }
+
+      @media (pointer: coarse) {
+        .ctrl-btn, .toc-list a, .search-group input[type="search"], .toc-summary, .back-to-top {
+          min-height: 44px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        * { transition: none !important; animation: none !important; }
+      }
+
+      @media (forced-colors: active) {
+        .kpi, .info-card, .callout, .doc-sheet, .toc-sidebar, .diagram-figure, table, th, td {
+          border-color: CanvasText !important;
+        }
+        .ctrl-btn, .pill {
+          border: 1px solid ButtonText !important;
+        }
+      }
+    }
+
+    @layer print {
+      @media print {
+        :root, body {
+          color-scheme: only light !important;
+          background: #ffffff !important;
+          color: #111111 !important;
+          --bg-canvas: var(--stone-canvas-light);
+          --bg-sheet: var(--stone-sheet-light);
+          --bg-well: var(--stone-well-light);
+          --bg-hover: var(--stone-hover-light);
+          --ink-strong: var(--ink-strong-light);
+          --ink-body: var(--ink-body-light);
+          --ink-muted: var(--ink-muted-light);
+          --rule-hair: var(--rule-hair-light);
+          --rule-ui: var(--rule-ui-light);
+          --rule-bar: var(--rule-bar-light);
+          --thead-bg: var(--thead-bg-light);
+          --code-bg: var(--code-bg-light);
+          --code-ink: var(--code-ink-light);
+          --color-accent: var(--sig-accent-light);
+          --color-accent-ink: var(--sig-accent-ink-light);
+          --color-cobalt: var(--sig-cobalt-light);
+          --color-cobalt-soft: var(--sig-cobalt-soft-light);
+          --color-income: var(--sig-income-light);
+          --color-income-soft: var(--sig-income-soft-light);
+          --color-expense: var(--sig-expense-light);
+          --color-expense-soft: var(--sig-expense-soft-light);
+          --color-grant: var(--sig-grant-light);
+          --color-grant-soft: var(--sig-grant-soft-light);
+        }
+        .top-bar, .toc-sidebar, .no-print, .copy-code-btn, .search-status-bar, .back-to-top {
+          display: none !important;
+        }
+        .page-shell {
+          display: block;
+          padding: 0;
+          max-width: none;
+        }
+        .doc-sheet {
+          border: 0;
+          padding: 0;
+          background: #ffffff !important;
+        }
+        .chapter-section.is-search-dimmed {
+          display: block !important;
+        }
+        .doc-main {
+          container-type: normal;
+        }
+        .table-wrapper {
+          max-block-size: none;
+          overflow: visible;
+          container-type: normal;
+        }
+        table { display: table; width: 100%; }
+        caption { display: table-caption; }
+        thead { display: table-header-group; position: static; }
+        tbody { display: table-row-group; }
+        tr { display: table-row; break-inside: avoid; }
+        th, td { display: table-cell; position: static; }
+        tbody td::before { display: none; content: none; }
+        .diagram-figure, .callout, .code-card, .info-card {
+          break-inside: avoid;
+        }
+        .arch-svg { min-width: 0; width: 100%; }
+        @page { size: A4; margin: 14mm 12mm; }
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link visually-hidden" href="#main-content">본문으로 바로가기</a>
+
+  <header class="top-bar">
+    <div class="top-bar-inner">
+      <div class="brand-lockup">
+        <svg class="brand-mark" viewBox="0 0 36 36" aria-hidden="true">
+          <rect x="2" y="2" width="32" height="32" rx="4" fill="var(--color-accent)" />
+          <rect x="7" y="8" width="22" height="3.5" fill="var(--color-accent-ink)" />
+          <rect x="7" y="15" width="14" height="3" fill="var(--color-accent-ink)" opacity="0.9" />
+          <rect x="7" y="21" width="22" height="3" fill="var(--color-accent-ink)" opacity="0.75" />
+          <rect x="23" y="14" width="6" height="12" rx="1" fill="var(--color-accent-ink)" />
+        </svg>
+        <div class="brand-title">
+          <strong>union-portal 아키텍처 · 인수인계 종합 해설서</strong>
+          <span>우체국물류지원단 물류노동조합 · 비개발자 관리자용 완전 가이드</span>
+        </div>
+      </div>
+
+      <div class="top-controls no-print" role="region" aria-label="문서 탐색 및 보기 설정">
+        <div class="search-group">
+          <label for="doc-search" class="visually-hidden">문서 내 키워드·모듈·명령어 검색</label>
+          <input id="doc-search" type="search" placeholder="예: SQLite, sync-ledger, 소통간사, 규약">
+          <button id="doc-search-clear" type="button" class="ctrl-btn" hidden>지우기</button>
+        </div>
+        <div class="scale-group" role="group" aria-label="글자 크기 조절">
+          <button id="font-down" type="button" class="ctrl-btn" aria-label="글자 축소">가-</button>
+          <output id="font-scale-out" class="scale-readout" aria-live="polite">100%</output>
+          <button id="font-up" type="button" class="ctrl-btn" aria-label="글자 확대">가+</button>
+          <button id="font-reset" type="button" class="ctrl-btn" aria-label="글자 크기 초기화">초기화</button>
+        </div>
+        <button id="theme-toggle" type="button" class="ctrl-btn" aria-pressed="false">다크 모드</button>
+        <button id="print-btn" type="button" class="ctrl-btn primary">인쇄 / PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-shell">
+    <aside class="toc-sidebar" aria-label="문서 목차 영역">
+      <details id="toc-drawer" class="toc-drawer" open>
+        <summary class="toc-summary">
+          <span>목차 (총 12장) · 1장~12장 바로가기</span>
+          <span class="toc-summary-hint" aria-hidden="true"></span>
+        </summary>
+        <div class="toc-drawer-body">
+          <div class="toc-head">
+            <strong>목차 (총 12장)</strong>
+            <a href="#main-content" class="ctrl-btn" style="min-height:1.75rem;padding:0.15rem 0.45rem;font-size:0.75rem;text-decoration:none;">맨 위</a>
+          </div>
+          <nav aria-label="문서 장별 바로가기">
+            <ol class="toc-list" id="toc-list">
+              <li><a href="#ch-1">1. 기초 개념 안내 (비개발자 필독)</a></li>
+              <li><a href="#ch-2">2. 전체 아키텍처 4대 다이어그램</a></li>
+              <li><a href="#ch-3">3. 3대 도메인 &amp; 표준 용어 사전</a></li>
+              <li><a href="#ch-4">4. 7대 아키텍처 결정 (ADR) 해설</a></li>
+              <li><a href="#ch-5">5. 폴더·파일 구조 (Git vs 로컬)</a></li>
+              <li><a href="#ch-6">6. DB 스키마 13개 테이블 명세</a></li>
+              <li><a href="#ch-7">7. 기능별 작동 원리 (8대 서브시스템)</a></li>
+              <li><a href="#ch-8">8. 코드 모듈별 상세 레퍼런스</a></li>
+              <li><a href="#ch-9">9. CLI 명령어 마스터 사전</a></li>
+              <li><a href="#ch-10">10. 상황별 실무 운영 매뉴얼 A~G</a></li>
+              <li><a href="#ch-11">11. 인수인계 체크리스트 &amp; FAQ</a></li>
+              <li><a href="#ch-12">12. 가독성·접근성·디자인 원칙</a></li>
+            </ol>
+          </nav>
+        </div>
+      </details>
+    </aside>
+
+    <main class="doc-main">
+      <article class="doc-sheet">
+        <header class="hero-header">
+          <span class="hero-kicker">인수인계 표준 매뉴얼 · Node.js 22 LTS / TypeScript 단일 스택</span>
+          <h1 id="main-content" tabindex="-1">우체국물류지원단 물류노동조합 종합 포털 (<code>union-portal</code>) 아키텍처 · 모듈 · 운영 해설서</h1>
+          <p class="hero-lead">
+            이 문서는 노동조합 집행부(위원장·사무국장·지부장)나 포털 관리자가 바뀌더라도 <strong>프로그래밍 경험이 없는 비개발자 관리자가 기초 개념부터 전체 시스템 설계, 개인정보 보호 원리, 개별 코드 모듈의 역할, 그리고 일상 실무까지 빠르게 파악하고 안전하게 업무를 이어받을 수 있도록</strong> 작성되었습니다.
+          </p>
+
+          <div class="kpi-strip" role="region" aria-label="시스템 핵심 수치 요약">
+            <div class="kpi" data-tone="accent">
+              <div class="label">통합 도메인 컨텍스트</div>
+              <div class="value">3대 축</div>
+              <div class="sub">조직(Org) · 회계(Acc) · 자료실(Archive)</div>
+            </div>
+            <div class="kpi" data-tone="income">
+              <div class="label">공개 포털 정보구조(IA)</div>
+              <div class="value">4개 영역</div>
+              <div class="sub">홈(/) · 자료실 · 회계 · 조합 안내</div>
+            </div>
+            <div class="kpi">
+              <div class="label">정본 SQLite 스키마</div>
+              <div class="value">13+2 테이블</div>
+              <div class="sub">Drizzle ORM + 물리 외래키(FK) 강제</div>
+            </div>
+            <div class="kpi" data-tone="expense">
+              <div class="label">개인정보 보호 게이트</div>
+              <div class="value">이중 차단</div>
+              <div class="sub">로컬 DB 100% 검사 + CI HMAC 해시</div>
+            </div>
+            <div class="kpi" data-tone="grant">
+              <div class="label">아키텍처 결정 기록</div>
+              <div class="value">ADR 7건</div>
+              <div class="sub">정적 포털 · 단일 스택 · 다회차 심의</div>
+            </div>
+          </div>
+
+          <div class="callout" data-tone="grant">
+            <div class="callout-title"><span class="pill warn">보안 불변식</span> <span>절대 지켜야 할 2가지 원칙</span></div>
+            <p>
+              <strong>① 민감 경로 Git 격리:</strong> <code>data/local/</code>, <code>_raw/</code>, <code>directory/</code>, <code>reports/</code>, <code>_site/</code>, <code>.env</code>는 절대 Git에 추가하거나 인터넷에 올리지 않습니다.<br>
+              <strong>② 실명 노출 금지:</strong> 본 문서의 모든 예시·명령어·표는 실제 조합원이 아닌 가상 인명(<code>홍길동</code>, <code>김철수</code>, <code>이영희</code>, <code>박민수</code>, <code>M-9001</code>, <code>E-9001</code>)만 사용합니다.
+            </p>
+          </div>
+        </header>
+
+        <div id="search-status-bar" class="search-status-bar" hidden>
+          <span id="search-status-text" role="status" aria-live="polite"></span>
+          <button id="search-show-all" type="button" class="ctrl-btn" style="min-height:1.9rem;">전체 장 다시 보기</button>
+        </div>
+
+        <!-- 제1장 -->
+        <section id="ch-1" class="chapter-section" data-chapter="1">
+          <span class="chapter-badge">Chapter 01 · Fundamentals</span>
+          <h2>제1장. 비개발자 관리자를 위한 기초 개념 안내 (시작하기 전에)</h2>
+
+          <h3>1.1 이 시스템은 왜 이렇게 만들어졌는가?</h3>
+          <p>노동조합을 투명하게 운영하려면 조합원 누구나 스마트폰에서 회계 장부, 회의록, 성명서, 규약을 쉽게 볼 수 있어야 합니다. 하지만 동시에 조합원 명부, 가입서 스캔본, 연락처, 경조사 내역 같은 민감한 개인정보는 단 한 글자도 외부 인터넷에 새어 나가선 안 됩니다.</p>
+          <p><code>union-portal</code>은 <strong>"사무실 내 컴퓨터 속 비밀 금고(로컬 정본)"</strong>와 <strong>"누구나 볼 수 있는 전시장(공개 정적 웹사이트)"</strong>을 완전히 분리해 놓고, 그 사이에 <strong>자동화된 개인정보 지우개 + 이중 보안 검문소</strong>를 세워 둔 시스템입니다.</p>
+
+          <h3>1.2 꼭 알아야 할 IT 기초 개념 10가지 (쉬운 비유 사전)</h3>
+          <div class="table-wrapper" tabindex="0" role="region" aria-labelledby="cap-concepts">
+            <table>
+              <caption id="cap-concepts">비개발자 관리자를 위한 10대 핵심 기술 개념과 일상 비유</caption>
+              <thead>
+                <tr>
+                  <th scope="col">번호</th>
+                  <th scope="col">기술 용어</th>
+                  <th scope="col">일상 비유 (쉽게 이해하기)</th>
+                  <th scope="col">union-portal에서의 실제 역할</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">01</th>
+                  <td data-label="기술 용어"><strong>정적 웹사이트 &amp; GitHub Pages</strong></td>
+                  <td data-label="일상 비유">24시간 경비원이 서 있는 백화점(서버)이 아니라, 미리 인쇄한 책자 묶음을 무료 전시장에 진열하는 방식</td>
+                  <td data-label="실제 역할">서버 유지비(월 비용)가 0원이며, 서버 해킹으로 조합원 DB가 탈취될 위험이 원천적으로 없습니다. <code>_site/</code> 폴더가 완성된 책자 묶음입니다.</td>
+                </tr>
+                <tr>
+                  <th scope="row">02</th>
+                  <td data-label="기술 용어"><strong>로컬(Local) vs 원격(GitHub)</strong></td>
+                  <td data-label="일상 비유">내 사무실 책상 잠금 서랍(내 PC) vs 인터넷 공용 진열장(GitHub)</td>
+                  <td data-label="실제 역할">개인정보 원본은 내 PC에만 보관하고, 개인정보가 지워진 파일과 프로그램 코드만 <code>git push</code>로 GitHub에 보냅니다.</td>
+                </tr>
+                <tr>
+                  <th scope="row">03</th>
+                  <td data-label="기술 용어"><strong><code>.gitignore</code> (출입 통제 명단)</strong></td>
+                  <td data-label="일상 비유">택배 상자에 절대 넣지 말아야 할 물품을 적어 둔 자동 금지 스티커</td>
+                  <td data-label="실제 역할"><code>data/local/</code>, <code>_raw/</code>, <code>directory/</code>, <code>reports/</code>, <code>_site/</code>, <code>.env</code>가 실수로 GitHub에 올라가지 못하게 자동 차단합니다.</td>
+                </tr>
+                <tr>
+                  <th scope="row">04</th>
+                  <td data-label="기술 용어"><strong>SQLite 데이터베이스 (<code>union.db</code>)</strong></td>
+                  <td data-label="일상 비유">여러 장의 엑셀 시트가 서로 어긋나지 않게 묶여 있는 "스마트 정본 금고 파일 1개"</td>
+                  <td data-label="실제 역할">조합원·외부인·직책 이력·별칭·원장·문서 연결을 <code>data/local/union.db</code> 1개 파일에 외래키 제약조건과 함께 안전하게 저장합니다.</td>
+                </tr>
+                <tr>
+                  <th scope="row">05</th>
+                  <td data-label="기술 용어"><strong>공개 투영 (<code>data/public/</code>)</strong></td>
+                  <td data-label="일상 비유">비밀 문서 원본에서 이름·연락처를 검은 펜으로 가리고 통계 숫자만 옮겨 적은 요약본</td>
+                  <td data-label="실제 역할"><code>export-public</code> 명령이 정본 DB에서 개인정보를 제거해 추출하는 정제 JSON 스냅샷입니다. 이 폴더만 GitHub에 올라갑니다.</td>
+                </tr>
+                <tr>
+                  <th scope="row">06</th>
+                  <td data-label="기술 용어"><strong>단방향 해시(HMAC-SHA256) &amp; 솔트</strong></td>
+                  <td data-label="일상 비유">이름을 암호 지문으로 바꾸는 믹서기. 지문만 보고는 원래 이름을 복원할 수 없지만, 글에 이름이 섞였는지는 100% 적발 가능</td>
+                  <td data-label="실제 역할">GitHub에는 이름 대신 지문 목록(<code>privacy_hashes.json</code>)만 올립니다. GitHub Secret의 비밀 솔트(<code>PRIVACY_HMAC_SALT</code>)로 실명 누수를 차단합니다.</td>
+                </tr>
+                <tr>
+                  <th scope="row">07</th>
+                  <td data-label="기술 용어"><strong>CLI (명령줄 도구, <code>union</code>)</strong></td>
+                  <td data-label="일상 비유">복잡한 메뉴 대신 터미널에 짧은 명령 한 줄을 입력해 실행하는 "만능 리모컨"</td>
+                  <td data-label="실제 역할">조합원 가입, 원장 동기화, 공개본 추출, 개인정보 감사, 사이트 빌드, A2/A3/A4 PDF 생성을 모두 한 줄로 처리합니다.</td>
+                </tr>
+                <tr>
+                  <th scope="row">08</th>
+                  <td data-label="기술 용어"><strong>TypeScript &amp; Node.js 22 LTS</strong></td>
+                  <td data-label="일상 비유">과거 회계(Python)와 자료실(JS)의 서로 달랐던 공용어를 하나로 통일한 설계 언어</td>
+                  <td data-label="실제 역할">인명 정규화·개인정보 검사·SVG 차트 생성·PDF 출력·웹 빌드가 단일 언어로 통합되어 중복과 불일치가 사라졌습니다.</td>
+                </tr>
+                <tr>
+                  <th scope="row">09</th>
+                  <td data-label="기술 용어"><strong>Markdown / YAML / JSON</strong></td>
+                  <td data-label="일상 비유">문서 서식(<code>.md</code>), 문서 표지 카드(<code>YAML</code>), 컴퓨터용 데이터 표(<code>JSON</code>)</td>
+                  <td data-label="실제 역할">회의록은 <code>.md</code>로 작성하고, 표지 정보는 상단 <code>---</code> 사이에 적으며, 규약 심의안과 계정 설정은 <code>.json</code>으로 관리합니다.</td>
+                </tr>
+                <tr>
+                  <th scope="row">10</th>
+                  <td data-label="기술 용어"><strong>CI/CD (GitHub Actions 검문소)</strong></td>
+                  <td data-label="일상 비유">공항 보안검색대: 올릴 때마다 로봇이 계산·링크·개인정보를 검사하고 통과해야만 공개</td>
+                  <td data-label="실제 역할"><code>main</code> 브랜치에 푸시할 때마다 자동으로 <code>typecheck</code>, <code>test</code>, <code>build:site</code>, <code>validate:ci</code>를 거쳐야만 GitHub Pages에 배포합니다.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 제2장 -->
+        <section id="ch-2" class="chapter-section" data-chapter="2">
+          <span class="chapter-badge">Chapter 02 · Visual Architecture</span>
+          <h2>제2장. 전체 아키텍처 한눈에 보기 (4대 핵심 다이어그램)</h2>
+          <p>아래 4개의 도표는 시스템 전체의 <strong>보안 경계</strong>, <strong>데이터 이동 순서</strong>, <strong>프로그램 계층 구조</strong>, 그리고 <strong>데이터베이스 테이블 관계</strong>를 한눈에 보여줍니다.</p>
+
+          <h3>2.1 다이어그램 1: 전체 시스템 아키텍처 및 보안 경계도</h3>
+          <figure class="diagram-figure">
+            <figcaption>
+              <span>그림 2-1. 로컬 비밀 구역 ↔ TypeScript 코어 엔진 ↔ Git 공개 원본 ↔ 이중 검증 &amp; GitHub Pages 배포도</span>
+              <span class="pill danger">점선 왼쪽(로컬 비밀)은 절대 Git 업로드 금지</span>
+            </figcaption>
+            <p class="diagram-scroll-hint">← 좌우로 밀어 다이어그램 전체 보기 →</p>
+            <div class="diagram-scroll" tabindex="0" role="region" aria-label="다이어그램 1 스크롤 영역">
+              <svg class="arch-svg" viewBox="0 0 980 560" role="img" aria-labelledby="svg1-t svg1-d">
+                <title id="svg1-t">union-portal 전체 시스템 아키텍처 및 보안 경계도</title>
+                <desc id="svg1-d">좌측의 로컬 전용 비밀 구역(Google Sheets/Excel, _raw 증빙, .env 솔트, union.db 정본, directory, reports)과 중앙의 TypeScript 코어 엔진(domain, storage, services, site/pdf/cli), 우측 상단의 Git 추적 공개 원본(config, _source, data/public, web/assets), 우측 하단의 이중 검증 게이트(pre-push 훅, GitHub Actions CI, _site 빌드, GitHub Pages 및 redirects)가 어떻게 연결되는지 보여줍니다.</desc>
+                <defs>
+                  <marker id="arr-dark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--ink-strong)" />
+                  </marker>
+                  <marker id="arr-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--color-accent)" />
+                  </marker>
+                  <marker id="arr-income" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--color-income)" />
+                  </marker>
+                </defs>
+
+                <!-- Zone 1: Local Secret Boundary -->
+                <rect x="14" y="16" width="310" height="528" rx="6" fill="var(--color-expense-soft)" stroke="var(--color-expense)" stroke-width="2" stroke-dasharray="7 4" />
+                <text x="28" y="42" font-size="13.5" font-weight="800" fill="var(--color-expense)">1. 로컬 전용 비밀 구역 (.gitignore 격리)</text>
+                <text x="28" y="60" font-size="11" fill="var(--ink-muted)">실명·연락처·원본 DB 포함 — GitHub 업로드 절대 금지</text>
+
+                <rect x="30" y="76" width="278" height="54" rx="4" fill="var(--bg-sheet)" stroke="var(--rule-ui)" stroke-width="1.5" />
+                <text x="169" y="99" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink-strong)">외부 회계 입력 (Google Sheets / .xlsx)</text>
+                <text x="169" y="117" text-anchor="middle" font-size="11" fill="var(--ink-muted)">단방향 upsert 동기화 (sync-ledger)</text>
+
+                <line x1="169" y1="130" x2="169" y2="162" stroke="var(--ink-strong)" stroke-width="1.8" marker-end="url(#arr-dark)" />
+
+                <rect x="30" y="166" width="278" height="72" rx="4" fill="var(--bg-sheet)" stroke="var(--color-expense)" stroke-width="2" />
+                <text x="169" y="191" text-anchor="middle" font-size="13.5" font-weight="800" fill="var(--ink-strong)">data/local/union.db (정본 DB)</text>
+                <text x="169" y="210" text-anchor="middle" font-size="11" fill="var(--ink-body)">SQLite 13개 테이블 (조합원·직책·별칭·원장·링크)</text>
+                <text x="169" y="227" text-anchor="middle" font-size="10.5" fill="var(--color-expense)">PRAGMA foreign_keys = ON (참조 무결성 강제)</text>
+
+                <rect x="30" y="256" width="134" height="72" rx="4" fill="var(--bg-sheet)" stroke="var(--rule-ui)" stroke-width="1.4" />
+                <text x="97" y="280" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink-strong)">_raw/ (증빙 원본)</text>
+                <text x="97" y="298" text-anchor="middle" font-size="10.5" fill="var(--ink-muted)">가입서·탈퇴서 스캔</text>
+                <text x="97" y="314" text-anchor="middle" font-size="10.5" fill="var(--ink-muted)">BlobStorage 논리키</text>
+
+                <rect x="174" y="256" width="134" height="72" rx="4" fill="var(--bg-sheet)" stroke="var(--rule-ui)" stroke-width="1.4" />
+                <text x="241" y="280" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink-strong)">.env (비밀 키)</text>
+                <text x="241" y="298" text-anchor="middle" font-size="10.5" fill="var(--ink-muted)">PRIVACY_HMAC_SALT</text>
+                <text x="241" y="314" text-anchor="middle" font-size="10.5" fill="var(--ink-muted)">CI Secret과 동일 값</text>
+
+                <rect x="30" y="346" width="278" height="58" rx="4" fill="var(--bg-sheet)" stroke="var(--rule-ui)" stroke-width="1.4" />
+                <text x="169" y="370" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink-strong)">directory/ (로컬 명부 .md · export-md)</text>
+                <text x="169" y="389" text-anchor="middle" font-size="10.5" fill="var(--ink-muted)">members · officers · external_people · title_rules</text>
+
+                <rect x="30" y="420" width="278" height="106" rx="4" fill="var(--bg-sheet)" stroke="var(--rule-ui)" stroke-width="1.4" />
+                <text x="169" y="444" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink-strong)">reports/ (내부 보고서 &amp; 인쇄 PDF)</text>
+                <text x="169" y="464" text-anchor="middle" font-size="11" fill="var(--ink-body)">• monthly/YYYY-MM_운영위보고.html</text>
+                <text x="169" y="482" text-anchor="middle" font-size="11" fill="var(--ink-body)">• annual/YYYY_대의원대회결산.html</text>
+                <text x="169" y="500" text-anchor="middle" font-size="11" fill="var(--ink-muted)">• pdf/*.pdf (Chrome/Edge 헤드리스 A2/A3/A4)</text>
+
+                <line x1="169" y1="238" x2="169" y2="342" stroke="var(--ink-strong)" stroke-width="1.4" stroke-dasharray="3 3" marker-end="url(#arr-dark)" />
+
+                <!-- Zone 2: Core TypeScript Engine -->
+                <rect x="348" y="16" width="268" height="528" rx="6" fill="var(--bg-well)" stroke="var(--rule-bar)" stroke-width="2" />
+                <text x="364" y="42" font-size="13.5" font-weight="800" fill="var(--ink-strong)">2. TypeScript 코어 엔진 (src/)</text>
+                <text x="364" y="60" font-size="11" fill="var(--ink-muted)">Node.js 22 LTS 단일 스택 · Git 추적</text>
+
+                <rect x="364" y="78" width="236" height="84" rx="4" fill="var(--bg-sheet)" stroke="var(--color-accent)" stroke-width="1.8" />
+                <text x="482" y="101" text-anchor="middle" font-size="12.5" font-weight="800" fill="var(--color-accent)">src/domain/ (순수 도메인)</text>
+                <text x="482" y="120" text-anchor="middle" font-size="11" fill="var(--ink-body)">accounting · person-normalizer</text>
+                <text x="482" y="137" text-anchor="middle" font-size="11" fill="var(--ink-body)">privacy · content-graph · types</text>
+                <text x="482" y="153" text-anchor="middle" font-size="10" fill="var(--ink-muted)">외부 DB 파일 경로 의존 없음</text>
+
+                <rect x="364" y="178" width="236" height="74" rx="4" fill="var(--bg-sheet)" stroke="var(--color-cobalt)" stroke-width="1.6" />
+                <text x="482" y="201" text-anchor="middle" font-size="12.5" font-weight="800" fill="var(--ink-strong)">src/storage/ (추상화 경계)</text>
+                <text x="482" y="220" text-anchor="middle" font-size="11" fill="var(--ink-body)">UnionRepositories &amp; BlobStorage</text>
+                <text x="482" y="237" text-anchor="middle" font-size="10.5" fill="var(--ink-muted)">Drizzle ORM + @libsql/client 구현</text>
+
+                <rect x="364" y="268" width="236" height="90" rx="4" fill="var(--bg-sheet)" stroke="var(--color-cobalt)" stroke-width="1.6" />
+                <text x="482" y="291" text-anchor="middle" font-size="12.5" font-weight="800" fill="var(--ink-strong)">src/services/ (유즈케이스)</text>
+                <text x="482" y="310" text-anchor="middle" font-size="11" fill="var(--ink-body)">MemberService · syncLedger</text>
+                <text x="482" y="327" text-anchor="middle" font-size="11" fill="var(--ink-body)">exportPublic · exportMarkdown</text>
+                <text x="482" y="344" text-anchor="middle" font-size="11" fill="var(--ink-body)">auditPrivacy · importLegacy</text>
+
+                <rect x="364" y="374" width="236" height="90" rx="4" fill="var(--bg-sheet)" stroke="var(--color-cobalt)" stroke-width="1.6" />
+                <text x="482" y="397" text-anchor="middle" font-size="12.5" font-weight="800" fill="var(--ink-strong)">src/site/ &amp; reports/ &amp; pdf/</text>
+                <text x="482" y="416" text-anchor="middle" font-size="11" fill="var(--ink-body)">buildSite · validateSite · shell</text>
+                <text x="482" y="433" text-anchor="middle" font-size="11" fill="var(--ink-body)">bylaws* · mom · statement · svg</text>
+                <text x="482" y="450" text-anchor="middle" font-size="11" fill="var(--ink-body)">buildInternalReports · generatePdf</text>
+
+                <rect x="364" y="480" width="236" height="46" rx="4" fill="var(--color-accent)" />
+                <text x="482" y="501" text-anchor="middle" font-size="12.5" font-weight="800" fill="var(--color-accent-ink)">src/cli/index.ts (union CLI)</text>
+                <text x="482" y="517" text-anchor="middle" font-size="10.5" fill="var(--color-accent-ink)" opacity="0.9">모든 관리 명령의 단일 진입점</text>
+
+                <!-- Arrows between Local and Engine -->
+                <line x1="308" y1="202" x2="360" y2="202" stroke="var(--color-accent)" stroke-width="2" marker-end="url(#arr-accent)" />
+                <line x1="364" y1="430" x2="312" y2="455" stroke="var(--ink-strong)" stroke-width="1.6" marker-end="url(#arr-dark)" />
+
+                <!-- Zone 3: Git Public Sources -->
+                <rect x="640" y="16" width="326" height="252" rx="6" fill="var(--color-income-soft)" stroke="var(--color-income)" stroke-width="2" />
+                <text x="656" y="42" font-size="13.5" font-weight="800" fill="var(--color-income)">3. Git 추적 공개 원본 구역 (GitHub)</text>
+                <text x="656" y="60" font-size="11" fill="var(--ink-muted)">비식별·공적 직무 데이터만 커밋 허용</text>
+
+                <rect x="656" y="74" width="294" height="52" rx="4" fill="var(--bg-sheet)" stroke="var(--color-income)" stroke-width="1.6" />
+                <text x="803" y="96" text-anchor="middle" font-size="12" font-weight="800" fill="var(--ink-strong)">data/public/ (export-public 산출물)</text>
+                <text x="803" y="114" text-anchor="middle" font-size="10.5" fill="var(--ink-body)">비식별 원장 · 조직통계 · 직무자 · 링크 · HMAC 해시</text>
+
+                <rect x="656" y="136" width="294" height="54" rx="4" fill="var(--bg-sheet)" stroke="var(--rule-ui)" stroke-width="1.4" />
+                <text x="803" y="158" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink-strong)">_source/ (문서 · 규약 원본)</text>
+                <text x="803" y="176" text-anchor="middle" font-size="10.5" fill="var(--ink-muted)">catalog/topics/sources + mom/statement/bylaws*</text>
+
+                <rect x="656" y="200" width="294" height="52" rx="4" fill="var(--bg-sheet)" stroke="var(--rule-ui)" stroke-width="1.4" />
+                <text x="803" y="222" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink-strong)">config/ &amp; web/assets/</text>
+                <text x="803" y="240" text-anchor="middle" font-size="10.5" fill="var(--ink-muted)">units.json · coa.json · Hallmark CSS · 대시보드 JS</text>
+
+                <!-- Arrow export-public -->
+                <line x1="600" y1="305" x2="652" y2="105" stroke="var(--color-income)" stroke-width="2" marker-end="url(#arr-income)" />
+                <text x="615" y="198" font-size="10" font-weight="700" fill="var(--color-income)" transform="rotate(-72 615 198)">비식별 투영</text>
+
+                <!-- Zone 4: Dual Gates & Pages Deploy -->
+                <rect x="640" y="288" width="326" height="256" rx="6" fill="var(--color-cobalt-soft)" stroke="var(--color-accent)" stroke-width="2" />
+                <text x="656" y="314" font-size="13.5" font-weight="800" fill="var(--color-accent)">4. 이중 검증 게이트 &amp; 자동 배포</text>
+
+                <rect x="656" y="328" width="294" height="44" rx="4" fill="var(--bg-sheet)" stroke="var(--rule-ui)" stroke-width="1.4" />
+                <text x="803" y="348" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--ink-strong)">로컬 pre-push 훅 (check:local)</text>
+                <text x="803" y="364" text-anchor="middle" font-size="10.5" fill="var(--ink-muted)">민감경로 추적 차단 + 정본 DB 100% 실명 대조</text>
+
+                <line x1="803" y1="372" x2="803" y2="388" stroke="var(--color-accent)" stroke-width="1.8" marker-end="url(#arr-accent)" />
+
+                <rect x="656" y="392" width="294" height="52" rx="4" fill="var(--bg-sheet)" stroke="var(--color-accent)" stroke-width="1.8" />
+                <text x="803" y="413" text-anchor="middle" font-size="12" font-weight="800" fill="var(--ink-strong)">GitHub Actions CI (pages.yml)</text>
+                <text x="803" y="431" text-anchor="middle" font-size="10.5" fill="var(--ink-body)">typecheck → test → build:site(_site/) → validate:ci</text>
+
+                <line x1="803" y1="444" x2="803" y2="462" stroke="var(--color-accent)" stroke-width="1.8" marker-end="url(#arr-accent)" />
+
+                <rect x="656" y="466" width="294" height="62" rx="4" fill="var(--color-accent)" />
+                <text x="803" y="490" text-anchor="middle" font-size="13" font-weight="800" fill="var(--color-accent-ink)">GitHub Pages 공개 포털 배포</text>
+                <text x="803" y="509" text-anchor="middle" font-size="10.5" fill="var(--color-accent-ink)" opacity="0.92">yghnsim.github.io/union-portal (+ redirects/)</text>
+
+                <line x1="600" y1="420" x2="652" y2="418" stroke="var(--color-accent)" stroke-width="1.8" marker-end="url(#arr-accent)" />
+              </svg>
+            </div>
+          </figure>
+
+          <h3>2.2 다이어그램 2: 5단계 데이터 생명주기 파이프라인</h3>
+          <figure class="diagram-figure">
+            <figcaption>
+              <span>그림 2-2. 입력 수집 → 정본 저장 → 비식별 투영 → 빌드·출력 → 이중 검증·배포 흐름</span>
+              <span class="pill info">단방향 데이터 파이프라인</span>
+            </figcaption>
+            <p class="diagram-scroll-hint">← 좌우로 밀어 다이어그램 전체 보기 →</p>
+            <div class="diagram-scroll" tabindex="0" role="region" aria-label="다이어그램 2 스크롤 영역">
+              <svg class="arch-svg" viewBox="0 0 980 215" role="img" aria-labelledby="svg2-t svg2-d">
+                <title id="svg2-t">5단계 데이터 생명주기 파이프라인</title>
+                <desc id="svg2-d">1단계 입력/수집, 2단계 정규화 및 정본 저장, 3단계 비식별 공개 투영, 4단계 사이트·보고서·PDF 빌드, 5단계 이중 개인정보 및 무결성 검증 후 GitHub Pages 배포까지의 순차적 흐름도입니다.</desc>
+                <defs>
+                  <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--color-accent)" />
+                  </marker>
+                </defs>
+
+                <!-- Step 1 -->
+                <rect x="10" y="18" width="174" height="178" rx="4" fill="var(--bg-sheet)" stroke="var(--rule-bar)" stroke-width="2" />
+                <rect x="10" y="18" width="174" height="28" fill="var(--rule-bar)" />
+                <text x="97" y="37" text-anchor="middle" font-size="12" font-weight="800" fill="var(--bg-sheet)">1단계. 입력·수집</text>
+                <text x="22" y="68" font-size="11" font-weight="700" fill="var(--ink-strong)">• Google Sheets / .xlsx</text>
+                <text x="22" y="88" font-size="11" fill="var(--ink-body)">• 가입·탈퇴서 스캔본</text>
+                <text x="22" y="108" font-size="11" fill="var(--ink-body)">• CLI 조합원/임원 등록</text>
+                <text x="22" y="128" font-size="11" fill="var(--ink-body)">• _source 회의록(.md)</text>
+                <text x="22" y="148" font-size="11" fill="var(--ink-body)">• 성명서/소식지/규약</text>
+                <text x="22" y="176" font-size="10" fill="var(--ink-muted)">원본: 로컬 + _source</text>
+
+                <line x1="184" y1="107" x2="205" y2="107" stroke="var(--color-accent)" stroke-width="2.2" marker-end="url(#arr2)" />
+
+                <!-- Step 2 -->
+                <rect x="208" y="18" width="174" height="178" rx="4" fill="var(--bg-sheet)" stroke="var(--color-cobalt)" stroke-width="2" />
+                <rect x="208" y="18" width="174" height="28" fill="var(--color-cobalt)" />
+                <text x="295" y="37" text-anchor="middle" font-size="12" font-weight="800" fill="var(--color-accent-ink)">2단계. 정규화·정본 저장</text>
+                <text x="220" y="68" font-size="11" font-weight="700" fill="var(--ink-strong)">• 인명 정규화 엔진</text>
+                <text x="220" y="88" font-size="11" fill="var(--ink-body)">• 원장 3대 검증</text>
+                <text x="226" y="104" font-size="10" fill="var(--ink-muted)">(COA · 수식 · 1원 잔액)</text>
+                <text x="220" y="124" font-size="11" fill="var(--ink-body)">• union.db FK 무결성</text>
+                <text x="220" y="144" font-size="11" fill="var(--ink-body)">• _raw/ BlobStorage</text>
+                <text x="220" y="176" font-size="10" fill="var(--ink-muted)">명령: sync-ledger, member</text>
+
+                <line x1="382" y1="107" x2="403" y2="107" stroke="var(--color-accent)" stroke-width="2.2" marker-end="url(#arr2)" />
+
+                <!-- Step 3 -->
+                <rect x="406" y="18" width="174" height="178" rx="4" fill="var(--bg-sheet)" stroke="var(--color-income)" stroke-width="2" />
+                <rect x="406" y="18" width="174" height="28" fill="var(--color-income)" />
+                <text x="493" y="37" text-anchor="middle" font-size="12" font-weight="800" fill="var(--color-accent-ink)">3단계. 비식별 투영</text>
+                <text x="418" y="68" font-size="11" font-weight="700" fill="var(--ink-strong)">• target → '개인' 치환</text>
+                <text x="418" y="88" font-size="11" fill="var(--ink-body)">• note/memo → '관계자'</text>
+                <text x="418" y="108" font-size="11" fill="var(--ink-body)">• 조직통계 순수 숫자 집계</text>
+                <text x="418" y="128" font-size="11" fill="var(--ink-body)">• 공적 직무자만 추출</text>
+                <text x="418" y="148" font-size="11" fill="var(--ink-body)">• HMAC-SHA256 해시화</text>
+                <text x="418" y="176" font-size="10" fill="var(--ink-muted)">명령: export-public</text>
+
+                <line x1="580" y1="107" x2="601" y2="107" stroke="var(--color-accent)" stroke-width="2.2" marker-end="url(#arr2)" />
+
+                <!-- Step 4 -->
+                <rect x="604" y="18" width="174" height="178" rx="4" fill="var(--bg-sheet)" stroke="var(--color-grant)" stroke-width="2" />
+                <rect x="604" y="18" width="174" height="28" fill="var(--color-grant)" />
+                <text x="691" y="37" text-anchor="middle" font-size="12" font-weight="800" fill="var(--color-accent-ink)">4단계. 빌드·출력</text>
+                <text x="616" y="68" font-size="11" font-weight="700" fill="var(--ink-strong)">• _site/ 정적 포털</text>
+                <text x="622" y="84" font-size="10" fill="var(--ink-muted)">(홈·자료실·회계·조합·sitemap)</text>
+                <text x="616" y="104" font-size="11" fill="var(--ink-body)">• reports/ 실명 보고서</text>
+                <text x="616" y="124" font-size="11" fill="var(--ink-body)">• directory/ 로컬 명부</text>
+                <text x="616" y="144" font-size="11" fill="var(--ink-body)">• A2/A3/A4 PDF 생성</text>
+                <text x="616" y="176" font-size="10" fill="var(--ink-muted)">명령: build-site, reports, pdf</text>
+
+                <line x1="778" y1="107" x2="799" y2="107" stroke="var(--color-accent)" stroke-width="2.2" marker-end="url(#arr2)" />
+
+                <!-- Step 5 -->
+                <rect x="802" y="18" width="168" height="178" rx="4" fill="var(--bg-sheet)" stroke="var(--color-accent)" stroke-width="2.2" />
+                <rect x="802" y="18" width="168" height="28" fill="var(--color-accent)" />
+                <text x="886" y="37" text-anchor="middle" font-size="12" font-weight="800" fill="var(--color-accent-ink)">5단계. 검증·배포</text>
+                <text x="814" y="68" font-size="11" font-weight="700" fill="var(--ink-strong)">• audit-privacy 감사</text>
+                <text x="814" y="88" font-size="11" fill="var(--ink-body)">• AST Dual-Zone 검사</text>
+                <text x="820" y="104" font-size="10" fill="var(--ink-muted)">(재정=0명 vs 본문=직무자)</text>
+                <text x="814" y="124" font-size="11" fill="var(--ink-body)">• 링크·산술·가시성 검증</text>
+                <text x="814" y="144" font-size="11" fill="var(--ink-body)">• GitHub Pages 배포</text>
+                <text x="814" y="176" font-size="10" fill="var(--ink-muted)">명령: check:local / ci</text>
+              </svg>
+            </div>
+          </figure>
+
+          <h3>2.3 다이어그램 3: 계층형 소프트웨어 구조와 클라우드 이전 경계</h3>
+          <figure class="diagram-figure">
+            <figcaption>
+              <span>그림 2-3. ADR-0001 · ADR-0005 추상화 경계 — 도메인 로직 수정 없이 저장소 교체 가능</span>
+              <span class="pill safe">의존성 역전 구조</span>
+            </figcaption>
+            <p class="diagram-scroll-hint">← 좌우로 밀어 다이어그램 전체 보기 →</p>
+            <div class="diagram-scroll" tabindex="0" role="region" aria-label="다이어그램 3 스크롤 영역">
+              <svg class="arch-svg" viewBox="0 0 920 330" role="img" aria-labelledby="svg3-t svg3-d">
+                <title id="svg3-t">계층형 소프트웨어 아키텍처 및 클라우드 이전 경계도</title>
+                <desc id="svg3-d">진입 계층(CLI, Site, Reports, PDF), 서비스 계층, 도메인 계층이 오직 저장소 추상 인터페이스(UnionRepositories, BlobStorage)에만 의존하며, 현재의 SQLite와 로컬 파일 구현체를 향후 PostgreSQL과 클라우드 오브젝트 스토리지로 도메인 코드 수정 없이 교체할 수 있는 구조입니다.</desc>
+                <defs>
+                  <marker id="arr3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--ink-strong)" />
+                  </marker>
+                </defs>
+
+                <rect x="40" y="16" width="840" height="52" rx="4" fill="var(--bg-well)" stroke="var(--rule-bar)" stroke-width="1.8" />
+                <text x="460" y="39" text-anchor="middle" font-size="13" font-weight="800" fill="var(--ink-strong)">진입 계층 (Entrypoints): src/cli/ · src/site/ · src/reports/ · src/pdf/</text>
+                <text x="460" y="57" text-anchor="middle" font-size="11" fill="var(--ink-muted)">사용자 명령 해석, HTML/SVG/PDF 생성, AST 검증 실행</text>
+
+                <line x1="300" y1="68" x2="300" y2="92" stroke="var(--ink-strong)" stroke-width="1.8" marker-end="url(#arr3)" />
+                <line x1="620" y1="68" x2="620" y2="92" stroke="var(--ink-strong)" stroke-width="1.8" marker-end="url(#arr3)" />
+
+                <rect x="40" y="96" width="400" height="62" rx="4" fill="var(--bg-sheet)" stroke="var(--color-cobalt)" stroke-width="1.8" />
+                <text x="240" y="120" text-anchor="middle" font-size="13" font-weight="800" fill="var(--ink-strong)">서비스 계층 (src/services/)</text>
+                <text x="240" y="140" text-anchor="middle" font-size="11" fill="var(--ink-body)">MemberService · syncLedger · exportPublic · auditPrivacy</text>
+
+                <rect x="480" y="96" width="400" height="62" rx="4" fill="var(--bg-sheet)" stroke="var(--color-accent)" stroke-width="2" />
+                <text x="680" y="120" text-anchor="middle" font-size="13" font-weight="800" fill="var(--color-accent)">순수 도메인 계층 (src/domain/)</text>
+                <text x="680" y="140" text-anchor="middle" font-size="11" fill="var(--ink-body)">accounting · person-normalizer · privacy · content-graph</text>
+
+                <line x1="440" y1="127" x2="476" y2="127" stroke="var(--ink-strong)" stroke-width="1.8" marker-end="url(#arr3)" />
+                <line x1="240" y1="158" x2="240" y2="184" stroke="var(--ink-strong)" stroke-width="1.8" marker-end="url(#arr3)" />
+
+                <rect x="40" y="188" width="840" height="46" rx="4" fill="var(--color-cobalt-soft)" stroke="var(--color-accent)" stroke-width="2" stroke-dasharray="6 3" />
+                <text x="460" y="210" text-anchor="middle" font-size="13" font-weight="800" fill="var(--color-accent)">저장소 추상 경계 (Ports): UnionRepositories (src/storage/repositories.ts) &amp; BlobStorage (blob-storage.ts)</text>
+                <text x="460" y="226" text-anchor="middle" font-size="10.5" fill="var(--ink-body)">도메인과 서비스는 오직 이 약속(인터페이스)에만 의존합니다.</text>
+
+                <line x1="240" y1="234" x2="240" y2="258" stroke="var(--ink-strong)" stroke-width="1.8" marker-end="url(#arr3)" />
+                <line x1="680" y1="234" x2="680" y2="258" stroke="var(--ink-muted)" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#arr3)" />
+
+                <rect x="40" y="262" width="400" height="54" rx="4" fill="var(--color-income-soft)" stroke="var(--color-income)" stroke-width="1.8" />
+                <text x="240" y="285" text-anchor="middle" font-size="12.5" font-weight="800" fill="var(--color-income)">현재 1단계 구현체 (로컬 우선)</text>
+                <text x="240" y="303" text-anchor="middle" font-size="11" fill="var(--ink-body)">SqliteUnionRepositories (union.db) + LocalFileStorage (_raw/)</text>
+
+                <rect x="480" y="262" width="400" height="54" rx="4" fill="var(--bg-sheet)" stroke="var(--rule-ui)" stroke-width="1.6" stroke-dasharray="5 3" />
+                <text x="680" y="285" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--ink-strong)">향후 2단계 구현체 (클라우드 확장 시)</text>
+                <text x="680" y="303" text-anchor="middle" font-size="11" fill="var(--ink-muted)">PostgresUnionRepositories + CloudObjectStorage (S3/R2)</text>
+              </svg>
+            </div>
+          </figure>
+
+          <h3>2.4 다이어그램 4: 정본 데이터베이스(<code>union.db</code>) 13개 테이블 관계도 (ERD)</h3>
+          <figure class="diagram-figure">
+            <figcaption>
+              <span>그림 2-4. 기준 마스터(2) · 인물/직책 거버넌스(7) · 프라이버시/회계/연계(4) 테이블 연결 구조</span>
+              <span class="pill info">PK / FK 제약조건 강제</span>
+            </figcaption>
+            <p class="diagram-scroll-hint">← 좌우로 밀어 다이어그램 전체 보기 →</p>
+            <div class="diagram-scroll" tabindex="0" role="region" aria-label="다이어그램 4 스크롤 영역">
+              <svg class="arch-svg" viewBox="0 0 980 410" role="img" aria-labelledby="svg4-t svg4-d">
+                <title id="svg4-t">SQLite 정본 데이터베이스 13개 테이블 관계도</title>
+                <desc id="svg4-d">units와 accounts 기준 테이블을 바탕으로 중앙의 people 통합 마스터가 member_profiles, external_profiles, membership_events, member_documents, person_aliases, person_roles와 연결되고, 우측의 ledger_entries가 ledger_person_links, document_ledger_links(ON DELETE RESTRICT), sync_metadata 및 privacy_rules/strip_tokens와 연동되는 구조입니다.</desc>
+
+                <!-- Left: Master Configs -->
+                <rect x="16" y="22" width="196" height="92" rx="4" fill="var(--bg-well)" stroke="var(--rule-bar)" stroke-width="1.8" />
+                <text x="114" y="46" text-anchor="middle" font-size="12.5" font-weight="800" fill="var(--ink-strong)">units (조직·회계단위)</text>
+                <text x="28" y="68" font-size="10.5" fill="var(--ink-body)">PK: code (HQ, AY, BP, SS)</text>
+                <text x="28" y="84" font-size="10.5" fill="var(--ink-muted)">official_name, short_name</text>
+                <text x="28" y="100" font-size="10.5" fill="var(--ink-muted)">status (active | closed)</text>
+
+                <rect x="16" y="134" width="196" height="84" rx="4" fill="var(--bg-well)" stroke="var(--rule-bar)" stroke-width="1.5" />
+                <text x="114" y="158" text-anchor="middle" font-size="12.5" font-weight="800" fill="var(--ink-strong)">accounts (3단계 계정)</text>
+                <text x="28" y="179" font-size="10.5" fill="var(--ink-body)">PK: (category, gwan, hang, mok)</text>
+                <text x="28" y="196" font-size="10.5" fill="var(--ink-muted)">config/coa.json 마스터</text>
+
+                <rect x="16" y="240" width="196" height="148" rx="4" fill="var(--color-grant-soft)" stroke="var(--color-grant)" stroke-width="1.6" />
+                <text x="114" y="264" text-anchor="middle" font-size="12.5" font-weight="800" fill="var(--ink-strong)">프라이버시 규칙 2종</text>
+                <text x="28" y="288" font-size="11" font-weight="700" fill="var(--ink-strong)">• strip_tokens</text>
+                <text x="36" y="304" font-size="10" fill="var(--ink-body)">PK: (category, token)</text>
+                <text x="28" y="328" font-size="11" font-weight="700" fill="var(--ink-strong)">• privacy_rules</text>
+                <text x="36" y="344" font-size="10" fill="var(--ink-body)">PK: (rule_type, match_key)</text>
+                <text x="36" y="360" font-size="10" fill="var(--ink-muted)">forbidden_name / target_mask</text>
+                <text x="36" y="374" font-size="10" fill="var(--ink-muted)">note_replacement</text>
+
+                <!-- Center: People Hub -->
+                <rect x="268" y="22" width="236" height="88" rx="4" fill="var(--color-accent)" />
+                <text x="386" y="47" text-anchor="middle" font-size="13.5" font-weight="800" fill="var(--color-accent-ink)">people (인물 통합 마스터)</text>
+                <text x="284" y="69" font-size="11" fill="var(--color-accent-ink)">PK: person_id (M-XXXX / E-XXXX)</text>
+                <text x="284" y="87" font-size="11" fill="var(--color-accent-ink)" opacity="0.92">kind, name, phone, email, status</text>
+
+                <rect x="256" y="136" width="175" height="90" rx="4" fill="var(--bg-sheet)" stroke="var(--color-cobalt)" stroke-width="1.6" />
+                <text x="343.5" y="158" text-anchor="middle" font-size="12" font-weight="800" fill="var(--ink-strong)">member_profiles (1:1)</text>
+                <text x="266" y="177" font-size="10.5" fill="var(--ink-body)">FK: person_id, unit_code</text>
+                <text x="266" y="193" font-size="10.5" fill="var(--ink-muted)">birth_date, shift, emp_type</text>
+                <text x="266" y="209" font-size="10.5" fill="var(--ink-muted)">joined_on, application_doc_key</text>
+
+                <rect x="444" y="136" width="172" height="90" rx="4" fill="var(--bg-sheet)" stroke="var(--color-cobalt)" stroke-width="1.6" />
+                <text x="530" y="158" text-anchor="middle" font-size="12" font-weight="800" fill="var(--ink-strong)">external_profiles (1:1)</text>
+                <text x="454" y="177" font-size="10.5" fill="var(--ink-body)">FK: person_id</text>
+                <text x="454" y="195" font-size="10.5" fill="var(--ink-muted)">org (소속기관/타노조)</text>
+                <text x="454" y="211" font-size="10.5" fill="var(--ink-muted)">category (분류)</text>
+
+                <rect x="256" y="246" width="175" height="82" rx="4" fill="var(--bg-sheet)" stroke="var(--color-cobalt)" stroke-width="1.6" />
+                <text x="343.5" y="268" text-anchor="middle" font-size="12" font-weight="800" fill="var(--ink-strong)">membership_events</text>
+                <text x="266" y="286" font-size="10.5" fill="var(--ink-body)">PK: event_id (EV-XXXX)</text>
+                <text x="266" y="302" font-size="10.5" fill="var(--ink-muted)">join/withdraw/rejoin/transfer</text>
+                <text x="266" y="318" font-size="10.5" fill="var(--ink-muted)">FK: refund_tx_id → ledger</text>
+
+                <rect x="256" y="340" width="175" height="54" rx="4" fill="var(--bg-sheet)" stroke="var(--rule-ui)" stroke-width="1.4" />
+                <text x="343.5" y="362" text-anchor="middle" font-size="11.5" font-weight="800" fill="var(--ink-strong)">member_documents</text>
+                <text x="266" y="380" font-size="10" fill="var(--ink-muted)">DOC-XXXX · blob_key (_raw)</text>
+
+                <rect x="444" y="246" width="172" height="62" rx="4" fill="var(--bg-sheet)" stroke="var(--rule-ui)" stroke-width="1.4" />
+                <text x="530" y="268" text-anchor="middle" font-size="12" font-weight="800" fill="var(--ink-strong)">person_aliases</text>
+                <text x="454" y="286" font-size="10" fill="var(--ink-body)">PK: alias → person_id</text>
+                <text x="454" y="300" font-size="10" fill="var(--ink-muted)">exact | context_title</text>
+
+                <rect x="444" y="320" width="172" height="74" rx="4" fill="var(--bg-sheet)" stroke="var(--color-accent)" stroke-width="1.6" />
+                <text x="530" y="342" text-anchor="middle" font-size="12" font-weight="800" fill="var(--color-accent)">person_roles (직책·등급)</text>
+                <text x="454" y="360" font-size="10" fill="var(--ink-body)">R-XXXX · role_scope · term</text>
+                <text x="454" y="376" font-size="10" fill="var(--ink-muted)">public_official | masked</text>
+
+                <!-- Right: Accounting & Links -->
+                <rect x="668" y="22" width="296" height="128" rx="4" fill="var(--color-income-soft)" stroke="var(--color-income)" stroke-width="2" />
+                <text x="816" y="47" text-anchor="middle" font-size="13.5" font-weight="800" fill="var(--color-income)">ledger_entries (회계 원장)</text>
+                <text x="684" y="69" font-size="11" font-weight="700" fill="var(--ink-strong)">PK: tx_id · FK: unit_code → units</text>
+                <text x="684" y="88" font-size="10.5" fill="var(--ink-body)">year, ym(보고월), date, gubun, gwan, hang, mok</text>
+                <text x="684" y="105" font-size="10.5" fill="var(--ink-body)">exp_type, fund, target, attr_ym(귀속월)</text>
+                <text x="684" y="122" font-size="10.5" fill="var(--ink-body)">inc, exp, unit_bal, note, memo</text>
+                <text x="684" y="139" font-size="10" fill="var(--ink-muted)">단방향 upsert 동기화 대상</text>
+
+                <rect x="668" y="174" width="296" height="68" rx="4" fill="var(--bg-sheet)" stroke="var(--rule-ui)" stroke-width="1.5" />
+                <text x="816" y="198" text-anchor="middle" font-size="12" font-weight="800" fill="var(--ink-strong)">ledger_person_links (자동 매핑)</text>
+                <text x="684" y="217" font-size="10.5" fill="var(--ink-body)">PK: (tx_id, person_id) · CASCADE</text>
+                <text x="684" y="233" font-size="10" fill="var(--ink-muted)">match_field: 'target' | 'note'</text>
+
+                <rect x="668" y="256" width="296" height="76" rx="4" fill="var(--color-expense-soft)" stroke="var(--color-expense)" stroke-width="1.8" />
+                <text x="816" y="280" text-anchor="middle" font-size="12" font-weight="800" fill="var(--color-expense)">document_ledger_links (문서-거래 연결)</text>
+                <text x="684" y="299" font-size="10.5" fill="var(--ink-strong)">PK: (doc_id, tx_id) · relation_note</text>
+                <text x="684" y="317" font-size="10.5" font-weight="700" fill="var(--color-expense)">ON DELETE RESTRICT (참조 tx_id 삭제 차단!)</text>
+
+                <rect x="668" y="346" width="296" height="48" rx="4" fill="var(--bg-well)" stroke="var(--rule-ui)" stroke-width="1.4" />
+                <text x="816" y="368" text-anchor="middle" font-size="12" font-weight="800" fill="var(--ink-strong)">sync_metadata (동기화 메타)</text>
+                <text x="684" y="384" font-size="10" fill="var(--ink-muted)">PK: sync_key ('ledger_sync') · value_json</text>
+
+                <!-- Connectors -->
+                <line x1="212" y1="68" x2="256" y2="165" stroke="var(--rule-ui)" stroke-width="1.4" />
+                <path d="M 212 40 Q 440 0 668 42" fill="none" stroke="var(--rule-ui)" stroke-width="1.4" stroke-dasharray="4 3" />
+                <line x1="343" y1="110" x2="343" y2="136" stroke="var(--ink-strong)" stroke-width="1.5" />
+                <line x1="450" y1="110" x2="510" y2="136" stroke="var(--ink-strong)" stroke-width="1.5" />
+                <line x1="343" y1="328" x2="343" y2="340" stroke="var(--ink-strong)" stroke-width="1.5" />
+                <line x1="504" y1="78" x2="668" y2="205" stroke="var(--rule-ui)" stroke-width="1.4" />
+                <line x1="816" y1="150" x2="816" y2="174" stroke="var(--color-income)" stroke-width="1.6" />
+                <line x1="668" y1="110" x2="431" y2="295" stroke="var(--color-cobalt)" stroke-width="1.4" stroke-dasharray="3 2" />
+              </svg>
+            </div>
+          </figure>
+        </section>
+
+        <!-- 제3장 -->
+        <section id="ch-3" class="chapter-section" data-chapter="3">
+          <span class="chapter-badge">Chapter 03 · Domain Glossary</span>
+          <h2>제3장. 3대 도메인 컨텍스트와 표준 용어 사전 (<code>GLOSSARY-MAP</code>)</h2>
+          <p><code>union-portal</code>은 <strong>조직(Organization)</strong>, <strong>회계(Accounting)</strong>, <strong>자료실(Archive)</strong> 세 가지 도메인으로 나뉘며, 문서와 코드 전체가 동일한 표준 어휘를 사용합니다.</p>
+
+          <h3>3.1 조직 (Organization) 컨텍스트 (<code>src/organization/GLOSSARY.md</code>)</h3>
+          <div class="table-wrapper" tabindex="0" role="region" aria-labelledby="cap-units">
+            <table>
+              <caption id="cap-units">config/units.json에 등록된 조합 공식 조직·회계단위 4곳</caption>
+              <thead>
+                <tr>
+                  <th scope="col">코드</th>
+                  <th scope="col">공식 명칭</th>
+                  <th scope="col">약칭</th>
+                  <th scope="col">전체 명칭</th>
+                  <th scope="col">상태</th>
+                  <th scope="col">담당 역할 및 비고</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row"><code>HQ</code></th>
+                  <td data-label="공식 명칭"><strong>본조</strong></td>
+                  <td data-label="약칭">본부</td>
+                  <td data-label="전체 명칭">우체국물류지원단 물류노동조합 본조합</td>
+                  <td class="ctr" data-label="상태"><span class="pill safe">운영중 (active)</span></td>
+                  <td data-label="담당 역할">조합비 수납, 교부금 배분, 중앙 교섭·복지 총괄 (시트: <code>원장_본부</code>)</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>AY</code></th>
+                  <td data-label="공식 명칭"><strong>안양지부</strong></td>
+                  <td data-label="약칭">안물</td>
+                  <td data-label="전체 명칭">안양물류센터지부</td>
+                  <td class="ctr" data-label="상태"><span class="pill safe">운영중 (active)</span></td>
+                  <td data-label="담당 역할">안양물류센터 현장 지부 (시트: <code>원장_안물</code>)</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>BP</code></th>
+                  <td data-label="공식 명칭"><strong>부평지부</strong></td>
+                  <td data-label="약칭">부평물</td>
+                  <td data-label="전체 명칭">부평물류센터지부</td>
+                  <td class="ctr" data-label="상태"><span class="pill safe">운영중 (active)</span></td>
+                  <td data-label="담당 역할">부평물류센터 현장 지부 (시트: <code>원장_부평물</code>)</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>SS</code></th>
+                  <td data-label="공식 명칭"><strong>서서울지부</strong></td>
+                  <td data-label="약칭">서물</td>
+                  <td data-label="전체 명칭">서서울물류센터지부</td>
+                  <td class="ctr" data-label="상태"><span class="pill warn">폐지 (closed)</span></td>
+                  <td data-label="담당 역할">2024년 3월 폐지, 잔여노조비 1,000,000원 본부 회수 완료(과거 자료 보관용)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <ul>
+            <li><strong>조직단위 vs 사업장(사업소)</strong>: <code>지부</code>는 조합 조직 단위이며, 사측 근무 현장은 <code>사업장(사업소)</code>으로 구분합니다. (Avoid: 분회, 지점, 센터)</li>
+            <li><strong>인물 통합 모델</strong>: 조합원(<code>M-XXXX</code>)과 외부 인사(<code>E-XXXX</code>)를 <code>people</code> 상위 개체로 통합합니다.</li>
+            <li><strong>공적 노출 등급 &amp; 7대 직책 구분(<code>roleScope</code>)</strong>: 선출·임명 공식 직무자(<code>executive</code> 집행부, <code>branch_head</code> 지부장, <code>auditor</code> 감사, <code>committee</code> 특별기구) 및 외부 대표(<code>external_rep</code>)의 <strong>공적 직무 활동</strong>만 임기 내 실명 공개를 허용합니다. 반대로 <strong>순번제 소통간사(<code>staff_rotating</code>)</strong>와 <code>other</code>는 무조건 비식별(<code>masked</code>) 강제 대상입니다.</li>
+            <li><strong>개인·재정 정보 전면 비식별 &amp; 인명 표기</strong>: 전·현직 임원도 회계 원장, 개인 찬조, 경조사, 실비 문맥에서는 전면 비식별합니다. 내부 원장은 <strong>정식 성명만(<code>name_only</code>)</strong>, 공적 문서는 직책 병기를 허용합니다.</li>
+          </ul>
+
+          <h3>3.2 회계 (Accounting) 컨텍스트 (<code>src/accounting/GLOSSARY.md</code>)</h3>
+          <div class="card-grid">
+            <div class="info-card">
+              <h4>재원 구분 (2종)</h4>
+              <p><strong>일반회계</strong>(정기 조합비·통상 경상비)와 <strong>특별모금·찬조</strong>(소송 연대·워크샵 등 목적성 기금)로 분리 집계합니다.</p>
+            </div>
+            <div class="info-card">
+              <h4>6대 거래 구분 (<code>gubun</code>)</h4>
+              <p><code>수입</code>, <code>지출</code>, <code>내부이전(전입)</code>, <code>내부이전(전출)</code>, <code>기초이월</code>(2022.12.23 승계), <code>이월차액</code>. 본부↔지부 내부이전은 통합 결산 시 자동 상계됩니다.</p>
+            </div>
+            <div class="info-card">
+              <h4>보고월 vs 귀속월</h4>
+              <p><strong>보고월(<code>ym</code>)</strong>은 월별 결산 마감 기준 월이고, <strong>귀속월(<code>attrYm</code>)</strong>은 실제 입출금일과 무관하게 해당 회비·교부금이 귀속되는 대상 월입니다.</p>
+            </div>
+            <div class="info-card">
+              <h4>10대 지출형태 (<code>expType</code>)</h4>
+              <p>식대, 다과·음료, 인쇄·제작, 물품·비품, 선물·상품권, 교통·숙박, 경조금·화환, 찬조·기부금, 교부·환급, 기타.</p>
+            </div>
+          </div>
+          <p><strong>3단계 계정과목 체계 (관 → 항 → 목, <code>config/coa.json</code>)</strong>: 수입은 3대 관(<code>조합비수입</code>, <code>기부·찬조수입</code>, <code>기타수입</code>), 지출은 5대 관(<code>운영비</code>, <code>교섭·투쟁·권익비</code>, <code>조직·교육비</code>, <code>조합원복지·연대비</code>, <code>조정·환급</code>)에 <code>내부이전</code>·<code>기초이월</code>을 더해 총 10개 관으로 구성됩니다.</p>
+
+          <h3>3.3 자료실 (Archive) 컨텍스트 (<code>src/archive/GLOSSARY.md</code>)</h3>
+          <ul>
+            <li><strong>5대 자료 문서 범주</strong>: 성명서(<code>statement</code>), 소식지(<code>newsletter</code>), 운영위원회 회의록(<code>mom</code> — 회의록/종합결산), 지식(<code>knowledge</code>), 알림(<code>notice</code>).</li>
+            <li><strong>3단계 게시 가시성(<code>visibility</code>)</strong>: <span class="pill safe">public (전체 공개)</span> 목록·사이트맵·검색 노출 / <span class="pill warn">unlisted (미등재)</span> HTML 생성하되 목록·사이트맵 제외 및 <code>noindex,follow</code> / <span class="pill danger">internal_only (내부 전용)</span> 공개 빌드 원천 제외.</li>
+            <li><strong>기준월(<code>financePeriod</code>) &amp; 문서-거래 연결</strong>: 회의록은 기준월 재정 현황을 자동 연동하며, <code>document_ledger_links</code>로 문서와 거래번호(<code>tx_id</code>)를 양방향 상호 참조합니다.</li>
+            <li><strong>규약 개정 다회차 심의</strong>: <code>초기 검토 시안</code>(불변 기준선) 대비 <code>회의 반영 잠정안</code>을 5단계 심의 상태(<code>pending</code> → <code>scheduled</code> → <code>discussing</code> → <code>confirmed_revision</code> / <code>confirmed_current</code>)와 상정 차수(<code>wave-1</code>/<code>wave-2</code>/<code>unassigned</code>)로 누적 관리합니다.</li>
+          </ul>
+        </section>
+
+        <!-- 제4장 -->
+        <section id="ch-4" class="chapter-section" data-chapter="4">
+          <span class="chapter-badge">Chapter 04 · Architectural Decisions</span>
+          <h2>제4장. 7대 핵심 아키텍처 결정 기록 (<code>ADR-0001</code> ~ <code>ADR-0007</code>)</h2>
+          <div class="table-wrapper" tabindex="0" role="region" aria-labelledby="cap-adr">
+            <table>
+              <caption id="cap-adr">docs/adr/에 기록된 7건의 핵심 설계 결정과 실무 영향</caption>
+              <thead>
+                <tr>
+                  <th scope="col">ADR 번호</th>
+                  <th scope="col">결정 제목</th>
+                  <th scope="col">해결하려는 문제 (배경)</th>
+                  <th scope="col">기각된 대안</th>
+                  <th scope="col">관리자 실무 결과</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row"><code>ADR-0001</code></th>
+                  <td data-label="결정 제목">비로그인 정적 공개 포털 + 로컬 관리 우선 &amp; 클라우드 경계</td>
+                  <td data-label="배경">약 60명 규모에서 상시 서버·DB 운영은 비용과 해킹 위험이 과도함</td>
+                  <td data-label="기각 대안">초기 클라우드 서버 구축 / 추상화 없는 단순 스크립트</td>
+                  <td data-label="실무 결과">유지비 0원 정적 사이트로 운영하되, <code>Repository</code>·<code>BlobStorage</code> 인터페이스로 클라우드 전환 대비</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>ADR-0002</code></th>
+                  <td data-label="결정 제목">단일 통합 모노레포(<code>union-portal</code>) &amp; 구 저장소 리다이렉트</td>
+                  <td data-label="배경">회계(<code>accounting</code>)와 자료실(<code>workplace</code>) 분리로 인명 검증·재정 연계 불가</td>
+                  <td data-label="기각 대안">기존 한쪽에 흡수 / 두 저장소 분리 유지</td>
+                  <td data-label="실무 결과">단일 저장소로 통합하되, 기존 공유 링크 보존을 위해 <code>generate-redirects</code> 제공</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>ADR-0003</code></th>
+                  <td data-label="결정 제목">공적 직무 vs 개인·재정 차등 공개 원칙</td>
+                  <td data-label="배경">회계만 가리고 회의록에 실명을 쓰면 교차 대조로 개인정보가 유출됨</td>
+                  <td data-label="기각 대안">전체 전면 비식별 / 기존 이원화 유지</td>
+                  <td data-label="실무 결과">공식 직무자의 공적 활동만 임기 내 실명 허용, 순번제 간사·재정·경조사는 전원 비식별</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>ADR-0004</code></th>
+                  <td data-label="결정 제목">TypeScript (Node.js 22 LTS) 단일 스택 통합</td>
+                  <td data-label="배경">Python(회계) + Node.js(자료실) 이원화로 동일 검증 로직 중복 구현 필요</td>
+                  <td data-label="기각 대안">이종 언어 하이브리드 유지 / Python 전면 재작성</td>
+                  <td data-label="실무 결과"><code>matplotlib</code> 대신 인라인 SVG 차트, PDF는 로컬 Chrome/Edge 헤드리스 단일 CLI로 통합</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>ADR-0005</code></th>
+                  <td data-label="결정 제목">SQLite 정본 DB + Repository 추상화 &amp; 단방향 동기화</td>
+                  <td data-label="배경">JSON 파일 분산 관리로 외래키 무결성·직책 이력 관리가 어려움</td>
+                  <td data-label="기각 대안">파일 정본 유지 / Google Sheets 즉시 폐기</td>
+                  <td data-label="실무 결과">입력은 편한 Google Sheets를 쓰되 단방향 upsert만 허용, 링크된 <code>tx_id</code> 누락 시 동기화 차단</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>ADR-0006</code></th>
+                  <td data-label="결정 제목">비식별 공개 투영 커밋 + CI 비밀 솔트 해시 검증 게이트</td>
+                  <td data-label="배경">HTML 전체 커밋 시 PR 오염·충돌이 잦고, 로컬 훅만 믿으면 웹 편집 시 누수 위험</td>
+                  <td data-label="기각 대안">생성 HTML 커밋 / CI 실명 검증 생략</td>
+                  <td data-label="실무 결과"><code>data/public/</code>만 커밋. 로컬 <code>.env</code>와 GitHub Secret의 <code>PRIVACY_HMAC_SALT</code> 일치 필수</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>ADR-0007</code></th>
+                  <td data-label="결정 제목">다회차 규약 개정 심의용 Git 정본 JSON &amp; 브라우저 로컬 편집</td>
+                  <td data-label="배경">66개 규약 조문을 여러 회의에서 나눠 심의·기록하되 서버 없는 정적 원칙 준수 필요</td>
+                  <td data-label="기각 대안">실시간 협업 API 서버 신설 / 로컬 DB 메모 보관</td>
+                  <td data-label="실무 결과">미등재 페이지에서 <code>localStorage</code>로 기록(직책명만 허용) 후 JSON 다운로드로 저장소에 커밋</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 제5장 -->
+        <section id="ch-5" class="chapter-section" data-chapter="5">
+          <span class="chapter-badge">Chapter 05 · Repository Map</span>
+          <h2>제5장. 폴더 및 파일 구조 완전 지도 (Git 추적 vs 로컬 격리)</h2>
+          <p><code>union-portal</code> 루트 디렉터리 안의 모든 폴더는 인터넷에 올라가는 <strong>공개·코드 구역</strong>과 내 PC에만 남아야 하는 <strong>로컬 비밀·산출물 구역</strong>으로 나뉩니다.</p>
+
+          <div class="table-wrapper" tabindex="0" role="region" aria-labelledby="cap-folders">
+            <table>
+              <caption id="cap-folders">프로젝트 전체 폴더별 역할, 주요 파일, Git 추적 여부 및 보안 등급</caption>
+              <thead>
+                <tr>
+                  <th scope="col">경로</th>
+                  <th scope="col">Git 추적</th>
+                  <th scope="col">보안 등급</th>
+                  <th scope="col">역할 및 주요 포함 파일</th>
+                  <th scope="col">관리 / 백업 주의사항</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row"><code>src/</code></th>
+                  <td class="ctr" data-label="Git 추적">포함</td>
+                  <td data-label="보안 등급"><span class="pill info">공개 코드</span></td>
+                  <td data-label="역할">TypeScript 전체 소스 (<code>domain/</code>, <code>storage/</code>, <code>services/</code>, <code>site/</code>, <code>reports/</code>, <code>pdf/</code>, <code>cli/</code>)</td>
+                  <td data-label="주의사항">도메인/서비스는 <code>UnionRepositories</code>·<code>BlobStorage</code>만 참조</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>drizzle/</code></th>
+                  <td class="ctr" data-label="Git 추적">포함</td>
+                  <td data-label="보안 등급"><span class="pill info">설계도</span></td>
+                  <td data-label="역할">SQLite 마이그레이션 SQL (<code>0000_initial.sql</code>, <code>0001_officer_governance.sql</code>)</td>
+                  <td data-label="주의사항"><code>union migrate</code> 시 자동 순차 실행됨</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>config/</code></th>
+                  <td class="ctr" data-label="Git 추적">포함</td>
+                  <td data-label="보안 등급"><span class="pill safe">비민감 마스터</span></td>
+                  <td data-label="역할"><code>units.json</code>(조직단위 4곳), <code>coa.json</code>(3단계 계정과목 체계)</td>
+                  <td data-label="주의사항">새 계정(목) 추가 시 이 파일부터 수정</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>_source/</code></th>
+                  <td class="ctr" data-label="Git 추적">포함</td>
+                  <td data-label="보안 등급"><span class="pill safe">공개 원본</span></td>
+                  <td data-label="역할"><code>catalog.json</code>, <code>topics.json</code>, <code>sources.json</code>, <code>schemas/</code>, <code>mom/*.md</code>, <code>statement/*.body.html</code>, <code>newsletter/</code>, <code>knowledge/</code>, <code>notice/</code>, <code>union/bylaws*</code></td>
+                  <td data-label="주의사항">일반 조합원 실명·연락처 입력 절대 금지</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>data/public/</code></th>
+                  <td class="ctr" data-label="Git 추적">포함</td>
+                  <td data-label="보안 등급"><span class="pill safe">비식별 투영</span></td>
+                  <td data-label="역할"><code>ledger_public.json</code>, <code>org_summary.json</code>, <code>public_officials.json</code>, <code>document_ledger_links.json</code>, <code>privacy_hashes.json</code></td>
+                  <td data-label="주의사항">직접 편집 금지! <code>export-public</code>으로만 재생성</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>web/assets/</code></th>
+                  <td class="ctr" data-label="Git 추적">포함</td>
+                  <td data-label="보안 등급"><span class="pill info">정적 에셋</span></td>
+                  <td data-label="역할"><code>app.css</code>, <code>newsletter.css</code>, 10개 프론트엔드 JS, <code>vendor/chart.umd.min.js</code>, 로고·파비콘·소셜카드</td>
+                  <td data-label="주의사항">빌드 시 SHA-256 12자 해시 캐시버스팅 적용</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>test/</code></th>
+                  <td class="ctr" data-label="Git 추적">포함</td>
+                  <td data-label="보안 등급"><span class="pill info">자동 테스트</span></td>
+                  <td data-label="역할">8개 테스트 스위트 (<code>accounting</code>, <code>bylaws</code>, <code>person-normalizer</code>, <code>privacy</code>, <code>site-pipeline</code>, <code>storage-sqlite</code>, <code>svg-reports</code>, <code>sync-ledger</code>)</td>
+                  <td data-label="주의사항">가상 인명(<code>홍길동</code>, <code>김철수</code>, <code>M-9001</code>)만 사용</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>.github/</code> &amp; <code>.githooks/</code></th>
+                  <td class="ctr" data-label="Git 추적">포함</td>
+                  <td data-label="보안 등급"><span class="pill info">자동 검문소</span></td>
+                  <td data-label="역할"><code>.github/workflows/pages.yml</code>(CI/CD 배포) 및 <code>.githooks/pre-push</code>(푸시 전 누수 차단)</td>
+                  <td data-label="주의사항">신규 PC에서 <code>npm run prepare:hooks</code> 필수</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>data/local/</code></th>
+                  <td class="ctr" data-label="Git 추적"><strong>제외</strong></td>
+                  <td data-label="보안 등급"><span class="pill danger">비밀 정본 금고</span></td>
+                  <td data-label="역할"><code>union.db</code> (로컬 정본 SQLite DB — 조합원 전체 실명·생년월일·연락처·원본 원장)</td>
+                  <td data-label="주의사항">인수인계 시 암호화 매체로 1순위 직접 전달</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>_raw/</code></th>
+                  <td class="ctr" data-label="Git 추적"><strong>제외</strong></td>
+                  <td data-label="보안 등급"><span class="pill danger">비밀 증빙 원본</span></td>
+                  <td data-label="역할">가입서·탈퇴서 스캔(<code>applications/</code>), 서류 카드 <code>.md</code>, 단위별 은행 PDF(<code>HQ/</code>, <code>AY/</code>, <code>BP/</code>, <code>SS/</code>), 회의록 원본 백업(<code>mom_originals/</code>)</td>
+                  <td data-label="주의사항"><code>union.db</code>와 함께 오프라인 백업·인수인계 필수</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>.env</code></th>
+                  <td class="ctr" data-label="Git 추적"><strong>제외</strong></td>
+                  <td data-label="보안 등급"><span class="pill danger">비밀 솔트 키</span></td>
+                  <td data-label="역할"><code>PRIVACY_HMAC_SALT</code> 값 보관 (해시 지문 생성·검증용)</td>
+                  <td data-label="주의사항">GitHub Actions Secret과 반드시 동일한 값 유지</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>directory/</code></th>
+                  <td class="ctr" data-label="Git 추적"><strong>제외</strong></td>
+                  <td data-label="보안 등급"><span class="pill warn">로컬 파생 뷰</span></td>
+                  <td data-label="역할">사람 열람용 명부 5종(<code>README.md</code>, <code>members.md</code>, <code>officers.md</code>, <code>external_people.md</code>, <code>title_rules.md</code>)</td>
+                  <td data-label="주의사항"><code>export-md</code> 명령으로 언제든 재생성</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>reports/</code></th>
+                  <td class="ctr" data-label="Git 추적"><strong>제외</strong></td>
+                  <td data-label="보안 등급"><span class="pill warn">내부 회의 출력물</span></td>
+                  <td data-label="역할">내부 실명 결산서(<code>monthly/</code>, <code>annual/</code>) 및 인쇄용 PDF(<code>pdf/</code>)</td>
+                  <td data-label="주의사항"><code>build:reports</code> 및 <code>union pdf</code>로 재생성</td>
+                </tr>
+                <tr>
+                  <th scope="row"><code>_site/</code> &amp; <code>redirects/</code></th>
+                  <td class="ctr" data-label="Git 추적"><strong>제외</strong></td>
+                  <td data-label="보안 등급"><span class="pill safe">빌드 산출물</span></td>
+                  <td data-label="역할">빌드된 공개 정적 사이트(<code>_site/</code>) 및 구 주소 리다이렉트 HTML(<code>redirects/</code>)</td>
+                  <td data-label="주의사항">CI가 매번 새로 빌드하므로 Git에 올리지 않음</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 제6장 -->
+        <section id="ch-6" class="chapter-section" data-chapter="6">
+          <span class="chapter-badge">Chapter 06 · Database Schema</span>
+          <h2>제6장. 데이터베이스(<code>union.db</code>) 스키마 및 13개 테이블 상세 명세</h2>
+          <p><code>src/storage/sqlite/schema.ts</code>와 <code>drizzle/*.sql</code>로 관리되는 SQLite 정본은 연결 시마다 <code>PRAGMA foreign_keys = ON</code>, <code>WAL</code> 모드가 활성화되어 데이터 꼬임을 원천 차단합니다.</p>
+
+          <div class="table-wrapper" tabindex="0" role="region" aria-labelledby="cap-schema">
+            <table>
+              <caption id="cap-schema">SQLite 정본 DB의 13개 업무 테이블(+2개 보조/연결 테이블) 구조 및 제약조건 요약</caption>
+              <thead>
+                <tr>
+                  <th scope="col">분류</th>
+                  <th scope="col">테이블명</th>
+                  <th scope="col">기본키 (PK)</th>
+                  <th scope="col">외래키 (FK) 및 삭제 규칙</th>
+                  <th scope="col">핵심 컬럼 및 역할 설명</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">기준</th>
+                  <td data-label="테이블명"><code>units</code></td>
+                  <td data-label="PK"><code>code</code></td>
+                  <td data-label="FK">-</td>
+                  <td data-label="역할"><code>HQ</code>, <code>AY</code>, <code>BP</code>, <code>SS</code>. <code>official_name</code>, <code>short_name</code>, <code>status</code>(active|closed)</td>
+                </tr>
+                <tr>
+                  <th scope="row">기준</th>
+                  <td data-label="테이블명"><code>accounts</code></td>
+                  <td data-label="PK"><code>(category, gwan, hang, mok)</code></td>
+                  <td data-label="FK">-</td>
+                  <td data-label="역할"><code>config/coa.json</code>과 동기화되는 3단계 계정과목 기준표</td>
+                </tr>
+                <tr>
+                  <th scope="row">인물</th>
+                  <td data-label="테이블명"><code>people</code></td>
+                  <td data-label="PK"><code>person_id</code></td>
+                  <td data-label="FK">-</td>
+                  <td data-label="역할">조합원(<code>M-XXXX</code>)·외부인(<code>E-XXXX</code>) 통합 마스터. <code>kind</code>, <code>name</code>, <code>phone</code>, <code>email</code>, <code>status</code></td>
+                </tr>
+                <tr>
+                  <th scope="row">인물</th>
+                  <td data-label="테이블명"><code>member_profiles</code></td>
+                  <td data-label="PK"><code>person_id</code></td>
+                  <td data-label="FK"><code>person_id</code>(CASCADE), <code>unit_code</code></td>
+                  <td data-label="역할">생년월일, 근무(<code>shift</code>), 고용(<code>employment_type</code>), 최초·최근가입일, 탈퇴일, 바라는점, <code>application_doc_key</code></td>
+                </tr>
+                <tr>
+                  <th scope="row">인물</th>
+                  <td data-label="테이블명"><code>external_profiles</code></td>
+                  <td data-label="PK"><code>person_id</code></td>
+                  <td data-label="FK"><code>person_id</code>(CASCADE)</td>
+                  <td data-label="역할">외부 인사의 <code>org</code>(소속기관/타노조) 및 <code>category</code></td>
+                </tr>
+                <tr>
+                  <th scope="row">이력</th>
+                  <td data-label="테이블명"><code>membership_events</code></td>
+                  <td data-label="PK"><code>event_id</code></td>
+                  <td data-label="FK"><code>person_id</code>(CASCADE), <code>from_unit</code>, <code>to_unit</code>, <code>refund_tx_id</code></td>
+                  <td data-label="역할"><code>EV-XXXX</code>. <code>join/withdraw/rejoin/transfer</code> 이력, 탈퇴·재가입 사유, <code>doc_md_path</code></td>
+                </tr>
+                <tr>
+                  <th scope="row">증빙</th>
+                  <td data-label="테이블명"><code>member_documents</code></td>
+                  <td data-label="PK"><code>doc_id</code></td>
+                  <td data-label="FK"><code>event_id</code>(CASCADE), <code>person_id</code>(CASCADE)</td>
+                  <td data-label="역할"><code>DOC-XXXX</code>. 가입서/탈퇴서/기타 증빙의 <code>blob_key</code>(<code>applications/...</code>)</td>
+                </tr>
+                <tr>
+                  <th scope="row">규칙</th>
+                  <td data-label="테이블명"><code>person_aliases</code></td>
+                  <td data-label="PK"><code>alias</code></td>
+                  <td data-label="FK"><code>person_id</code>(CASCADE)</td>
+                  <td data-label="역할">원장·문서 내 약칭/별칭 매핑. <code>match_mode</code>(<code>exact</code> | <code>context_title</code>)</td>
+                </tr>
+                <tr>
+                  <th scope="row">거버넌스</th>
+                  <td data-label="테이블명"><code>person_roles</code></td>
+                  <td data-label="PK"><code>role_id</code></td>
+                  <td data-label="FK"><code>person_id</code>(CASCADE)</td>
+                  <td data-label="역할"><code>R-XXXX</code>. 직책, <code>public_disclosure</code>(<code>public_official</code>|<code>masked</code>), <code>role_scope</code>, <code>term_label</code>, 임기, 서열, <code>evidence_doc_id</code></td>
+                </tr>
+                <tr>
+                  <th scope="row">규칙</th>
+                  <td data-label="테이블명"><code>strip_tokens</code></td>
+                  <td data-label="PK"><code>(category, token)</code></td>
+                  <td data-label="FK">-</td>
+                  <td data-label="역할">인명 앞뒤 제거 대상 호칭(<code>honorific</code>)·수식어(<code>modifier</code>)·직책(<code>title</code>)</td>
+                </tr>
+                <tr>
+                  <th scope="row">규칙</th>
+                  <td data-label="테이블명"><code>privacy_rules</code></td>
+                  <td data-label="PK"><code>(rule_type, match_key)</code></td>
+                  <td data-label="FK">-</td>
+                  <td data-label="역할"><code>forbidden_name</code>(금칙어), <code>target_mask</code>(대상 마스킹), <code>note_replacement</code>(적요 치환)</td>
+                </tr>
+                <tr>
+                  <th scope="row">회계</th>
+                  <td data-label="테이블명"><code>ledger_entries</code></td>
+                  <td data-label="PK"><code>tx_id</code></td>
+                  <td data-label="FK"><code>unit_code</code> → <code>units</code></td>
+                  <td data-label="역할">원장 스냅샷. <code>year</code>, <code>ym</code>, <code>date</code>, <code>gubun</code>, <code>gwan</code>, <code>hang</code>, <code>mok</code>, <code>exp_type</code>, <code>fund</code>, <code>target</code>, <code>attr_ym</code>, <code>inc</code>, <code>exp</code>, <code>unit_bal</code>, <code>note</code>, <code>memo</code></td>
+                </tr>
+                <tr>
+                  <th scope="row">연계</th>
+                  <td data-label="테이블명"><code>ledger_person_links</code></td>
+                  <td data-label="PK"><code>(tx_id, person_id)</code></td>
+                  <td data-label="FK"><code>tx_id</code>(CASCADE), <code>person_id</code>(CASCADE)</td>
+                  <td data-label="역할">원장 <code>target</code>/<code>note</code>에서 자동 감지된 등장 인물 매핑</td>
+                </tr>
+                <tr>
+                  <th scope="row">연계</th>
+                  <td data-label="테이블명"><code>document_ledger_links</code></td>
+                  <td data-label="PK"><code>(doc_id, tx_id)</code></td>
+                  <td data-label="FK"><strong><code>tx_id</code> → <code>ledger_entries</code> (ON DELETE RESTRICT)</strong></td>
+                  <td data-label="역할">자료 문서 ↔ 회계 거래 양방향 참조. <strong>연결된 <code>tx_id</code> 삭제·누락 시 원장 동기화 차단!</strong></td>
+                </tr>
+                <tr>
+                  <th scope="row">메타</th>
+                  <td data-label="테이블명"><code>sync_metadata</code></td>
+                  <td data-label="PK"><code>sync_key</code></td>
+                  <td data-label="FK">-</td>
+                  <td data-label="역할">최근 원장 동기화 일시, 월 범위, 단위별 잔액 요약 JSON (<code>ledger_sync</code>)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p><em>※ 이 외에 SQL 마이그레이션 적용 기록을 보관하는 내부 관리 테이블 <code>__union_migrations(id, applied_at)</code> 1개가 자동 생성됩니다.</em></p>
+        </section>
+
+        <!-- 제7장 -->
+        <section id="ch-7" class="chapter-section" data-chapter="7">
+          <span class="chapter-badge">Chapter 07 · Subsystems Deep-Dive</span>
+          <h2>제7장. 기능 단위별 작동 원리 (8대 핵심 서브시스템 심층 해부)</h2>
+
+          <h3>7.1 조합원 · 외부인 · 직책 · 별칭 관리 (<code>MemberService</code>)</h3>
+          <p><code>src/services/member-service.ts</code>는 모든 인사 변동을 데이터베이스 트랜잭션 안에서 처리합니다.</p>
+          <ul>
+            <li><strong>가입 &amp; 자동 재가입 판정</strong>: <code>joinMember()</code>는 입력된 <code>--unit</code>(코드·정식명·약칭 모두 인식)을 표준 코드로 변환한 뒤, <code>이름 + 생년월일</code>이 일치하는 기존 비현역 조합원 1명이 발견되면 자동으로 <strong>재가입(<code>rejoin</code>)</strong>으로 전환해 기존 <code>M-XXXX</code> 번호와 최초 가입일(<code>firstJoinedOn</code>)을 승계합니다.</li>
+            <li><strong>증빙 보관 &amp; 금칙어 자동 등록</strong>: 첨부된 가입서/탈퇴서 스캔본은 <code>LocalFileStorage</code>가 경로 탈출(<code>../</code>) 검사를 거쳐 <code>_raw/applications/JOIN_YYYYMMDD_M-XXXX_이름.ext</code> 키로 저장하며, 가입 시 해당 이름이 <code>privacy_rules(forbidden_name)</code>에 자동 등록됩니다.</li>
+            <li><strong>탈퇴 시 환급 검증 &amp; 직책 자동 종료</strong>: <code>withdrawMember()</code>는 <code>--refund-tx</code>가 주어지면 실제 원장(<code>ledger_entries</code>)에 존재하는 거래번호인지 검증하고, 해당 조합원이 맡고 있던 모든 현임 직책을 <code>endReason: '탈퇴'</code>로 자동 마감합니다.</li>
+            <li><strong>소통간사 비공개 강제 가드</strong>: <code>appointRole()</code> 및 <code>transferRole()</code>은 <code>roleScope === 'staff_rotating'</code>(순번제 소통간사)을 <code>public_official</code>로 공개하려 하면 <code>ADR-0003</code> 위반 에러를 발생시켜 실수를 원천 차단합니다.</li>
+          </ul>
+
+          <h3>7.2 인명 정규화 엔진 (<code>person-normalizer.ts</code>)</h3>
+          <p>원장에 <code>"홍길동 위원장님"</code>, <code>"길동 형"</code>, <code>"김철수님 모친상"</code>처럼 뒤섞여 입력된 표현은 <code>normalizePersonMentions()</code>의 3단계 파이프라인을 거쳐 정식 성명만으로 깔끔히 정리됩니다.</p>
+          <ol>
+            <li><strong>1단계 (별칭 해결)</strong>: <code>person_aliases</code>를 긴 별칭부터 순차 치환합니다. <code>exact</code> 모드는 앞뒤가 한글이 아닐 때 무조건 바꾸고, <code>context_title</code> 모드는 뒤에 직책·호칭이 따라올 때만 바꿉니다.</li>
+            <li><strong>2단계 (등록 성명 앞뒤 수식어·직책·존칭 박리)</strong>: <code>strip_tokens</code>(존칭 <code>님/씨/선생님</code>, 수식어 <code>전/현/직무대행/신임</code>, 직책 <code>위원장/사무국장/지부장/반장...</code>)를 조합한 정규식으로 이름 앞뒤에 반복적으로 붙은 수식을 한 번에 제거합니다.</li>
+            <li><strong>3단계 (일반 존칭·경조사 폴백 + 비인명 보호)</strong>: 미등록 2~4글자 한글 이름 뒤의 띄어쓴 존칭(<code>SPACED_HONORIFIC_RE</code>)과 경조사(<code>모친상/결혼/퇴직</code> 등) 앞 <code>님</code>을 제거하되, <code>NON_PERSON_WORDS</code>(<code>부모님</code>, <code>어머님</code>, <code>아버님</code>, <code>선생님</code>, <code>하느님</code> 등 10개)는 보호합니다.</li>
+          </ol>
+
+          <h3>7.3 회계 원장 단방향 동기화 및 3대 검증 (<code>sync-ledger.ts</code>, <code>accounting.ts</code>)</h3>
+          <ol>
+            <li><strong>엑셀/JSON 파싱</strong>: <code>.xlsx</code>의 <code>'통합원장'</code> 시트 18개 열을 읽으며, Google Sheets 내보내기 시 생기는 <code>IFERROR(__xludf.DUMMYFUNCTION(...))</code> 수식 래퍼나 RichText를 자동 해제해 실제 값을 꺼냅니다. 이후 <code>normalizePersonMentions()</code>로 인명을 정규화합니다.</li>
+            <li><strong>3대 무결성 검증 (<code>validateLedgerRecords</code>)</strong>: ① 모든 행의 <code>(구분, 관, 항, 목)</code>이 <code>config/coa.json</code>에 등록되어 있는지, ② <code>#REF!</code>·<code>#NAME?</code>·<code>#VALUE!</code>·<code>#N/A</code> 수식 오류가 없는지, ③ 회계단위별 누적 잔액(<code>이전 잔액 + inc - exp === unitBal</code>)이 <strong>1원 오차도 없이 일치하는지</strong> 검증합니다.</li>
+            <li><strong>참조 무결성 게이트 &amp; 인물 매핑</strong>: 기존 <code>document_ledger_links</code>나 <code>membership_events.refund_tx_id</code>가 참조하는 <code>tx_id</code>가 새 파일에 누락되면 즉시 동기화를 롤백합니다. 통과 시 <code>ledger_person_links</code>를 최신화하고 <code>sync_metadata</code>에 동기화 기록을 남깁니다.</li>
+          </ol>
+
+          <h3>7.4 차등 프라이버시 마스킹 및 공개 투영 추출 (<code>privacy.ts</code>, <code>export-public.ts</code>)</h3>
+          <p><code>exportPublicProjection()</code>은 <code>.env</code>(또는 환경변수)의 <code>PRIVACY_HMAC_SALT</code>(없을 경우 32바이트 난수 자동 생성)를 이용해 <code>data/public/</code>에 5개 파일을 생성합니다.</p>
+          <ul>
+            <li><strong><code>ledger_public.json</code></strong>: <code>sanitizeLedgerRecords()</code>가 <code>target</code>을 <code>targetMask</code> 또는 <code>'개인'</code>으로, <code>note</code>를 <code>exactNoteReplacements</code> 또는 <code>'관계자'</code>로, <code>memo</code> 내 인명을 <code>'관계자'</code>로 치환합니다.</li>
+            <li><strong><code>org_summary.json</code></strong>: 개인정보 없이 단위별 조합원 수, 고용/근무 분포, 월별 입·탈퇴 흐름 숫자만 집계합니다.</li>
+            <li><strong><code>public_officials.json</code></strong>: <code>public_disclosure === 'public_official'</code> 직책만 추출하되 연락처·생년월일은 제외합니다.</li>
+            <li><strong><code>document_ledger_links.json</code></strong>: 문서 ID ↔ 거래번호 연결 목록.</li>
+            <li><strong><code>privacy_hashes.json</code></strong>: 모든 성명·금칙어·<code>exact</code> 별칭·전화번호(숫자형 포함)·이메일을 <code>HMAC-SHA256(token, salt)</code>로 일방향 해싱한 지문 목록과 한글 길이 인덱스(<code>hangulLengths</code>)만 저장합니다.</li>
+          </ul>
+
+          <h3>7.5 자료실 콘텐츠 그래프 v3 및 문서 렌더러 (<code>content-graph.ts</code>, <code>mom-renderer.ts</code>, <code>statement-fragment.ts</code>)</h3>
+          <ul>
+            <li><strong><code>content-graph.ts</code></strong>: <code>catalog.json</code>, <code>topics.json</code>, <code>sources.json</code>, <code>mom/*.md</code> Frontmatter를 읽어 <code>Ajv</code>(JSON Schema Draft 2020-12 strict 모드)로 검증하고, <code>route</code> 안전성·날짜 순서·주제/출처/관련문서 상호 참조·<code>socialImage</code> 실존 여부를 검사합니다.</li>
+            <li><strong><code>mom-renderer.ts</code></strong>: 회의록을 <code>markdown-it</code>(<code>html: false</code>)으로 안전하게 변환하고, <code>&lt;br&gt;</code>만 예외 허용하며, 위험 링크 스킴(<code>javascript:</code> 등)을 차단하고, 표마다 <code>.table-wrapper</code>와 모바일 카드용 <code>data-label</code>을 자동 부착합니다. 또한 <code>**</code> 짝 불일치나 <code>\[</code> 잔재를 잡아냅니다.</li>
+            <li><strong><code>statement-fragment.ts</code></strong>: 성명서 <code>.body.html</code>을 <code>parse5</code> AST로 파싱해 허용 태그 11종·허용 클래스 8종·마지막 최상위 <code>closing-block</code> 구조를 강제하고, 글자수·문단·줄바꿈·소제목·요구항목·제목줄 수 가중 점수에 따라 A2 인쇄 밀도(<code>≤1400 short</code>, <code>≤2800 standard</code>, 그 외 <code>long</code>)를 자동 결정합니다.</li>
+          </ul>
+
+          <h3>7.6 조합 규약 체계 및 다회차 심의 스튜디오 (<code>bylaws.ts</code>, <code>bylaws-law.ts</code>, <code>bylaws-revision.ts</code>)</h3>
+          <ul>
+            <li><strong>공개 규약 2종</strong>: <code>bylaws-guide.html</code>(12장 59조·부칙 3조·별첨 2건 개괄, 인라인 SVG 거버넌스 체계도, 법정 기한표) 및 <code>bylaws.html</code>(중복 제37조까지 고유 앵커 보존, 실시간 검색·하이라이트·주제 칩 필터·조문 링크 복사).</li>
+            <li><strong>미등재(<code>unlisted</code>, <code>noindex,follow</code>) 규약 검토 3종 모음</strong>:
+              <ol>
+                <li><code>bylaws-law.html</code>: 2026.3.10 시행 노조법 개정 접점, 제11조 필수기재사항 15호 매트릭스, 4단계 진단(<code>risk</code>/<code>recommend</code>/<code>caution</code>/<code>aligned</code>), TFT 체크리스트.</li>
+                <li><code>bylaws-revision-diff.html</code> (신·구조문대비표) &amp; <code>bylaws-revision-full.html</code> (개정안 전문): 66건 조문을 5단계 심의 상태로 추적. 회의 중 브라우저 <code>localStorage</code>에 기록하며 <code>detectPossiblePii()</code>가 실명·전화·이메일·주민번호 입력을 실시간 경고하고, 회의 후 <strong>[정본 JSON 다운로드]</strong>로 <code>_source/union/bylaws-revision.json</code>에 반영합니다.</li>
+              </ol>
+            </li>
+          </ul>
+
+          <h3>7.7 정적 포털 빌더 및 프론트엔드 구조 (<code>build-site.ts</code>, <code>shell.ts</code>, <code>svg-charts.ts</code>)</h3>
+          <p><code>buildSite()</code>는 오직 Git 추적 파일(<code>_source/</code>, <code>config/</code>, <code>data/public/</code>, <code>web/assets/</code>)만 읽어 <code>_site/</code>를 결정적으로 생성합니다. <code>copyAndHashAssets()</code>가 모든 CSS/JS/이미지에 SHA-256 앞 12자 쿼리(<code>?v=...</code>)를 붙여 캐시 문제를 없애고, <code>accounting/data/public_ledger.js</code> 및 <code>public_links.js</code>를 함께 생성해 <code>file://</code> 로컬 열람 시에도 대시보드와 거래 탐색기가 동작하도록 합니다.</p>
+
+          <h3>7.8 이중 검증 게이트 및 내부 보고서 · PDF · 리다이렉트</h3>
+          <ul>
+            <li><strong><code>audit-privacy.ts</code></strong>: 로컬 DB 전체를 기준으로 <code>data/public/</code> 및 <code>_source/</code> 비내부 문서를 정밀 감사.</li>
+            <li><strong><code>validate-site.ts</code></strong>: 빌드된 <code>_site/</code> 전체 HTML을 <code>parse5</code>로 파싱하여 구문·<code>viewport</code>·<code>public/unlisted/internal_only</code> 계약·깨진 상대경로·마크다운 잔재를 검사하고, <strong>Dual-Zone 개인정보 검사</strong>(재정 구역 <code>financeText</code>는 전원 0명, 비재정 구역은 해당 문서 시점 <code>public_official</code>만 허용; CI 모드에서는 <code>PRIVACY_HMAC_SALT</code> + <code>privacy_hashes.json</code> 해시 대조)를 통과해야 배포를 허가합니다.</li>
+            <li><strong><code>build-internal-reports.ts</code></strong>: <code>reports/monthly/</code>, <code>reports/annual/</code>에 원장 실명 적요와 5종 스탠드얼론 SVG 차트가 포함된 내부 회의용 단일 HTML 보고서를 생성합니다.</li>
+            <li><strong><code>generate-pdf.ts</code></strong>: 로컬 Chrome/Edge 헤드리스(<code>--headless=new --print-to-pdf</code>)로 성명서(기본 A2), 소식지(기본 A3), 회의록(기본 A4)을 라이트 모드 고정 인쇄물로 출력합니다.</li>
+            <li><strong><code>generate-redirects.ts</code></strong>: 구 <code>accounting</code>, <code>workplace</code>(<code>MoM/</code> 포함) 경로용 리다이렉트 HTML을 <code>redirects/</code>에 생성합니다.</li>
+          </ul>
+        </section>
+
+        <!-- 제8장 -->
+        <section id="ch-8" class="chapter-section" data-chapter="8">
+          <span class="chapter-badge">Chapter 08 · Module Reference</span>
+          <h2>제8장. 소스 코드 모듈별(파일별) 상세 레퍼런스 사전</h2>
+
+          <h3>8.1 백엔드 · 코어 TypeScript 모듈 (<code>src/</code> — 총 30개 코드 파일)</h3>
+          <div class="table-wrapper" tabindex="0" role="region" aria-labelledby="cap-src">
+            <table>
+              <caption id="cap-src">src/ 하위 모든 TypeScript 모듈의 역할, 주요 심볼 및 수정 시점 가이드</caption>
+              <thead>
+                <tr>
+                  <th scope="col">계층</th>
+                  <th scope="col">파일 경로</th>
+                  <th scope="col">한 줄 요약</th>
+                  <th scope="col">주요 함수 · 클래스 · 타입</th>
+                  <th scope="col">언제 이 파일을 수정하는가?</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Domain</th>
+                  <td data-label="파일 경로"><code>src/domain/types.ts</code></td>
+                  <td data-label="요약">전역 도메인 타입 정의</td>
+                  <td data-label="주요 심볼"><code>Unit</code>, <code>Account</code>, <code>Person</code>, <code>MemberRecord</code>, <code>PersonRole</code>, <code>LedgerEntry</code>, <code>DocumentRecordV3</code></td>
+                  <td data-label="수정 시점">새 데이터 필드나 문서 스키마 속성 추가 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Domain</th>
+                  <td data-label="파일 경로"><code>src/domain/accounting.ts</code></td>
+                  <td data-label="요약">수지 집계 및 원장 검증</td>
+                  <td data-label="주요 심볼"><code>summarizePeriod()</code>, <code>validateLedgerRecords()</code></td>
+                  <td data-label="수정 시점">수입·지출·내부이전 합산식이나 COA·잔액 검증 추가 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Domain</th>
+                  <td data-label="파일 경로"><code>src/domain/person-normalizer.ts</code></td>
+                  <td data-label="요약">별칭·직책 박리 인명 정규화</td>
+                  <td data-label="주요 심볼"><code>normalizePersonMentions()</code>, <code>collectPersonNames()</code>, <code>NON_PERSON_WORDS</code></td>
+                  <td data-label="수정 시점">새 호칭/직책 제거 규칙 또는 예외 단어 추가 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Domain</th>
+                  <td data-label="파일 경로"><code>src/domain/privacy.ts</code></td>
+                  <td data-label="요약">마스킹, 해싱, 문서 감사</td>
+                  <td data-label="주요 심볼"><code>sanitizeLedgerRecords()</code>, <code>computePrivacyHashes()</code>, <code>scanTextWithHashes()</code>, <code>auditDocumentPrivacy()</code>, <code>isPublicOfficialOn()</code></td>
+                  <td data-label="수정 시점">재정 구역 판정 제목이나 마스킹/패턴 검사 규칙 변경 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Domain</th>
+                  <td data-label="파일 경로"><code>src/domain/content-graph.ts</code></td>
+                  <td data-label="요약">자료실 v3 로드 &amp; 스키마 검증</td>
+                  <td data-label="주요 심볼"><code>CATEGORY_REGISTRY</code>, <code>validateSourceTree()</code>, <code>loadContentGraph()</code>, <code>parseYamlFrontMatter()</code></td>
+                  <td data-label="수정 시점">문서 카테고리 신설 또는 메타데이터 검증 규칙 수정 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Storage</th>
+                  <td data-label="파일 경로"><code>src/storage/repositories.ts</code></td>
+                  <td data-label="요약">저장소 추상 인터페이스</td>
+                  <td data-label="주요 심볼"><code>UnionRepositories</code> 및 7개 하위 Repository 인터페이스</td>
+                  <td data-label="수정 시점">새 DB 조회/저장 메서드 추가 또는 클라우드 전환 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Storage</th>
+                  <td data-label="파일 경로"><code>src/storage/blob-storage.ts</code></td>
+                  <td data-label="요약">증빙 파일 스토리지 &amp; 경로보안</td>
+                  <td data-label="주요 심볼"><code>BlobStorage</code>, <code>normalizeBlobKey()</code>, <code>LocalFileStorage</code></td>
+                  <td data-label="수정 시점">파일 키 정책 변경 또는 S3/R2 클라우드 스토리지 구현 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Storage</th>
+                  <td data-label="파일 경로"><code>src/storage/sqlite/schema.ts</code></td>
+                  <td data-label="요약">Drizzle ORM 13테이블 정의</td>
+                  <td data-label="주요 심볼"><code>units</code>, <code>people</code>, <code>personRoles</code>, <code>ledgerEntries</code>, <code>documentLedgerLinks</code> 등</td>
+                  <td data-label="수정 시점">테이블 컬럼·제약조건 변경 시 (<code>drizzle/*.sql</code> 동반)</td>
+                </tr>
+                <tr>
+                  <th scope="row">Storage</th>
+                  <td data-label="파일 경로"><code>src/storage/sqlite/client.ts</code></td>
+                  <td data-label="요약">LibSQL DB 연결 및 PRAGMA</td>
+                  <td data-label="주요 심볼"><code>openSqliteConnection()</code></td>
+                  <td data-label="수정 시점">SQLite WAL·타임아웃 등 연결 옵션 조정 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Storage</th>
+                  <td data-label="파일 경로"><code>src/storage/sqlite/migrate.ts</code></td>
+                  <td data-label="요약">SQL 마이그레이션 실행기</td>
+                  <td data-label="주요 심볼"><code>migrateSqlite()</code></td>
+                  <td data-label="수정 시점">마이그레이션 적용 방식 수정 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Storage</th>
+                  <td data-label="파일 경로"><code>src/storage/sqlite/repositories.ts</code></td>
+                  <td data-label="요약">SQLite 저장소 실제 구현체</td>
+                  <td data-label="주요 심볼"><code>SqliteUnionRepositories</code> (트랜잭션 및 참조 <code>tx_id</code> 검증)</td>
+                  <td data-label="수정 시점">DB 쿼리·업서트·정렬 로직 변경 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Services</th>
+                  <td data-label="파일 경로"><code>src/services/member-service.ts</code></td>
+                  <td data-label="요약">조합원·임원·별칭·링크 서비스</td>
+                  <td data-label="주요 심볼"><code>MemberService</code> (<code>joinMember</code>, <code>withdrawMember</code>, <code>appointRole</code>, <code>transferRole</code>, <code>linkDocumentLedger</code> 등)</td>
+                  <td data-label="수정 시점">입탈퇴, 임원 거버넌스, 증빙 보관 업무 로직 수정 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Services</th>
+                  <td data-label="파일 경로"><code>src/services/sync-ledger.ts</code></td>
+                  <td data-label="요약">원장 단방향 동기화 어댑터</td>
+                  <td data-label="주요 심볼"><code>parseLedgerFromXlsx()</code>, <code>parseLedgerFromJson()</code>, <code>syncLedgerFromFile()</code></td>
+                  <td data-label="수정 시점">엑셀 시트명/열 구조 변경 또는 동기화 절차 수정 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Services</th>
+                  <td data-label="파일 경로"><code>src/services/export-public.ts</code></td>
+                  <td data-label="요약">비식별 공개 투영 5종 추출</td>
+                  <td data-label="주요 심볼"><code>ensureLocalPrivacySalt()</code>, <code>exportPublicProjection()</code></td>
+                  <td data-label="수정 시점"><code>data/public/*.json</code> 구조나 통계 집계 항목 변경 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Services</th>
+                  <td data-label="파일 경로"><code>src/services/export-markdown.ts</code></td>
+                  <td data-label="요약">로컬 <code>directory/</code> 명부 생성</td>
+                  <td data-label="주요 심볼"><code>exportDirectoryMarkdown()</code></td>
+                  <td data-label="수정 시점">내부 열람용 <code>members.md</code>·<code>officers.md</code>·서류카드 서식 수정 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Services</th>
+                  <td data-label="파일 경로"><code>src/services/audit-privacy.ts</code></td>
+                  <td data-label="요약">원본·공개투영 개인정보 감사</td>
+                  <td data-label="주요 심볼"><code>runPrivacyAudit()</code></td>
+                  <td data-label="수정 시점">감사 범위나 리포트 출력 형식 조정 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Services</th>
+                  <td data-label="파일 경로"><code>src/services/import-legacy.ts</code></td>
+                  <td data-label="요약">구 저장소 일회성 데이터 이관</td>
+                  <td data-label="주요 심볼"><code>importLegacyData()</code></td>
+                  <td data-label="수정 시점">과거 이관 규칙 참고용 (일상 운영 시 수정 불필요)</td>
+                </tr>
+                <tr>
+                  <th scope="row">Site</th>
+                  <td data-label="파일 경로"><code>src/site/shell.ts</code></td>
+                  <td data-label="요약">공통 HTML 셸 및 에셋 해싱</td>
+                  <td data-label="주요 심볼"><code>renderPageShell()</code>, <code>copyAndHashAssets()</code>, <code>renderDocumentToolsWidget()</code></td>
+                  <td data-label="수정 시점">상단 메뉴, 기본 URL, 메타태그, 공통 헤더/푸터 수정 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Site</th>
+                  <td data-label="파일 경로"><code>src/site/build-site.ts</code></td>
+                  <td data-label="요약">정적 사이트 <code>_site/</code> 전체 빌드</td>
+                  <td data-label="주요 심볼"><code>buildSite()</code> (홈·자료실·회계·조합·<code>sitemap.xml</code>)</td>
+                  <td data-label="수정 시점">포털 페이지 추가, 마크업 변경, 집계 표 수정 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Site</th>
+                  <td data-label="파일 경로"><code>src/site/validate-site.ts</code></td>
+                  <td data-label="요약">로컬·CI Dual-Zone 검증 게이트</td>
+                  <td data-label="주요 심볼"><code>validateSite()</code>, <code>inspectHtmlAst()</code>, <code>checkTextPrivacy()</code></td>
+                  <td data-label="수정 시점">배포 차단 규칙·개인정보 허용 정책·링크 검사 수정 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Site</th>
+                  <td data-label="파일 경로"><code>src/site/mom-renderer.ts</code></td>
+                  <td data-label="요약">회의록 마크다운 → HTML 렌더러</td>
+                  <td data-label="주요 심볼"><code>renderMomMarkdown()</code>, <code>findMarkdownSyntaxResidues()</code></td>
+                  <td data-label="수정 시점">회의록 표·목차·링크 렌더링 및 문법 잔재 검사 수정 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Site</th>
+                  <td data-label="파일 경로"><code>src/site/statement-fragment.ts</code></td>
+                  <td data-label="요약">성명서 AST 검증 &amp; 밀도 계산</td>
+                  <td data-label="주요 심볼"><code>analyzeStatementFragment()</code>, <code>selectPrintDensity()</code></td>
+                  <td data-label="수정 시점">성명서 허용 태그/클래스 또는 A2 인쇄 밀도 기준 변경 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Site</th>
+                  <td data-label="파일 경로"><code>src/site/svg-charts.ts</code></td>
+                  <td data-label="요약">접근성 준수 인라인 SVG 차트</td>
+                  <td data-label="주요 심볼"><code>renderMonthlyFlowSvg()</code>, <code>renderActivityBarsSvg()</code>, <code>renderUnitComparisonSvg()</code></td>
+                  <td data-label="수정 시점">연간 보고서·조합원 현황·내부 보고서 SVG 차트 수정 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Site</th>
+                  <td data-label="파일 경로"><code>src/site/bylaws.ts</code></td>
+                  <td data-label="요약">규약 파서 및 안내·전문 빌더</td>
+                  <td data-label="주요 심볼"><code>parseBylawsMarkdown()</code>, <code>buildBylawsGuideHtml()</code>, <code>buildBylawsFullHtml()</code></td>
+                  <td data-label="수정 시점">규약 파싱 규칙·거버넌스 도식·주제 그룹 수정 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Site</th>
+                  <td data-label="파일 경로"><code>src/site/bylaws-law.ts</code></td>
+                  <td data-label="요약">노조법 비교 분석(미등재) 빌더</td>
+                  <td data-label="주요 심볼"><code>loadBylawsLawDocument()</code>, <code>buildBylawsLawHtml()</code></td>
+                  <td data-label="수정 시점">노조법 비교 분석 화면·등급·체크리스트 구조 수정 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Site</th>
+                  <td data-label="파일 경로"><code>src/site/bylaws-revision.ts</code></td>
+                  <td data-label="요약">규약 개정 다회차 심의 빌더</td>
+                  <td data-label="주요 심볼"><code>buildBylawsRevisionDiffHtml()</code>, <code>buildBylawsRevisionFullHtml()</code></td>
+                  <td data-label="수정 시점">신·구조문대비표 및 개정안 심의 UI 구조 수정 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Site</th>
+                  <td data-label="파일 경로"><code>src/site/generate-redirects.ts</code></td>
+                  <td data-label="요약">구 저장소 리다이렉트 생성</td>
+                  <td data-label="주요 심볼"><code>generateRedirects()</code></td>
+                  <td data-label="수정 시점">구 <code>accounting</code>/<code>workplace</code> URL 매핑 추가 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">Reports</th>
+                  <td data-label="파일 경로"><code>src/reports/build-internal-reports.ts</code></td>
+                  <td data-label="요약">내부 회의용 실명 결산서 빌더</td>
+                  <td data-label="주요 심볼"><code>buildInternalReports()</code></td>
+                  <td data-label="수정 시점">내부 운영위·대의원대회 결산 보고서 레이아웃 변경 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">PDF</th>
+                  <td data-label="파일 경로"><code>src/pdf/generate-pdf.ts</code></td>
+                  <td data-label="요약">Chrome/Edge 헤드리스 PDF 출력</td>
+                  <td data-label="주요 심볼"><code>findBrowserExecutable()</code>, <code>generateDocumentPdf()</code></td>
+                  <td data-label="수정 시점">용지 여백, 라이트 고정 인쇄 스타일, 브라우저 경로 추가 시</td>
+                </tr>
+                <tr>
+                  <th scope="row">CLI</th>
+                  <td data-label="파일 경로"><code>src/cli/index.ts</code></td>
+                  <td data-label="요약"><code>union</code> 명령줄 진입점</td>
+                  <td data-label="주요 심볼"><code>parseArgs()</code>, <code>main()</code>, <code>printHelp()</code></td>
+                  <td data-label="수정 시점">새로운 CLI 서브커맨드나 옵션 플래그 추가 시</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>8.2 프론트엔드 에셋(<code>web/assets/</code>) 및 자동화 테스트(<code>test/</code>)</h3>
+          <div class="table-wrapper" tabindex="0" role="region" aria-labelledby="cap-front">
+            <table>
+              <caption id="cap-front">브라우저 실행 JS/CSS 모듈 및 8개 단위·통합 테스트 파일 목록</caption>
+              <thead>
+                <tr>
+                  <th scope="col">분류</th>
+                  <th scope="col">파일 경로</th>
+                  <th scope="col">담당 기능 및 핵심 동작</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">CSS</th>
+                  <td data-label="파일"><code>web/assets/app.css</code> · <code>newsletter.css</code></td>
+                  <td data-label="담당 기능">Hallmark Ledger 7개 CSS Layer 디자인 시스템, <code>light-dark()</code> 라이트/다크 토큰, A3 소식지 인쇄 격자</td>
+                </tr>
+                <tr>
+                  <th scope="row">공통 JS</th>
+                  <td data-label="파일"><code>web/assets/nav.js</code></td>
+                  <td data-label="담당 기능">반응형 헤더 메뉴(<code>ResizeObserver</code> + <code>popover</code> 폴리필), 다크 모드 토글 및 타 탭 동기화</td>
+                </tr>
+                <tr>
+                  <th scope="row">공통 JS</th>
+                  <td data-label="파일"><code>web/assets/document-tools.js</code></td>
+                  <td data-label="담당 기능">글자 크기(80~150%), 본문/링크 복사, 공유, 자동 목차(TOC Scroll-spy), 반응형 표 <code>data-label</code> 보강</td>
+                </tr>
+                <tr>
+                  <th scope="row">회계 JS</th>
+                  <td data-label="파일"><code>web/assets/dashboard.js</code> · <code>ledger.js</code></td>
+                  <td data-label="담당 기능">Chart.js 월별 추이·미니맵·TOP 10·와플 3단계 드릴다운 / 거래 탐색기 다중 필터·30건 페이징·CSV 저장</td>
+                </tr>
+                <tr>
+                  <th scope="row">기준 JS</th>
+                  <td data-label="파일"><code>web/assets/coa-tabs.js</code> · <code>coa-map.js</code></td>
+                  <td data-label="담당 기능">다이어그램/표 ARIA 탭 전환 및 회계단위·관·항·목 클릭형 3단계 드릴다운</td>
+                </tr>
+                <tr>
+                  <th scope="row">자료 JS</th>
+                  <td data-label="파일"><code>web/assets/archive-filter.js</code> · <code>video-embed.js</code></td>
+                  <td data-label="담당 기능">자료실 주제·검색어 URL 동기화(구 <code>?category=</code> 리다이렉트) / 유튜브 클릭 시 지연 임베드 파사드</td>
+                </tr>
+                <tr>
+                  <th scope="row">규약 JS</th>
+                  <td data-label="파일"><code>web/assets/bylaws.js</code> · <code>bylaws-law.js</code> · <code>bylaws-revision.js</code></td>
+                  <td data-label="담당 기능">규약 전문 실시간 검색·하이라이트 / 노조법 등급·주제 필터 / 다회차 규약 심의 <code>localStorage</code> 저장·PII 경고·JSON/MD 내보내기</td>
+                </tr>
+                <tr>
+                  <th scope="row">테스트</th>
+                  <td data-label="파일"><code>test/*.test.ts</code> (8개 파일)</td>
+                  <td data-label="담당 기능"><code>accounting</code>, <code>person-normalizer</code>, <code>privacy</code>, <code>storage-sqlite</code>, <code>sync-ledger</code>, <code>bylaws</code>, <code>svg-reports</code>, <code>site-pipeline</code> 전 영역 자동 검증</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 제9장 -->
+        <section id="ch-9" class="chapter-section" data-chapter="9">
+          <span class="chapter-badge">Chapter 09 · CLI Reference</span>
+          <h2>제9장. CLI 명령어 마스터 레퍼런스 (<code>npm run</code> &amp; <code>union</code> 전체 명령)</h2>
+
+          <h3>9.1 <code>package.json</code> 단축 스크립트 (13종)</h3>
+          <div class="table-wrapper" tabindex="0" role="region" aria-labelledby="cap-npm">
+            <table>
+              <caption id="cap-npm">package.json에 등록된 npm run 단축 명령 전체 목록</caption>
+              <thead>
+                <tr>
+                  <th scope="col">명령어</th>
+                  <th scope="col">실제 실행 내용</th>
+                  <th scope="col">용도 및 사용 시점</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row"><code>npm run typecheck</code></th><td data-label="실제 실행"><code>tsc --noEmit</code></td><td data-label="용도">TypeScript 타입·문법 오류 검사</td></tr>
+                <tr><th scope="row"><code>npm test</code></th><td data-label="실제 실행"><code>node --import tsx --test test/*.test.ts</code></td><td data-label="용도">8개 자동화 테스트 스위트 일괄 실행</td></tr>
+                <tr><th scope="row"><code>npm run db:migrate</code></th><td data-label="실제 실행"><code>tsx src/cli/index.ts migrate</code></td><td data-label="용도"><code>union.db</code> 최초 생성 또는 새 SQL 적용</td></tr>
+                <tr><th scope="row"><code>npm run export:public</code></th><td data-label="실제 실행"><code>tsx src/cli/index.ts export-public</code></td><td data-label="용도"><code>data/public/</code> 비식별 JSON 4종 + 해시 갱신</td></tr>
+                <tr><th scope="row"><code>npm run audit:privacy</code></th><td data-label="실제 실행"><code>tsx src/cli/index.ts audit-privacy</code></td><td data-label="용도"><code>data/public/</code> 및 <code>_source/</code> 개인정보 정밀 감사</td></tr>
+                <tr><th scope="row"><code>npm run build:site</code></th><td data-label="실제 실행"><code>tsx src/cli/index.ts build-site</code></td><td data-label="용도"><code>_site/</code> 정적 포털 로컬 빌드</td></tr>
+                <tr><th scope="row"><code>npm run build:reports</code></th><td data-label="실제 실행"><code>tsx src/cli/index.ts build-reports</code></td><td data-label="용도">내부 회의용 실명 월간·연간 결산서(<code>reports/</code>) 생성</td></tr>
+                <tr><th scope="row"><code>npm run validate:site</code></th><td data-label="실제 실행"><code>tsx src/cli/index.ts validate-site</code></td><td data-label="용도">로컬 DB 전체 기준 <code>_site/</code> 개인정보·무결성 검사</td></tr>
+                <tr><th scope="row"><code>npm run validate:ci</code></th><td data-label="실제 실행"><code>tsx src/cli/index.ts validate-site --ci</code></td><td data-label="용도">DB 없이 <code>PRIVACY_HMAC_SALT</code> 기반 CI 모드 검사</td></tr>
+                <tr><th scope="row"><code>npm run generate:redirects</code></th><td data-label="실제 실행"><code>tsx src/cli/index.ts generate-redirects</code></td><td data-label="용도">구 저장소용 리다이렉트 HTML(<code>redirects/</code>) 생성</td></tr>
+                <tr><th scope="row"><code>npm run check:local</code></th><td data-label="실제 실행"><code>typecheck &amp;&amp; test &amp;&amp; audit:privacy &amp;&amp; build:site &amp;&amp; validate:site</code></td><td data-label="용도"><strong>Git 푸시 전 필수 전체 검증 파이프라인</strong></td></tr>
+                <tr><th scope="row"><code>npm run check:ci</code></th><td data-label="실제 실행"><code>typecheck &amp;&amp; test &amp;&amp; build:site &amp;&amp; validate:ci</code></td><td data-label="용도">GitHub Actions CI 환경과 동일한 검증 실행</td></tr>
+                <tr><th scope="row"><code>npm run prepare:hooks</code></th><td data-label="실제 실행"><code>git config core.hooksPath .githooks</code></td><td data-label="용도">신규 PC 최초 설정 시 푸시 전 안전 훅 활성화</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>9.2 <code>union</code> CLI 서브커맨드 전체 문법 (가상 인명 예시)</h3>
+          <div class="code-card">
+            <div class="code-head">
+              <span>PowerShell — union CLI 주요 서브커맨드 마스터 모음</span>
+              <button type="button" class="copy-code-btn">복사</button>
+            </div>
+            <pre class="code-body"># 1. DB 마이그레이션 · 초기 이관 · 원장 단방향 동기화
+npm run union -- migrate
+npm run union -- import-legacy --accounting c:\Accounting --workplace c:\workplace
+npm run union -- sync-ledger --file "C:\다운로드\ledger.xlsx"
+
+# 2. 조합원 관리 (list / join / withdraw / rejoin / transfer)
+npm run union -- member list --unit AY --status active --include-external
+npm run union -- member join --name 홍길동 --unit AY --birth 850315 --phone 010-0000-0000 --emp-type 공무직 --shift 주간 --date 2026-11-22 --wish "안전한 현장" --doc "C:\스캔\가입서.jpg"
+npm run union -- member withdraw --id M-9001 --category 정년퇴직 --reason "정년퇴직" --date 2026-11-30 --refund-tx HQ-2026-099 --doc "탈퇴서=C:\스캔\탈퇴서.jpg"
+npm run union -- member rejoin --id M-9001 --unit BP --date 2026-12-01 --rejoin-category "일반 재가입"
+npm run union -- member transfer --id M-9001 --to-unit BP --date 2026-12-01 --reason "사업장 전보"
+
+# 3. 외부인 관리 · 임원 직책 거버넌스
+npm run union -- external list
+npm run union -- external add --name 이영희 --org 연대노조 --category 타노조대표 --phone 010-0000-0000
+npm run union -- role list --active --scope executive
+npm run union -- role appoint --person M-9001 --title 사무국장 --scope executive --org 본조 --term 제3기 --from 2026-11 --appointed-on 2026-11-01 --order 20 --disclosure public_official --doc mom:202611
+npm run union -- role transfer --role R-0001 --new-title 수석부위원장 --new-scope executive --date 2026-11-15 --reason "보직변경"
+npm run union -- role end --role R-0001 --to 2026-11 --ended-on 2026-11-30 --reason 임기만료
+npm run union -- role set-disclosure --role R-0001 --disclosure masked
+
+# 4. 별칭 · 문서-거래 연결 · 내보내기 · PDF
+npm run union -- alias list
+npm run union -- alias add --alias 길동 --person M-9001 --mode context_title --note "회의록 약칭"
+npm run union -- link list --doc mom:202611
+npm run union -- link add --doc mom:202611 --tx HQ-2026-015 --note "11월 정기 운영위원회 식대"
+npm run union -- export-md
+npm run union -- build-reports --month latest --year 2026 --out reports
+npm run union -- pdf statement:성명서_202607 --size A2 --out reports/pdf/성명서.pdf</pre>
+          </div>
+        </section>
+
+        <!-- 제10장 -->
+        <section id="ch-10" class="chapter-section" data-chapter="10">
+          <span class="chapter-badge">Chapter 10 · Operations Playbook</span>
+          <h2>제10장. 비개발자 관리자를 위한 상황별 실무 운영 매뉴얼 (레시피 A~G)</h2>
+
+          <h3>레시피 A. 신규 조합원 가입 · 탈퇴 · 지부 이동 처리하기</h3>
+          <ol>
+            <li>스캔받은 가입서(또는 탈퇴서) 이미지/PDF 파일을 내 PC에 준비합니다.</li>
+            <li><code>npm run union -- member join --name 홍길동 --unit AY --birth 850315 --doc "C:\경로\가입서.jpg"</code>를 실행합니다. (<code>--birth</code>가 과거 탈퇴자와 일치하면 자동으로 재가입으로 이어집니다.)</li>
+            <li><code>npm run union -- export-md</code>와 <code>npm run export:public</code>을 순서대로 실행합니다.</li>
+            <li>Git에는 오직 <code>data/public/</code>만 커밋·푸시합니다. (<code>union.db</code>와 <code>_raw/</code>는 로컬에만 보관)</li>
+          </ol>
+
+          <h3>레시피 B. 임원 선출 · 보직 변경 및 순번제 소통간사 등록하기</h3>
+          <ul>
+            <li><strong>공식 임원</strong>: <code>role appoint ... --scope executive --disclosure public_official</code>로 임명하면 공개 웹(<code>/union/</code>) 임원 카드와 회의록 허용 목록에 자동 반영됩니다.</li>
+            <li><strong>순번제 소통간사</strong>: <code>--scope staff_rotating</code>을 지정하면 <code>masked</code>로 고정되며 <code>public_official</code> 설정 시 에러로 차단됩니다.</li>
+            <li>변경 후 반드시 <code>export-md</code>와 <code>export:public</code>을 실행하세요.</li>
+          </ul>
+
+          <h3>레시피 C. 매월 회계 원장 동기화 및 결산서·포털 업데이트하기</h3>
+          <ol>
+            <li>Google Sheets 원장을 <code>.xlsx</code> 파일로 다운로드합니다(시트명 <code>통합원장</code> 유지).</li>
+            <li>신규 계정(<code>목</code>)이 생겼다면 먼저 <code>config/coa.json</code>에 등록합니다.</li>
+            <li><code>npm run union -- sync-ledger --file "C:\다운로드\ledger.xlsx"</code> 실행(3대 검증 및 참조 <code>tx_id</code> 검증 자동 수행).</li>
+            <li><code>npm run build:reports</code>로 내부 회의용 실명 결산서(<code>reports/</code>)를 뽑습니다.</li>
+            <li><code>npm run export:public</code> → <code>npm run check:local</code> 실행 후 <code>data/public/</code>을 커밋·푸시합니다.</li>
+          </ol>
+
+          <h3>레시피 D. 운영위원회 회의록 작성 및 회계 거래 연결하기</h3>
+          <ol>
+            <li><code>_source/mom/</code> 폴더에 <code>YYYYMM 운영위원회 회의록.md</code> 파일을 작성하고 YAML Frontmatter(<code>id: mom:YYYYMM</code>, <code>route</code>, <code>dates</code>, <code>financePeriod: "YYYY-MM"</code>, <code>workflow.visibility</code>)를 입력합니다.</li>
+            <li>일반 조합원·소통간사 실명 및 <code>## 재정 현황</code> 구역 아래 모든 실명 기재를 철저히 금지합니다.</li>
+            <li>관련 지출이 있으면 <code>npm run union -- link add --doc mom:YYYYMM --tx HQ-2026-XXX --note "설명"</code> 실행 후 <code>npm run export:public</code>으로 공개 링크 JSON을 갱신합니다.</li>
+          </ol>
+
+          <h3>레시피 E. 성명서·소식지 발행 및 인쇄용 PDF(A2/A3/A4) 뽑기</h3>
+          <ol>
+            <li>성명서 본문 조각(<code>_source/statement/*.body.html</code>) 작성 후 <code>_source/catalog.json</code>에 등록합니다.</li>
+            <li><code>npm run build:site</code> 실행 후 <code>npm run union -- pdf &lt;doc_id&gt;</code>를 실행하면 성명서는 A2, 소식지는 A3, 일반 문서는 A4 PDF로 <code>reports/pdf/</code>에 출력됩니다.</li>
+          </ol>
+
+          <h3>레시피 F. 규약개정 TF·운영위 다회차 심의 및 정본 반영하기</h3>
+          <ol>
+            <li>포털 미등재 URL(<code>union/bylaws-revision-diff.html</code> 또는 <code>bylaws-revision-full.html</code>)에서 회의를 진행합니다.</li>
+            <li>발언 주체는 직책·기구명만 선택/입력하며, 조문별 상태와 수정 문구를 브라우저에 임시 저장합니다.</li>
+            <li>회의 종료 후 <strong>[정본 JSON 다운로드]</strong>로 받은 파일을 <code>_source/union/bylaws-revision.json</code>에 덮어쓰고, <code>npm run check:local</code> 통과 후 커밋합니다.</li>
+          </ol>
+
+          <h3>레시피 G. 최종 안전 점검 및 GitHub Pages 배포하기</h3>
+          <div class="code-card">
+            <div class="code-head">
+              <span>PowerShell — 푸시 직전 표준 검증·배포 4단계</span>
+              <button type="button" class="copy-code-btn">복사</button>
+            </div>
+            <pre class="code-body">npm run check:local
+git status            # data/local, _raw, directory, reports, _site, .env 미노출 확인!
+git add config/ _source/ data/public/ web/ docs/ src/
+git commit -m "2026년 11월 운영위원회 회의록 및 결산 반영"
+git push origin main  # pre-push 훅 + GitHub Actions CI 통과 후 자동 배포</pre>
+          </div>
+        </section>
+
+        <!-- 제11장 -->
+        <section id="ch-11" class="chapter-section" data-chapter="11">
+          <span class="chapter-badge">Chapter 11 · Handover &amp; FAQ</span>
+          <h2>제11장. 인수인계 체크리스트 및 자주 발생하는 문제 해결 (FAQ)</h2>
+
+          <h3>11.1 신임 관리자 인수인계 7대 필수 체크리스트</h3>
+          <ul class="checklist">
+            <li><input type="checkbox" id="chk-1"><label for="chk-1"><strong>1. 필수 소프트웨어 확인:</strong> Node.js 22 LTS 이상, Git, Chrome 또는 Edge가 새 PC에 설치되어 있는지 확인 (<code>node -v</code>, <code>git --version</code>).</label></li>
+            <li><input type="checkbox" id="chk-2"><label for="chk-2"><strong>2. 저장소 복제 및 패키지 설치:</strong> <code>git clone</code> 후 프로젝트 루트에서 <code>npm install</code> 실행.</label></li>
+            <li><input type="checkbox" id="chk-3"><label for="chk-3"><strong>3. Git 푸시 보호 훅 활성화:</strong> <code>npm run prepare:hooks</code> 실행하여 <code>.githooks/pre-push</code> 활성화.</label></li>
+            <li><input type="checkbox" id="chk-4"><label for="chk-4"><strong>4. [핵심] 로컬 비밀 자산 3종 오프라인/암호화 인수:</strong> 전임자로부터 ① <code>data/local/union.db</code>, ② <code>_raw/</code> 폴더 전체, ③ <code>.env</code>(GitHub Actions Secret과 동일한 <code>PRIVACY_HMAC_SALT</code> 값) 직접 인수.</label></li>
+            <li><input type="checkbox" id="chk-5"><label for="chk-5"><strong>5. 파생 명부·보고서 생성 확인:</strong> <code>npm run union -- export-md</code>와 <code>npm run build:reports</code>로 <code>directory/</code>와 <code>reports/</code> 정상 생성 확인.</label></li>
+            <li><input type="checkbox" id="chk-6"><label for="chk-6"><strong>6. 전체 무결성·개인정보 게이트 통과:</strong> <code>npm run check:local</code> 실행 시 오류 0건 확인.</label></li>
+            <li><input type="checkbox" id="chk-7"><label for="chk-7"><strong>7. 구 사이트 리다이렉트 점검:</strong> 필요 시 <code>npm run generate:redirects</code>로 <code>redirects/</code> 최신화.</label></li>
+          </ul>
+
+          <h3>11.2 자주 만나는 오류 메시지와 해결법 (FAQ 10선)</h3>
+          <details class="faq-item">
+            <summary>Q1. <code>Invalid COA at &lt;txId&gt;</code> 오류가 나면서 원장 동기화가 실패합니다.</summary>
+            <div class="faq-body">엑셀 원장에 적힌 <code>(구분, 관, 항, 목)</code> 조합이 <code>config/coa.json</code> 기준표에 없다는 뜻입니다. 오타를 수정하거나 새로운 활동 계정이 필요하면 <code>config/coa.json</code>에 먼저 추가한 뒤 다시 <code>sync-ledger</code>를 실행하세요.</div>
+          </details>
+          <details class="faq-item">
+            <summary>Q2. <code>Balance mismatch at &lt;txId&gt;: expected X, got Y</code> 오류가 납니다.</summary>
+            <div class="faq-body">엑셀 원장의 중간 행을 지우거나 금액을 고친 뒤 단위 잔액(<code>unit_bal</code>) 수식이 맞지 않아 1원 이상 어긋난 상태입니다. 해당 거래번호 앞뒤 행의 수입·지출·잔액 수식을 엑셀에서 바로잡고 다시 시도하세요.</div>
+          </details>
+          <details class="faq-item">
+            <summary>Q3. <code>Formula error '#REF!'</code> 오류가 납니다.</summary>
+            <div class="faq-body">Google Sheets/Excel 셀에 <code>#REF!</code>, <code>#NAME?</code>, <code>#VALUE!</code>, <code>#N/A</code> 같은 시트 수식 오류 문자가 남아 있습니다. 시트에서 해당 오류 셀을 해결한 뒤 다시 내려받으세요.</div>
+          </details>
+          <details class="faq-item">
+            <summary>Q4. <code>document_ledger_links가 참조하는 거래번호가 누락되었습니다</code> 오류가 납니다.</summary>
+            <div class="faq-body">자료실 회의록이나 탈퇴 환급 이력에 이미 연결해 둔 거래번호(<code>tx_id</code>)가 새 원장 파일에서 사라졌거나 번호가 바뀌었습니다. 데이터베이스 참조 무결성을 지키기 위해 자동 롤백되었으니, 엑셀의 기존 <code>tx_id</code>를 복구하세요.</div>
+          </details>
+          <details class="faq-item">
+            <summary>Q5. 소통간사를 <code>public_official</code>로 등록하려니 에러가 납니다.</summary>
+            <div class="faq-body"><code>ADR-0003</code> 원칙상 순번제 소통간사(<code>staff_rotating</code>)는 일반 조합원 보호를 위해 공개 직무자로 설정할 수 없도록 코드에서 차단합니다. <code>--disclosure masked</code>를 쓰거나 플래그를 생략하세요.</div>
+          </details>
+          <details class="faq-item">
+            <summary>Q6. 회의록에 위원장 실명을 적었는데 <code>[finance-zone]: 비공개 인물 성명 노출</code> 오류가 뜹니다.</summary>
+            <div class="faq-body"><code>## 재정 현황</code>, <code>## 찬조금</code> 같은 재정 제목 아래 구역에서는 선출 임원이라 할지라도 실명 기재를 금지합니다. 해당 구역에서는 <code>"관계자"</code>, <code>"임원"</code>, <code>"조합원"</code> 등으로 비식별 표기하세요.</div>
+          </details>
+          <details class="faq-item">
+            <summary>Q7. <code>validate:ci</code>에서 <code>해시 비공개 인물 노출 [홍*동]</code> 오류가 발생했습니다.</summary>
+            <div class="faq-body">문서에 비공개 대상자(또는 해당 문서 날짜 기준 임기 외 인물)의 실명이 포함되었습니다. 문서 본문에서 익명 처리하거나, 공식 임원 임기가 누락되었다면 <code>person_roles</code> 수정 후 <code>export:public</code>을 다시 실행하세요.</div>
+          </details>
+          <details class="faq-item">
+            <summary>Q8. <code>PRIVACY_HMAC_SALT</code> 불일치/누락 경고가 뜹니다.</summary>
+            <div class="faq-body">내 PC의 <code>.env</code> 파일 속 솔트 값과 GitHub Repository Settings의 Actions Secret(<code>PRIVACY_HMAC_SALT</code>) 값이 다르면 CI가 해시를 대조하지 못합니다. 두 값을 똑같이 맞춘 후 <code>npm run export:public</code>을 실행해 <code>privacy_hashes.json</code>을 다시 커밋하세요.</div>
+          </details>
+          <details class="faq-item">
+            <summary>Q9. 회의록 검증에서 <code>unbalanced-strong-marker</code> 또는 <code>escaped-bracket-residue</code>가 뜹니다.</summary>
+            <div class="faq-body">Markdown 문법 오류입니다. <code>**굵기**</code> 표기가 닫히지 않았거나 <code>\[</code> 이스케이프 문자가 화면에 그대로 출력될 위험이 있다는 뜻이니 안내된 줄 번호를 확인해 고쳐 주세요.</div>
+          </details>
+          <details class="faq-item">
+            <summary>Q10. <code>union pdf</code> 실행 시 Chrome 또는 Edge를 못 찾는다고 나옵니다.</summary>
+            <div class="faq-body">브라우저가 비표준 폴더에 설치된 경우입니다. PowerShell에서 <code>$env:CHROME_PATH="C:\실제경로\chrome.exe"</code>를 지정한 뒤 다시 실행하세요.</div>
+          </details>
+        </section>
+
+        <!-- 제12장 -->
+        <section id="ch-12" class="chapter-section" data-chapter="12">
+          <span class="chapter-badge">Chapter 12 · Design &amp; Accessibility</span>
+          <h2>제12장. 가독성·접근성(A11y) 및 디자인 시스템(<code>DESIGN.md</code>) 설계 원칙</h2>
+          <p><code>union-portal</code> 포털과 지금 보고 계신 이 HTML 인수인계 해설서는 조합원과 관리자가 기기·시력·환경에 상관없이 정보를 얻도록 다음 원칙을 엄격히 지킵니다.</p>
+          <ul>
+            <li><strong>Hallmark Ledger 시각 정체성</strong>: 카드 박스를 무분별하게 중첩하지 않고, 장부의 굵은 상단 괘선(<code>2px~4px --rule-bar</code>)과 1px 헤어라인, Klein Blue(<code>#002FA7</code>)·Dark Tyrian(<code>#12354E</code>)·로고 코발트(<code>#516DB2</code>) 배색으로 명료한 계층을 만듭니다.</li>
+            <li><strong>라이트·다크 모드 &amp; 인쇄 분리</strong>: <code>&lt;meta name="color-scheme" content="light dark"&gt;</code>와 <code>light-dark()</code> 토큰으로 OS 테마를 기본 추종하며 수동 전환 시 FOUC 깜빡임을 막습니다. 반면 종이 인쇄(<code>@media print</code>)와 PDF 출력은 다크 모드의 영향을 받지 않도록 <strong>흰 배경·검은 잉크 라이트 전용</strong>으로 고정합니다.</li>
+            <li><strong>타이포그래피와 OS 글자 확대 존중</strong>: <code>Pretendard</code> 계열 단일 글꼴과 <code>tabular-nums</code> 숫자 정렬을 쓰며, <code>&lt;meta name="text-scale" content="scale"&gt;</code>과 <code>rem</code>/<code>em</code> 상대 단위를 사용해 OS 확대 설정과 본 문서의 글자 크기 조절(85~130%)이 깨짐 없이 동작합니다.</li>
+            <li><strong>WCAG AA 웹 접근성</strong>: 본문 바로가기 링크(<code>skip-link</code>), 시맨틱 랜드마크(<code>header</code>, <code>nav</code>, <code>main</code>, <code>aside</code>, <code>footer</code>), <code>:focus-visible</code> 고대비 포커스 링, <code>@container</code> 기반 모바일 카드형 표 전환(<code>data-label</code>), 색맹·고대비 모드(<code>forced-colors: active</code>) 대비용 텍스트·아이콘 병기, 그리고 모든 SVG 다이어그램에 <code>role="img"</code>·<code>&lt;title&gt;</code>·<code>&lt;desc&gt;</code>를 내장했습니다.</li>
+          </ul>
+        </section>
+
+        <footer style="margin-top:2.5rem;padding-top:1.25rem;border-top:2px solid var(--rule-bar);font-size:0.86rem;color:var(--ink-muted);display:flex;flex-wrap:wrap;justify-content:space-between;gap:0.5rem;">
+          <span>우체국물류지원단 물류노동조합 종합 포털 (<code>union-portal</code>) 아키텍처·인수인계 해설서</span>
+          <span>원본 Markdown: <a href="./ARCHITECTURE-HANDOVER.md">ARCHITECTURE-HANDOVER.md</a></span>
+        </footer>
+      </article>
+    </main>
+  </div>
+
+  <button id="back-to-top" type="button" class="back-to-top no-print" hidden aria-label="페이지 맨 위로 이동">↑ 맨 위</button>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // 1. Two-state Dark Mode Toggle (System default vs explicit override)
+      var THEME_KEY = 'handover-color-scheme';
+      var metaScheme = document.querySelector('meta[name="color-scheme"]');
+      var themeBtn = document.getElementById('theme-toggle');
+      var darkMql = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+
+      function getSystemScheme() {
+        return darkMql && darkMql.matches ? 'dark' : 'light';
+      }
+
+      function resolveEffectiveScheme(content) {
+        if (content === 'dark') return 'dark';
+        if (content === 'light') return 'light';
+        return getSystemScheme();
+      }
+
+      function applyThemeState(content) {
+        var normalized = content === 'dark' || content === 'light' ? content : 'light dark';
+        var effective = resolveEffectiveScheme(normalized);
+        if (metaScheme) metaScheme.content = normalized;
+        if (themeBtn) {
+          themeBtn.setAttribute('aria-pressed', String(effective === 'dark'));
+          themeBtn.textContent = effective === 'dark' ? '라이트 모드' : '다크 모드';
+          themeBtn.setAttribute('aria-label', effective === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환');
+        }
+      }
+
+      if (metaScheme && themeBtn) {
+        applyThemeState(metaScheme.content);
+        themeBtn.addEventListener('click', function () {
+          var currentEffective = resolveEffectiveScheme(metaScheme.content);
+          var next = currentEffective === 'dark' ? 'light' : 'dark';
+          var sys = getSystemScheme();
+          try {
+            if (next === sys) {
+              localStorage.removeItem(THEME_KEY);
+              applyThemeState('light dark');
+            } else {
+              localStorage.setItem(THEME_KEY, next);
+              applyThemeState(next);
+            }
+          } catch (_) {
+            applyThemeState(next === sys ? 'light dark' : next);
+          }
+        });
+
+        window.addEventListener('storage', function (e) {
+          if (e.key === THEME_KEY) {
+            applyThemeState(e.newValue === 'light' || e.newValue === 'dark' ? e.newValue : 'light dark');
+          }
+        });
+
+        if (darkMql && typeof darkMql.addEventListener === 'function') {
+          darkMql.addEventListener('change', function () {
+            if (metaScheme.content === 'light dark') {
+              applyThemeState('light dark');
+            }
+          });
+        }
+      }
+
+      // 2. Reader Font Scale (modifies --reader-scale on .doc-main without touching :root/html)
+      var SCALE_KEY = 'handover-reader-scale';
+      var scale = 1;
+      var minScale = 0.85;
+      var maxScale = 1.3;
+      var step = 0.05;
+      var btnDown = document.getElementById('font-down');
+      var btnUp = document.getElementById('font-up');
+      var btnReset = document.getElementById('font-reset');
+      var scaleOut = document.getElementById('font-scale-out');
+
+      try {
+        var savedScale = parseFloat(localStorage.getItem(SCALE_KEY) || '1');
+        if (Number.isFinite(savedScale)) {
+          scale = Math.min(maxScale, Math.max(minScale, Math.round(savedScale * 20) / 20));
+        }
+      } catch (_) {}
+
+      function applyScale(persist) {
+        document.documentElement.style.setProperty('--reader-scale', scale.toFixed(2));
+        if (scaleOut) scaleOut.textContent = Math.round(scale * 100) + '%';
+        if (btnDown) btnDown.disabled = scale <= minScale + 0.001;
+        if (btnUp) btnUp.disabled = scale >= maxScale - 0.001;
+        if (btnReset) btnReset.disabled = Math.abs(scale - 1) < 0.001;
+        if (persist) {
+          try { localStorage.setItem(SCALE_KEY, scale.toFixed(2)); } catch (_) {}
+        }
+      }
+
+      applyScale(false);
+      if (btnDown) btnDown.addEventListener('click', function () { scale = Math.max(minScale, Math.round((scale - step) * 20) / 20); applyScale(true); });
+      if (btnUp) btnUp.addEventListener('click', function () { scale = Math.min(maxScale, Math.round((scale + step) * 20) / 20); applyScale(true); });
+      if (btnReset) btnReset.addEventListener('click', function () { scale = 1; applyScale(true); });
+
+      // 3. Print Action
+      var printBtn = document.getElementById('print-btn');
+      if (printBtn) {
+        printBtn.addEventListener('click', function () { window.print(); });
+      }
+
+      // 4. Copy Code Buttons
+      document.querySelectorAll('.code-card').forEach(function (card) {
+        var btn = card.querySelector('.copy-code-btn');
+        var pre = card.querySelector('pre.code-body');
+        if (!btn || !pre) return;
+        btn.addEventListener('click', function () {
+          var text = pre.textContent || '';
+          var done = function () {
+            var old = btn.textContent;
+            btn.textContent = '복사됨';
+            setTimeout(function () { btn.textContent = old; }, 1600);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done, function () {});
+          } else {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.cssText = 'position:fixed;left:-9999px;';
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); done(); } catch (_) {}
+            ta.remove();
+          }
+        });
+      });
+
+      // 5. Keyword Search Filter across 12 Chapters
+      var searchInput = document.getElementById('doc-search');
+      var searchClear = document.getElementById('doc-search-clear');
+      var statusBar = document.getElementById('search-status-bar');
+      var statusText = document.getElementById('search-status-text');
+      var showAllBtn = document.getElementById('search-show-all');
+      var chapters = Array.from(document.querySelectorAll('.chapter-section'));
+      var tocLinks = Array.from(document.querySelectorAll('#toc-list a'));
+
+      function filterChapters() {
+        var q = (searchInput ? searchInput.value : '').trim().toLowerCase();
+        if (searchClear) searchClear.hidden = !q;
+
+        if (!q) {
+          chapters.forEach(function (ch) { ch.classList.remove('is-search-dimmed'); });
+          tocLinks.forEach(function (a) { a.style.opacity = ''; });
+          if (statusBar) statusBar.hidden = true;
+          if (statusText) statusText.textContent = '';
+          return;
+        }
+
+        var matchedIds = new Set();
+        chapters.forEach(function (ch) {
+          var hay = (ch.textContent || '').toLowerCase();
+          var hit = hay.includes(q);
+          ch.classList.toggle('is-search-dimmed', !hit);
+          if (hit && ch.id) matchedIds.add(ch.id);
+        });
+
+        tocLinks.forEach(function (a) {
+          var targetId = (a.getAttribute('href') || '').replace(/^#/, '');
+          a.style.opacity = matchedIds.has(targetId) ? '1' : '0.4';
+        });
+
+        if (statusBar) statusBar.hidden = false;
+        if (statusText) {
+          statusText.textContent = matchedIds.size > 0
+            ? '“' + searchInput.value.trim() + '” 키워드가 포함된 장 ' + matchedIds.size + '개를 표시 중입니다.'
+            : '“' + searchInput.value.trim() + '”과(와) 일치하는 장이 없습니다.';
+        }
+      }
+
+      if (searchInput) searchInput.addEventListener('input', filterChapters);
+      if (searchClear) searchClear.addEventListener('click', function () { searchInput.value = ''; filterChapters(); searchInput.focus(); });
+      if (showAllBtn) showAllBtn.addEventListener('click', function () { searchInput.value = ''; filterChapters(); });
+
+      // 6. Scroll-Spy for Sticky Sidebar TOC
+      function setActiveToc(id) {
+        tocLinks.forEach(function (a) {
+          var isMatch = a.getAttribute('href') === '#' + id;
+          if (isMatch) a.setAttribute('aria-current', 'location');
+          else a.removeAttribute('aria-current');
+        });
+      }
+
+      if ('IntersectionObserver' in window && chapters.length > 0) {
+        var obs = new IntersectionObserver(function (entries) {
+          var visible = entries.filter(function (e) { return e.isIntersecting; })
+            .sort(function (a, b) { return a.boundingClientRect.top - b.boundingClientRect.top; });
+          if (visible[0] && visible[0].target.id) {
+            setActiveToc(visible[0].target.id);
+          }
+        }, { rootMargin: '-12% 0px -70% 0px', threshold: [0, 0.25] });
+        chapters.forEach(function (ch) { obs.observe(ch); });
+      }
+
+      // 7. Mobile Collapsible TOC Drawer
+      var tocDrawer = document.getElementById('toc-drawer');
+      var mobileTocMq = window.matchMedia ? window.matchMedia('(max-width: 980px)') : null;
+
+      function syncTocDrawer(e) {
+        if (!tocDrawer) return;
+        var isMobile = e && typeof e.matches === 'boolean' ? e.matches : window.innerWidth <= 980;
+        tocDrawer.open = !isMobile;
+      }
+
+      if (tocDrawer) {
+        syncTocDrawer(mobileTocMq);
+        if (mobileTocMq) {
+          if (typeof mobileTocMq.addEventListener === 'function') {
+            mobileTocMq.addEventListener('change', syncTocDrawer);
+          } else if (typeof mobileTocMq.addListener === 'function') {
+            mobileTocMq.addListener(syncTocDrawer);
+          }
+        }
+        tocLinks.forEach(function (link) {
+          link.addEventListener('click', function () {
+            if ((mobileTocMq && mobileTocMq.matches) || window.innerWidth <= 980) {
+              tocDrawer.open = false;
+            }
+          });
+        });
+      }
+
+      // 8. Floating Back-to-Top Button
+      var backToTopBtn = document.getElementById('back-to-top');
+      if (backToTopBtn) {
+        function updateBackToTop() {
+          var scrolled = (window.scrollY || document.documentElement.scrollTop || 0) > 420;
+          if (scrolled) {
+            backToTopBtn.removeAttribute('hidden');
+          } else {
+            backToTopBtn.setAttribute('hidden', '');
+          }
+        }
+        window.addEventListener('scroll', updateBackToTop, { passive: true });
+        updateBackToTop();
+
+        backToTopBtn.addEventListener('click', function () {
+          var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
