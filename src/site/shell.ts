@@ -211,9 +211,9 @@ export function renderPageShell(opts: RenderShellOptions): string {
   <meta name="twitter:image" content="${escapeAttr(ogImage)}">
   <link rel="icon" type="image/png" sizes="32x32" href="${escapeAttr(fav32)}">
   <link rel="icon" type="image/png" sizes="192x192" href="${escapeAttr(fav192)}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&amp;display=swap">${jsonLdScript}
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://hangeul.pstatic.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">${jsonLdScript}
   <link rel="stylesheet" href="${escapeAttr(appCss)}">
   ${opts.extraHeadHtml ?? ''}
 </head>
