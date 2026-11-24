@@ -914,13 +914,18 @@ function buildArchiveDetailPages(
       const density = selectPrintDensity(analysis.metrics, doc.title, lines);
       const titleHtml = lines
         .map((line) => {
-          const isSub = /^—.*—$/.test(line.trim());
+          const trimmed = line.trim();
+          const isSub = /^—.*—$/.test(trimmed);
+          const displayLine = isSub
+            ? trimmed.replace(/^—\s*/, '').replace(/\s*—$/, '')
+            : line;
           const cls = isSub
             ? 'statement-title-line statement-title-line--subtitle'
             : 'statement-title-line';
-          return `<span class="${cls}">${escapeHtml(line)}</span>`;
+          return `<span class="${cls}">${escapeHtml(displayLine)}</span>`;
         })
         .join('\n        ');
+      const pageTitle = doc.title.replace(/\s*—\s*([^—]+?)\s*—\s*$/, ' · $1');
       const sigDate = doc.dates.eventOn ?? doc.dates.publishedOn ?? '';
       const statementSealSvg = `<svg class="statement-seal-svg" viewBox="0 0 80 92" width="56" height="64" aria-hidden="true" focusable="false"><polygon points="40,2 2,24 2,68 40,90" fill="#516db2"></polygon><polygon points="40,2 78,24 78,68 40,90" fill="#0b051a"></polygon><polygon points="40,20 62.5,33 62.5,59 40,72 17.5,59 17.5,33" fill="#ffffff"></polygon><polygon points="38.6,23.2 21,33.4 38.6,43.5" fill="#0b051a"></polygon><polygon points="41.4,23.2 59,33.4 41.4,43.5" fill="#516db2"></polygon></svg>`;
 
@@ -967,7 +972,7 @@ function buildArchiveDetailPages(
   ${renderDocumentToolsWidget()}`;
 
       const htmlOut = renderPageShell({
-        title: doc.title,
+        title: pageTitle,
         description: doc.summary,
         activeNav: 'archive',
         route: doc.route,
