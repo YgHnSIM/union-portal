@@ -134,6 +134,14 @@ export interface RenderShellOptions {
   extraScriptsHtml?: string;
 }
 
+export function renderUnionEmblemSvg(cls = 'brand-emblem'): string {
+  return `<svg class="${escapeAttr(cls)}" viewBox="0 0 80 92" width="32" height="37" aria-hidden="true" focusable="false"><polygon points="40,2 2,24 2,68 40,90" fill="var(--brand-emblem-blue, #516db2)"></polygon><polygon points="40,2 78,24 78,68 40,90" fill="var(--brand-emblem-ink, #0b051a)"></polygon><polygon points="40,20 62.5,33 62.5,59 40,72 17.5,59 17.5,33" fill="var(--brand-emblem-box, #fdfcf9)"></polygon><polygon points="38.6,23.2 21,33.4 38.6,43.5" fill="var(--brand-emblem-ink, #0b051a)"></polygon><polygon points="41.4,23.2 59,33.4 41.4,43.5" fill="var(--brand-emblem-blue, #516db2)"></polygon></svg>`;
+}
+
+export function renderUnionBrandLockup(cls = 'brand-lockup'): string {
+  return `<span class="${escapeAttr(cls)}">${renderUnionEmblemSvg('brand-emblem')}<span class="brand-wordmark"><span class="brand-sub">우체국물류지원단</span><span class="brand-main">물류노동조합</span></span></span>`;
+}
+
 export function renderPageShell(opts: RenderShellOptions): string {
   const baseUrl = (opts.baseUrl ?? SITE_BASE_URL).replace(/\/+$/, '');
   const prefix = opts.prefix ?? computePrefixForRoute(opts.route);
@@ -143,8 +151,6 @@ export function renderPageShell(opts: RenderShellOptions): string {
   const navJs = assetHref(prefix, 'nav.js', opts.assets);
   const fav32 = assetHref(prefix, 'favicon-32.png', opts.assets);
   const fav192 = assetHref(prefix, 'favicon-192.png', opts.assets);
-  const logo300 = assetHref(prefix, 'logo-header-300.webp', opts.assets);
-  const logo600 = assetHref(prefix, 'logo-header-600.webp', opts.assets);
 
   const navItems: Array<{ key: TopAxis; label: string; href: string; cls?: string }> = [
     { key: 'home', label: '홈', href: `${prefix}index.html` },
@@ -204,7 +210,10 @@ export function renderPageShell(opts: RenderShellOptions): string {
   <meta name="twitter:description" content="${escapeAttr(opts.description)}">
   <meta name="twitter:image" content="${escapeAttr(ogImage)}">
   <link rel="icon" type="image/png" sizes="32x32" href="${escapeAttr(fav32)}">
-  <link rel="icon" type="image/png" sizes="192x192" href="${escapeAttr(fav192)}">${jsonLdScript}
+  <link rel="icon" type="image/png" sizes="192x192" href="${escapeAttr(fav192)}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&amp;display=swap">${jsonLdScript}
   <link rel="stylesheet" href="${escapeAttr(appCss)}">
   ${opts.extraHeadHtml ?? ''}
 </head>
@@ -213,7 +222,7 @@ export function renderPageShell(opts: RenderShellOptions): string {
 <header class="site-header">
   <div class="header-inner">
     <a class="brand" href="${escapeAttr(`${prefix}index.html`)}" aria-label="우체국물류지원단 물류노동조합 포털 홈">
-      <img class="brand-logo" src="${escapeAttr(logo300)}" srcset="${escapeAttr(logo300)} 1x, ${escapeAttr(logo600)} 2x" width="140" height="39" alt="우체국물류지원단 물류노동조합">
+      ${renderUnionBrandLockup()}
     </a>
     <div class="header-controls">
       <nav class="site-nav" aria-label="주요 메뉴">
@@ -252,7 +261,24 @@ ${menuLinks}
   ${opts.bodyHtml}
 </main>
 <footer class="site-footer">
-  <span>우체국물류지원단 물류노동조합</span>
+  <div class="footer-inner">
+    <div class="footer-colophon">
+      <div class="footer-brand">
+        ${renderUnionEmblemSvg('footer-emblem')}
+        <div class="footer-org-group">
+          <strong class="footer-org">우체국물류지원단 물류노동조합</strong>
+          <span class="footer-units">본조 · 안양지부 · 부평지부 통합 공개 포털</span>
+        </div>
+      </div>
+      <p class="footer-privacy">공적 직무 활동에 한해 공식 직무자의 직책·성명을 표기하며, 일반 조합원의 개인·재정 정보는 전면 비식별하여 공개합니다.</p>
+    </div>
+    <nav class="footer-nav no-print" aria-label="하단 바로가기">
+      <a href="${escapeAttr(`${prefix}index.html`)}">포털 홈</a>
+      <a href="${escapeAttr(`${prefix}archive/index.html`)}">자료실</a>
+      <a href="${escapeAttr(`${prefix}accounting/index.html`)}">회계</a>
+      <a href="${escapeAttr(`${prefix}union/index.html`)}">조합·규약</a>
+    </nav>
+  </div>
 </footer>
 <script src="${escapeAttr(navJs)}"></script>
 ${opts.extraScriptsHtml ?? ''}

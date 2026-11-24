@@ -49,6 +49,7 @@ import {
   renderArchiveCategoryNav,
   renderDocumentToolsWidget,
   renderPageShell,
+  renderUnionEmblemSvg,
   renderUnionSubnav,
 } from './shell.js';
 import {
@@ -294,19 +295,25 @@ function renderLinkedLedgerPanel(
   const rows = valid
     .map(({ lk, tx }) => {
       const amt = tx.inc ? `+${fmtWon(tx.inc)}원` : tx.exp ? `-${fmtWon(tx.exp)}원` : '0원';
+      const amtTone = tx.inc ? 'inc' : tx.exp ? 'exp' : 'zero';
       const rel = lk.relationNote ? ` · ${lk.relationNote}` : '';
       return `<li class="linked-ledger-item">
-        <div>
-          <strong>${escapeHtml(tx.date)}</strong> · ${escapeHtml(tx.mok)} (${escapeHtml(amt)})
-          <span class="muted"> — ${escapeHtml(tx.note)}${escapeHtml(rel)}</span>
+        <div class="linked-ledger-main">
+          <span class="linked-ledger-date">${escapeHtml(tx.date)}</span>
+          <strong>${escapeHtml(tx.mok)}</strong>
+          <span class="linked-ledger-amt" data-amt="${amtTone}">${escapeHtml(amt)}</span>
+          <span class="muted">· ${escapeHtml(tx.note)}${escapeHtml(rel)}</span>
         </div>
-        <a class="linked-ledger-link" href="${escapeAttr(`${prefix}accounting/ledger.html?tx=${encodeURIComponent(tx.tx_id)}`)}">${escapeHtml(tx.tx_id)} 내역 보기 →</a>
+        <a class="linked-ledger-link" href="${escapeAttr(`${prefix}accounting/ledger.html?tx=${encodeURIComponent(tx.tx_id)}`)}">${escapeHtml(tx.tx_id)} 원장 대조 →</a>
       </li>`;
     })
     .join('\n      ');
 
   return `<section class="linked-ledger-panel no-print" data-privacy-zone="finance" aria-labelledby="sec-linked-ledger">
-    <h2 id="sec-linked-ledger">연계된 회계 원장 내역 (${valid.length}건)</h2>
+    <div class="linked-ledger-head">
+      <h2 id="sec-linked-ledger">연계된 회계 원장 내역 (${valid.length}건)</h2>
+      <span class="ledger-audit-stamp">문서·거래 교차 대조</span>
+    </div>
     <ul class="linked-ledger-list">
       ${rows}
     </ul>
@@ -363,32 +370,34 @@ function renderDocCard(
   linkCount: number,
 ): string {
   const catMeta = CATEGORY_BY_ID.get(doc.category);
+  const catLabel = catMeta?.label ?? doc.category;
   const topicLabels = doc.topicIds.map((id) => graph.topicsById.get(id)?.label ?? id);
   const dateText = primaryDateOf(doc) || '연혁';
-  const searchBlob = [doc.title, doc.summary, catMeta?.label ?? '', ...topicLabels, doc.id].join(' ');
-  const pills = topicLabels
-    .map((t) => `<span class="doc-topic-pill">${escapeHtml(t)}</span>`)
-    .join('');
-  const ledgerBadge =
-    linkCount > 0 ? `<span class="doc-topic-pill">회계 연계 ${linkCount}건</span>` : '';
+  const searchBlob = [doc.title, doc.summary, catLabel, ...topicLabels, doc.id].join(' ');
   const href = `${prefixToRoot}${doc.route}`;
 
+  const metaParts: string[] = [
+    `<strong class="doc-cat-label" data-cat="${escapeAttr(doc.category)}">${escapeHtml(catLabel)}</strong>`,
+    `<time>${escapeHtml(dateText)}</time>`,
+  ];
+  if (doc.financePeriod) {
+    metaParts.push(`<span>재정 기준월 ${escapeHtml(doc.financePeriod)}</span>`);
+  }
+  if (topicLabels.length > 0) {
+    metaParts.push(`<span>${escapeHtml(topicLabels.join(' · '))}</span>`);
+  }
+  if (linkCount > 0) {
+    metaParts.push(`<span class="doc-ledger-trace">회계 원장 연계 ${linkCount}건</span>`);
+  }
+
   return `<article class="doc-card" data-category="${escapeAttr(doc.category)}" data-topics="${escapeAttr(topicLabels.join('|'))}" data-search="${escapeAttr(searchBlob)}">
-      <div>
-        <div class="doc-meta">
-          <span class="doc-cat-badge" data-cat="${escapeAttr(doc.category)}">${escapeHtml(catMeta?.label ?? doc.category)}</span>
-          <time>${escapeHtml(dateText)}</time>
-          ${doc.financePeriod ? `<span>· 재정 기준월 ${escapeHtml(doc.financePeriod)}</span>` : ''}
-        </div>
+      <div class="doc-card-body">
         <h3 class="doc-title"><a href="${escapeAttr(href)}">${escapeHtml(cardTitleOf(doc))}</a></h3>
         <p class="doc-summary">${escapeHtml(doc.summary)}</p>
       </div>
-      <div>
-        <div class="doc-topics">${pills}${ledgerBadge}</div>
-        <div class="doc-card-footer">
-          <span class="doc-meta">${escapeHtml(doc.evidence.note ?? catMeta?.label ?? '')}</span>
-          <a class="doc-card-link" href="${escapeAttr(href)}">${escapeHtml(catMeta?.action ?? '원문 보기')} →</a>
-        </div>
+      <div class="doc-card-footer">
+        <div class="doc-meta">${metaParts.join(' <span class="doc-meta-sep" aria-hidden="true">·</span> ')}</div>
+        <a class="doc-card-link" href="${escapeAttr(href)}">${escapeHtml(catMeta?.action ?? '원문 보기')} →</a>
       </div>
     </article>`;
 }
@@ -399,11 +408,16 @@ function buildPortalHomeHtml(
   entries: LedgerEntry[],
   orgSummary: OrgSummaryJson,
   linksByDoc: Map<string, PublicLinkEntry[]>,
+  hasBylaws: boolean,
   assets: AssetManifest,
   baseUrl: string,
 ): string {
   const sortedPublic = sortDocumentsDesc(graph.listedDocuments);
-  const latestDocs = sortedPublic.slice(0, 5);
+  const leadDoc =
+    sortedPublic.find((d) => d.category === 'statement' || d.category === 'newsletter') ??
+    sortedPublic[0];
+  const chronicleDocs = sortedPublic.filter((d) => d !== leadDoc).slice(0, 5);
+
   const months = [...new Set(entries.map((r) => r.ym).filter(Boolean))].sort();
   const latestYm = months[months.length - 1] ?? '';
   const latestYear = latestYm ? latestYm.slice(0, 4) : '';
@@ -418,104 +432,163 @@ function buildPortalHomeHtml(
         ? `-${fmtWon(Math.abs(latestMonthNet))}원`
         : '0원';
 
-  const latestListHtml = latestDocs
+  const maxFlow = Math.max(latestMonthSum.inc, latestMonthSum.exp, latestMonthSum.trOut, 1);
+  const incBarPct = latestMonthSum.inc ? Math.max(4, Math.round((latestMonthSum.inc / maxFlow) * 100)) : 0;
+  const expBarPct = latestMonthSum.exp ? Math.max(4, Math.round((latestMonthSum.exp / maxFlow) * 100)) : 0;
+  const grantBarPct = latestMonthSum.trOut ? Math.max(4, Math.round((latestMonthSum.trOut / maxFlow) * 100)) : 0;
+
+  let leadVoiceHtml = '';
+  if (leadDoc) {
+    const leadCatMeta = CATEGORY_BY_ID.get(leadDoc.category);
+    const leadCatLabel = leadCatMeta?.label ?? leadDoc.category;
+    const leadDate = primaryDateOf(leadDoc) || '상시';
+    const leadLinkCnt = linksByDoc.get(leadDoc.id)?.length ?? 0;
+    const leadTrace = leadLinkCnt > 0 ? ` · <span class="doc-ledger-trace">회계 연계 ${leadLinkCnt}건</span>` : '';
+    leadVoiceHtml = `<article class="frontpage-lead" data-cat="${escapeAttr(leadDoc.category)}">
+          <h2 id="sec-lead-voice" class="frontpage-lead-title">
+            <a href="${escapeAttr(leadDoc.route)}">${escapeHtml(cardTitleOf(leadDoc))}</a>
+          </h2>
+          <p class="frontpage-lead-meta">
+            <strong class="doc-cat-label" data-cat="${escapeAttr(leadDoc.category)}">${escapeHtml(leadCatLabel)}</strong>
+            <span aria-hidden="true">·</span>
+            <time>${escapeHtml(leadDate)}</time>${leadTrace}
+          </p>
+          <p class="frontpage-lead-summary">${escapeHtml(leadDoc.summary)}</p>
+          <div class="frontpage-lead-action">
+            <a class="btn" href="${escapeAttr(leadDoc.route)}">${escapeHtml(leadCatMeta?.action ?? '전문 읽기')} →</a>
+          </div>
+        </article>`;
+  } else {
+    leadVoiceHtml = `<div class="frontpage-lead">
+          <h2 id="sec-lead-voice" class="frontpage-lead-title">공개 자료실</h2>
+          <p class="frontpage-lead-summary">성명서, 현장소식지, 운영위원회 회의록, 지식 자료를 열람할 수 있습니다.</p>
+          <div class="frontpage-lead-action">
+            <a class="btn" href="archive/index.html">자료실 열기 →</a>
+          </div>
+        </div>`;
+  }
+
+  const chronicleHtml = chronicleDocs
     .map((doc) => {
       const catLabel = CATEGORY_BY_ID.get(doc.category)?.label ?? doc.category;
       const dateTxt = primaryDateOf(doc) || '상시';
       const lCount = linksByDoc.get(doc.id)?.length ?? 0;
-      const badge = lCount > 0 ? `<span class="doc-topic-pill">거래 ${lCount}건</span>` : '';
-      return `<li class="portal-latest-item">
-        <div>
-          <span class="doc-cat-badge" data-cat="${escapeAttr(doc.category)}">${escapeHtml(catLabel)}</span>
-          <a href="${escapeAttr(doc.route)}">${escapeHtml(cardTitleOf(doc))}</a>
-        </div>
-        <span class="portal-latest-meta">${badge}<time>${escapeHtml(dateTxt)}</time></span>
-      </li>`;
+      const trace = lCount > 0 ? `<span class="doc-ledger-trace">원장 ${lCount}건</span>` : '';
+      return `<li class="frontpage-chronicle-row">
+            <div class="frontpage-chronicle-main">
+              <strong class="doc-cat-label" data-cat="${escapeAttr(doc.category)}">${escapeHtml(catLabel)}</strong>
+              <a href="${escapeAttr(doc.route)}">${escapeHtml(cardTitleOf(doc))}</a>
+            </div>
+            <span class="frontpage-chronicle-meta">${trace}<time>${escapeHtml(dateTxt)}</time></span>
+          </li>`;
     })
-    .join('\n      ');
+    .join('\n          ');
+
+  const activeBranchSummary = orgSummary.units
+    .filter((u) => u.status === 'active' && u.code !== 'HQ')
+    .map((u) => `${u.officialName}(${u.shortName}) ${u.activeCount}명`)
+    .join(' · ');
 
   const bodyHtml = `
-  <section class="portal-hero" aria-labelledby="hero-title">
-    <span class="portal-hero-kicker">우체국물류지원단 물류노동조합 · 통합 공개 포털</span>
-    <h1 id="hero-title">조합 활동과 회계·조직 현황을 한곳에서 확인하세요</h1>
-    <p class="portal-hero-lead">성명서·소식지·회의록·지식 자료와 회계 원장, 조합 현황을 열람할 수 있습니다.</p>
-    <div class="portal-actions">
-      <a class="btn" href="archive/index.html">자료실</a>
-      <a class="btn secondary" href="accounting/index.html">회계 대시보드</a>
-      <a class="btn secondary" href="union/index.html">조직·임원 현황</a>
+  <header class="broadsheet-header">
+    <div>
+      <h1 class="broadsheet-title">현장의 목소리와 투명한 조합 살림</h1>
+      <p class="broadsheet-sub">성명서 · 현장소식지 · 운영위원회 회의록과 1원 단위까지 공개되는 조합비 회계 원장</p>
     </div>
-  </section>
+    <div class="broadsheet-issue">
+      <span>기준월 <strong>${escapeHtml(latestYm || '-')}</strong></span>
+      <span>활동 조합원 <strong>${orgSummary.totalActive}명</strong></span>
+      <span>공개 문서 <strong>${sortedPublic.length}건</strong></span>
+    </div>
+  </header>
 
-  <div class="kpi-strip" role="region" aria-label="조합 통합 주요 지표">
-    <div class="kpi"><div class="label">자료실 공개 문서</div><div class="value">${sortedPublic.length}건</div><div class="sub">성명·소식지·회의록·지식·알림</div></div>
-    <div class="kpi" data-tone="balance"><div class="label">현재 조합 통장 잔액</div><div class="value">${fmtWon(totalBal)}원</div><div class="sub">기준월 ${escapeHtml(latestYm)}</div></div>
-    <div class="kpi kpi-split">
-      <div class="label">최근월 수지 (${escapeHtml(latestYm)})</div>
-      <div class="kpi-split-rows">
-        <div class="kpi-split-row"><span class="kpi-split-tag">수입</span><span class="kpi-income">${fmtWon(latestMonthSum.inc)}원</span></div>
-        <div class="kpi-split-row"><span class="kpi-split-tag">지출</span><span class="kpi-expense">${fmtWon(latestMonthSum.exp)}원</span></div>
+  <div class="frontpage-stage">
+    <section class="frontpage-voice" aria-labelledby="sec-lead-voice">
+      ${leadVoiceHtml}
+      ${
+        chronicleDocs.length > 0
+          ? `<div class="frontpage-chronicle-wrap">
+        <div class="frontpage-chronicle-head">
+          <h3>최근 공개 기록</h3>
+          <a href="archive/index.html">자료실 전체 ${sortedPublic.length}건 보기 →</a>
+        </div>
+        <ul class="frontpage-chronicle">
+          ${chronicleHtml}
+        </ul>
+      </div>`
+          : ''
+      }
+    </section>
+
+    <aside class="frontpage-ledger" data-privacy-zone="finance" aria-labelledby="sec-live-ledger">
+      <div class="frontpage-ledger-head">
+        <h2 id="sec-live-ledger">이달의 조합 살림 (${escapeHtml(latestYm)})</h2>
+        <span class="ledger-audit-stamp">원장 대조 필</span>
       </div>
-      <div class="sub">순수지 ${escapeHtml(latestMonthNetText)}</div>
-    </div>
-    <div class="kpi"><div class="label">활동 조합원 수</div><div class="value">${orgSummary.totalActive}명</div><div class="sub">안양·부평지부 합계</div></div>
+
+      <div class="frontpage-balance-block">
+        <span class="frontpage-balance-label">현재 조합 통합 통장 잔액</span>
+        <strong class="frontpage-balance-value">${fmtWon(totalBal)}원</strong>
+        <span class="frontpage-balance-range">집계 기간 ${escapeHtml(ledger.meta.monthsRange[0])} ~ ${escapeHtml(ledger.meta.monthsRange[1])} (${ledger.meta.totalRecords}건)</span>
+      </div>
+
+      <dl class="frontpage-flow-list">
+        <div class="frontpage-flow-row">
+          <div class="frontpage-flow-top">
+            <dt>조합 수입 (조합비·찬조)</dt>
+            <dd class="flow-amt inc">+${fmtWon(latestMonthSum.inc)}원</dd>
+          </div>
+          <div class="frontpage-flow-track" aria-hidden="true"><span class="frontpage-flow-fill inc" style="inline-size: ${incBarPct}%"></span></div>
+        </div>
+        <div class="frontpage-flow-row">
+          <div class="frontpage-flow-top">
+            <dt>사업 지출 (교섭·복지·운영)</dt>
+            <dd class="flow-amt exp">-${fmtWon(latestMonthSum.exp)}원</dd>
+          </div>
+          <div class="frontpage-flow-track" aria-hidden="true"><span class="frontpage-flow-fill exp" style="inline-size: ${expBarPct}%"></span></div>
+        </div>
+        <div class="frontpage-flow-row">
+          <div class="frontpage-flow-top">
+            <dt>지부 교부·지원</dt>
+            <dd class="flow-amt grant">${fmtWon(latestMonthSum.trOut)}원</dd>
+          </div>
+          <div class="frontpage-flow-track" aria-hidden="true"><span class="frontpage-flow-fill grant" style="inline-size: ${grantBarPct}%"></span></div>
+        </div>
+        <div class="frontpage-flow-row is-net">
+          <div class="frontpage-flow-top">
+            <dt>${escapeHtml(latestYm)} 당월 순수지</dt>
+            <dd class="flow-amt">${escapeHtml(latestMonthNetText)}</dd>
+          </div>
+        </div>
+      </dl>
+
+      <div class="frontpage-ledger-foot">
+        ${latestYm ? `<a class="btn" href="${escapeAttr(`accounting/reports/monthly/${latestYm}.html`)}">${escapeHtml(latestYm)} 월간 재정보고서 보기 →</a>` : `<a class="btn" href="accounting/index.html">회계 대시보드 보기 →</a>`}
+        <div class="frontpage-ledger-links">
+          <a href="accounting/index.html">회계 대시보드</a>
+          <span aria-hidden="true">·</span>
+          <a href="accounting/ledger.html">공개 거래 탐색기</a>
+          ${latestYear ? `<span aria-hidden="true">·</span><a href="accounting/reports/index.html">${escapeHtml(latestYear)}년 결산 목록</a>` : ''}
+        </div>
+      </div>
+    </aside>
   </div>
 
-  <section class="section-band" aria-labelledby="sec-axes">
+  <section class="section-band" aria-labelledby="sec-union-solidarity">
     <div class="section-head">
-      <h2 id="sec-axes">포털 주요 서비스 안내</h2>
-      <span class="section-sub">자료실 · 회계 · 조합</span>
+      <h2 id="sec-union-solidarity">조직 현황 및 노동조합 규약</h2>
+      <span class="section-sub">본조 · 안양지부 · 부평지부</span>
     </div>
-    <div class="portal-grid">
-      <article class="portal-card" data-axis="archive">
-        <div>
-          <span class="portal-card-kicker">ARCHIVE · 자료실</span>
-          <h3>회의록 · 성명서 · 소식지 · 지식</h3>
-          <p>성명서, 소식지, 회의록, 지식, 알림 자료를 열람할 수 있습니다.</p>
-        </div>
-        <a class="portal-card-link" href="archive/index.html">자료실 이동 →</a>
-      </article>
-      <article class="portal-card" data-axis="accounting">
-        <div>
-          <span class="portal-card-kicker">ACCOUNTING · 회계</span>
-          <h3>회계 대시보드 · 원장 · 결산 보고</h3>
-          <p>${escapeHtml(ledger.meta.monthsRange[0])} ~ ${escapeHtml(ledger.meta.monthsRange[1])} 수지 현황과 결산 보고서를 제공합니다.</p>
-        </div>
-        <a class="portal-card-link" href="accounting/index.html">회계 포털 이동 →</a>
-      </article>
-      <article class="portal-card" data-axis="union">
-        <div>
-          <span class="portal-card-kicker">UNION · 조합</span>
-          <h3>지부별 조직 통계 · 임원 · 규약</h3>
-          <p>지부별 조합원 통계, 현 임기 임원 현황과 조합 규약을 안내합니다.</p>
-        </div>
-        <a class="portal-card-link" href="union/index.html">조합 안내 이동 →</a>
-      </article>
-    </div>
-  </section>
-
-  <section class="section-band" aria-labelledby="sec-latest">
-    <div class="section-head">
-      <h2 id="sec-latest">최근 공개 자료 (${latestDocs.length}건)</h2>
-      <span class="section-sub"><a href="archive/index.html">전체 ${sortedPublic.length}건 모두 보기 →</a></span>
-    </div>
-    <ul class="portal-latest-list">
-      ${latestListHtml}
-    </ul>
-  </section>
-
-  <section class="section-band" aria-labelledby="sec-latest-report">
-    <div class="section-head">
-      <h2 id="sec-latest-report">최근 공개 재정 보고서</h2>
-      <span class="section-sub">${escapeHtml(latestYm)} 월간 · ${escapeHtml(latestYear)}년 연간</span>
-    </div>
-    <div class="portal-latest-item">
-      <div>
-        <strong>${escapeHtml(latestYm)} 운영위원회 공개 재정 보고서</strong>
-        <p class="muted" style="font-size:0.86rem;">조합 수입 ${fmtWon(latestMonthSum.inc)}원 · 사업 지출 ${fmtWon(latestMonthSum.exp)}원 · 기말 잔액 ${fmtWon(totalBal)}원</p>
+    <div class="frontpage-union-strip">
+      <div class="frontpage-union-cell">
+        <h3>지부별 조합원 구성 및 현 임기 임원 안내</h3>
+        <p>${escapeHtml(activeBranchSummary ? `${activeBranchSummary} (합계 ${orgSummary.totalActive}명)` : `활동 조합원 ${orgSummary.totalActive}명`)}의 직종·근무형태별 비식별 통계와 공식 직무자 현황을 공개합니다.</p>
+        <a class="frontpage-inline-link" href="union/index.html">조직·임원 현황 확인 →</a>
       </div>
-      <div class="portal-actions">
-        ${latestYm ? `<a class="btn small" href="${escapeAttr(`accounting/reports/monthly/${latestYm}.html`)}">${escapeHtml(latestYm)} 월간 보고 →</a>` : ''}
-        <a class="btn secondary small" href="accounting/reports/index.html">전체 보고서 목록</a>
+      <div class="frontpage-union-cell">
+        <h3>노동조합 규약과 민주적 의사결정 기준</h3>
+        <p>총회·대의원대회·운영위원회 의결정족수, 조합원의 권리와 의무, 단체교섭·쟁의·회계감사 규정을 시각 요약과 전문으로 열람할 수 있습니다.</p>
+        <a class="frontpage-inline-link" href="${hasBylaws ? 'union/bylaws-guide.html' : 'union/index.html'}">${hasBylaws ? '규약 한눈에 보기 →' : '조합 안내 보기 →'}</a>
       </div>
     </div>
   </section>`;
@@ -849,8 +922,7 @@ function buildArchiveDetailPages(
         })
         .join('\n        ');
       const sigDate = doc.dates.eventOn ?? doc.dates.publishedOn ?? '';
-      const logo600 = assetHref(prefix, 'logo-header-600.webp', assets);
-      const logoFull = assetHref(prefix, 'logo-header-600.webp', assets);
+      const statementSealSvg = `<svg class="statement-seal-svg" viewBox="0 0 80 92" width="56" height="64" aria-hidden="true" focusable="false"><polygon points="40,2 2,24 2,68 40,90" fill="#516db2"></polygon><polygon points="40,2 78,24 78,68 40,90" fill="#0b051a"></polygon><polygon points="40,20 62.5,33 62.5,59 40,72 17.5,59 17.5,33" fill="#ffffff"></polygon><polygon points="38.6,23.2 21,33.4 38.6,43.5" fill="#0b051a"></polygon><polygon points="41.4,23.2 59,33.4 41.4,43.5" fill="#516db2"></polygon></svg>`;
 
       const bodyHtml = `
   <article class="statement-container print-light-surface document-article" data-print-density="${density}" data-document-category="성명서">
@@ -867,7 +939,7 @@ function buildArchiveDetailPages(
         <span>성명서</span>
       </p>
       <div class="statement-brand-mark" aria-hidden="true">
-        <img src="${escapeAttr(logo600)}" alt="">
+        ${statementSealSvg}
       </div>
       <h1 class="statement-title${density === 'long' ? ' statement-title--long' : ''}">
         ${titleHtml}
@@ -880,7 +952,13 @@ function buildArchiveDetailPages(
     <div class="signature-block">
       <p class="signature-date"><time datetime="${escapeAttr(sigDate)}">${escapeHtml(sigDate)}</time></p>
       <div class="signature-org-row">
-        <img src="${escapeAttr(logoFull)}" alt="우체국물류지원단 물류노동조합" class="signature-org-logo">
+        <div class="signature-brand-lockup" role="img" aria-label="우체국물류지원단 물류노동조합">
+          ${statementSealSvg}
+          <div class="signature-brand-text">
+            <span class="signature-brand-sub">우체국물류지원단</span>
+            <span class="signature-brand-main">물류노동조합</span>
+          </div>
+        </div>
       </div>
     </div>
     ${linkedLedgerHtml}
@@ -2747,11 +2825,24 @@ export async function buildSite(options: BuildSiteOptions): Promise<BuildSiteRes
     linksByDoc.set(doc.id, arr);
   }
 
+  const bylawsDoc = loadBylawsDocument(projectRoot);
+  const bylawsLawDoc = loadBylawsLawDocument(projectRoot);
+  const bylawsRevisionDoc = loadBylawsRevisionDocument(projectRoot);
+
   // 1. Portal Home (/)
   writeOutFile(
     outDir,
     'index.html',
-    buildPortalHomeHtml(graph, ledger, entries, orgSummary, linksByDoc, assets, baseUrl),
+    buildPortalHomeHtml(
+      graph,
+      ledger,
+      entries,
+      orgSummary,
+      linksByDoc,
+      Boolean(bylawsDoc),
+      assets,
+      baseUrl,
+    ),
   );
 
   // 2. Archive Indices & Document Detail Pages
@@ -2783,9 +2874,6 @@ export async function buildSite(options: BuildSiteOptions): Promise<BuildSiteRes
   );
 
   // 4. Union Pages (Organization + Bylaws Guide + Bylaws Full Text + Unlisted Review Suite)
-  const bylawsDoc = loadBylawsDocument(projectRoot);
-  const bylawsLawDoc = loadBylawsLawDocument(projectRoot);
-  const bylawsRevisionDoc = loadBylawsRevisionDocument(projectRoot);
   const unionPages = buildUnionPages(
     outDir,
     orgSummary,

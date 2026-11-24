@@ -2,23 +2,27 @@
 
 우체국물류지원단 물류노동조합 종합 포털의 시각 체계입니다.
 
-## 정체성 ("Hallmark Ledger")
-- 장부처럼 굵은 상단 괘선(2px `--rule-bar`)과 1px 헤어라인으로 구역을 나눈다. 카드 중첩 대신 괘선과 여백을 사용한다.
-- 브랜드 색: Klein Blue `#002FA7`(accent), 조합 로고 `#516DB2`, 잉크 `#0B051A`. 웹 포털 전체는 라이트/다크 쌍 토큰(`light-dark()`)을 지원한다.
-- 의미 색: 수입 `--color-income`(녹색), 지출 `--color-expense`(적색), 교부·지원 `--color-grant`(황토), 잔액 `--color-accent`(청색).
-- 차트 팔레트 "Fresh Fintech"(`--chart-*`): cobalt·blue·income·expense·grant·slate·teal·plum.
+## 정체성 ("Broadsheet & Ledger" — 노동조합 기관지 × 열린 장부)
+- 물류 현장의 육각 화물 심볼 조형, 기관지·대자보의 선명한 목소리, 1원까지 대조되는 복식 장부 괘선을 결합한다.
+- 카드·배지 중첩 대신 굵은 상단 먹선(`2px~3px --color-rule-strong`)과 `1px` 헤어라인, 여백으로 구역을 나눈다.
+- 지면 색: 순백색 눈부심을 덜어낸 따뜻한 미색 장부·기관지 바탕(`#F6F3EC` canvas · `#FDFCF9` sheet · `#EDE8DE` well)과 야간·교대근무 모바일 열람을 고려한 심야 네이비 다크 모드(`#0C0E17` · `#141826`)를 `light-dark()` 쌍 토큰으로 지원한다.
+- 브랜드·연대 색: 옵시디언 잉크 `#0B051A`(제호·굵은 괘선), 유니언 코발트 `#0F3899`(주 강조·잔액), 물류 심볼 블루 `#516DB2`(로고·회의록), 연대 진홍 `#B42318`(성명서·투쟁·지출), 조합비 녹색 `#1D6B39`(수입·원장 대조), 지부 황토 `#94530A`(교부·지원·현장소식지).
+- 모든 상태·범주는 색상 단독으로 표시하지 않고 한글 범주명·부호(`+`/`-`, `원장 대조 필`)를 병기한다.
 
-## 타이포그래피
-- Pretendard Variable → SUIT → Apple SD Gothic Neo → Malgun Gothic → system-ui. 한 가족으로 제목·본문·숫자 모두 처리한다.
-- 숫자는 `font-variant-numeric: tabular-nums lining-nums`. 고정폭 글꼴은 쓰지 않는다.
+## 타이포그래피 (2서체 조합 · 본문 3단계 규율)
+- 기본 서체(`--font-sans`): `Pretendard Variable → SUIT → Apple SD Gothic Neo → Malgun Gothic → system-ui`. UI·본문·표·수치 전반을 담당한다.
+- 선언·헌장 서체(`--font-serif`): `Noto Serif KR → MaruBuri → AppleMyungjo → Batang → serif`. 포털 홈 대표 성명 헤드라인, 공식 성명서 제목·본문, 규약 전문 서문에 한정해 사용한다.
+- 본문 크기 규율: 첫 화면 대표 디스플레이(`--text-display`)와 브랜드 제호를 제외한 본문 영역은 `--text-heading` / `--text-body`(`1rem`) / `--text-sm`(`0.875rem`) 3단계 스케일을 기본으로 하며, 다열 회계 원장·결산표 내부에만 `--text-table`(`0.8125rem`)을 허용한다.
+- 숫자는 `font-variant-numeric: tabular-nums lining-nums`로 정렬하며 UI·수치에 별도 고정폭 글꼴을 쓰지 않는다.
 - 한국어 줄바꿈: `word-break: keep-all` + `overflow-wrap: anywhere`. 거래번호·운영기간·건수는 줄바꿈 금지.
 
 ## 인쇄·배포물 전용 규칙 (`@media print` · 성명서·현장소식지)
-- 성명서·현장소식지의 `@media print` 및 PDF 출력 레이아웃은 다크 모드의 영향을 받지 않도록 **라이트 전용(`#FFFFFF` 배경 / `#111111` 본문 / `#002FA7` 강조)**으로 고정한다.
+- 성명서·현장소식지의 `@media print` 및 PDF 출력 레이아웃은 다크 모드와 화면 미색 배경의 영향을 받지 않도록 **라이트 순백 지면(`#FFFFFF` 배경 / `#111111` 본문 / `#0F3899`·`#B42318` 강조)**으로 고정한다.
 - 성명서는 본문 분량에 따라 `short` / `standard` / `long` 인쇄 밀도 조절과 다단/페이지 분할 기준을 보존하고, 현장소식지는 A3 인쇄 포스터 밀도 규격을 유지한다.
 
 ## 구성 요소 및 반경·간격
+- 브랜드 심볼: 육각 물류상자 인라인 벡터(`<svg>`)로 라이트·다크·고대비·인쇄 전 환경에서 선명도를 보장한다.
 - KPI 띠: 1px 간격 그리드, 항목별 3px 상단 색 괘선. 휴대폰(< 560px) 2열, < 300px 1열.
-- 표: 데스크톱 상단 고정 헤더 + 내부 스크롤, < 620px에서는 라벨—값 카드형 행으로 전환.
+- 표: 데스크톱 상단 고정 헤더 + 내부 스크롤, < 620px에서는 라벨-값 카드형 행으로 전환.
 - 반경: 2px(sharp) / 4px(control) / 6px(sheet). 3px 이상 색 괘선이 붙는 요소는 반경 0.
 - 페이지 폭 1180px, 거터 `clamp(1rem, 3vw, 2rem)`, 터치 타깃 32px 이상(내비·다이어그램·모바일 링크 44px).
