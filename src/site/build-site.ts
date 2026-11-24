@@ -49,6 +49,7 @@ import {
   renderArchiveCategoryNav,
   renderDocumentToolsWidget,
   renderPageShell,
+  renderUnionBrandLockup,
   renderUnionEmblemSvg,
   renderUnionSubnav,
 } from './shell.js';
@@ -927,10 +928,14 @@ function buildArchiveDetailPages(
         .join('\n        ');
       const pageTitle = doc.title.replace(/\s*—\s*([^—]+?)\s*—\s*$/, ' · $1');
       const sigDate = doc.dates.eventOn ?? doc.dates.publishedOn ?? '';
-      const statementSealSvg = `<svg class="statement-seal-svg" viewBox="0 0 80 92" width="56" height="64" aria-hidden="true" focusable="false"><polygon points="40,2 2,24 2,68 40,90" fill="#516db2"></polygon><polygon points="40,2 78,24 78,68 40,90" fill="#0b051a"></polygon><polygon points="40,20 62.5,33 62.5,59 40,72 17.5,59 17.5,33" fill="#ffffff"></polygon><polygon points="38.6,23.2 21,33.4 38.6,43.5" fill="#0b051a"></polygon><polygon points="41.4,23.2 59,33.4 41.4,43.5" fill="#516db2"></polygon></svg>`;
+      const statementSealSvg = renderUnionEmblemSvg('statement-seal-svg', true);
+      const statementSignatureLogo = renderUnionBrandLockup('signature-brand-svg', {
+        lightOnly: true,
+        ariaLabel: '우체국물류지원단 물류노동조합',
+      });
 
       const bodyHtml = `
-  <article class="statement-container print-light-surface document-article" data-print-density="${density}" data-document-category="성명서">
+  <article class="statement-container print-light-surface document-article" data-print-density="${density}" data-document-category="성명서" data-skip-auto-toc="true">
     <nav class="document-breadcrumb no-print" aria-label="현재 위치">
       <ol>
         <li><a href="${escapeAttr(`${prefix}archive/index.html`)}">공개 자료실</a></li>
@@ -949,7 +954,6 @@ function buildArchiveDetailPages(
       <h1 class="statement-title${density === 'long' ? ' statement-title--long' : ''}">
         ${titleHtml}
       </h1>
-      <p class="statement-meta"><time datetime="${escapeAttr(sigDate)}">${escapeHtml(sigDate)}</time> · ${escapeHtml(doc.evidence.note ?? '노동조합 공식 성명서')}</p>
     </header>
     <div class="statement-body" data-copy-body>
       ${analysis.html}
@@ -957,13 +961,7 @@ function buildArchiveDetailPages(
     <div class="signature-block">
       <p class="signature-date"><time datetime="${escapeAttr(sigDate)}">${escapeHtml(sigDate)}</time></p>
       <div class="signature-org-row">
-        <div class="signature-brand-lockup" role="img" aria-label="우체국물류지원단 물류노동조합">
-          ${statementSealSvg}
-          <div class="signature-brand-text">
-            <span class="signature-brand-sub">우체국물류지원단</span>
-            <span class="signature-brand-main">물류노동조합</span>
-          </div>
-        </div>
+        ${statementSignatureLogo}
       </div>
     </div>
     ${linkedLedgerHtml}

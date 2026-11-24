@@ -650,10 +650,16 @@
     text-decoration: none;
   }
 
-  .brand-lockup {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.62rem;
+  .brand-lockup-svg {
+    display: block;
+    block-size: 2.25rem;
+    inline-size: auto;
+    flex-shrink: 0;
+    forced-color-adjust: none;
+  }
+
+  .brand-lockup-svg .brand-wordmark-main {
+    transition: fill 0.14s ease;
   }
 
   .brand-emblem {
@@ -663,27 +669,6 @@
     forced-color-adjust: none;
   }
 
-  .brand-wordmark {
-    display: flex;
-    flex-direction: column;
-    gap: 0.08rem;
-    line-height: 1.06;
-  }
-
-  .brand-sub {
-    font-size: 0.8125rem;
-    font-weight: 700;
-    letter-spacing: -0.015em;
-    color: var(--color-logo);
-  }
-
-  .brand-main {
-    font-size: 1.16rem;
-    font-weight: 900;
-    letter-spacing: -0.03em;
-    color: var(--color-ink);
-  }
-
   .brand-logo {
     display: block;
     height: auto;
@@ -691,9 +676,9 @@
     mix-blend-mode: var(--logo-image-blend, normal);
   }
 
-  .site-logo:hover .brand-main,
-  .brand:hover .brand-main {
-    color: var(--color-accent);
+  .site-logo:hover .brand-lockup-svg .brand-wordmark-main,
+  .brand:hover .brand-lockup-svg .brand-wordmark-main {
+    fill: var(--color-accent);
   }
 
   .site-mark {
@@ -5389,14 +5374,6 @@
     margin-top: 0.85rem;
   }
 
-  .statement-container .statement-meta {
-    grid-column: 1 / -1;
-    color: #4a4552;
-    font-size: calc(0.875rem * var(--font-scale));
-    font-weight: 700;
-    font-variant-numeric: tabular-nums lining-nums;
-  }
-
   .statement-container .statement-body {
     max-inline-size: 68ch;
     margin-inline: auto;
@@ -5463,18 +5440,20 @@
   }
 
   .statement-container .signature-block {
-    margin-top: 2.5rem;
-    padding-top: 1.5rem;
+    margin-top: 2.6rem;
+    padding-top: 1.75rem;
+    padding-bottom: 0.35rem;
     border-top: 1px solid #d8d1c5;
     text-align: center;
   }
 
   .statement-container .signature-date {
-    color: #111111;
-    font-size: calc(1.125rem * var(--font-scale));
-    font-weight: 800;
+    color: #4a4552;
+    font-size: calc(1rem * var(--font-scale));
+    font-weight: 700;
+    letter-spacing: 0.08em;
     font-variant-numeric: tabular-nums lining-nums;
-    margin-bottom: 1rem;
+    margin-bottom: 1.1rem;
   }
 
   .statement-container .signature-org-row {
@@ -5482,34 +5461,12 @@
     justify-content: center;
   }
 
-  .statement-container .signature-brand-lockup {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    text-align: start;
-  }
-
-  .statement-container .signature-brand-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    line-height: 1.06;
-  }
-
-  .statement-container .signature-brand-sub {
-    font-family: var(--font-sans);
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: #516db2;
-    letter-spacing: -0.015em;
-  }
-
-  .statement-container .signature-brand-main {
-    font-family: var(--font-sans);
-    font-size: 1.45rem;
-    font-weight: 900;
-    color: #0b051a;
-    letter-spacing: -0.03em;
+  .statement-container .signature-brand-svg {
+    display: block;
+    block-size: calc(3.1rem * var(--font-scale));
+    inline-size: auto;
+    max-inline-size: 100%;
+    forced-color-adjust: none;
   }
 
   /* Union Info Page (/union/) */
