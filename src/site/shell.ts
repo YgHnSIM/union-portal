@@ -213,7 +213,10 @@ export function renderPageShell(opts: RenderShellOptions): string {
   <link rel="icon" type="image/png" sizes="192x192" href="${escapeAttr(fav192)}">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://hangeul.pstatic.net" crossorigin>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">${jsonLdScript}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">${jsonLdScript}
   <link rel="stylesheet" href="${escapeAttr(appCss)}">
   ${opts.extraHeadHtml ?? ''}
 </head>
@@ -267,7 +270,7 @@ ${menuLinks}
         ${renderUnionEmblemSvg('footer-emblem')}
         <div class="footer-org-group">
           <strong class="footer-org">우체국물류지원단 물류노동조합</strong>
-          <span class="footer-units">본조 · 안양지부 · 부평지부 통합 공개 포털</span>
+          <span class="footer-units">공개 포털</span>
         </div>
       </div>
       <p class="footer-privacy">공적 직무 활동에 한해 공식 직무자의 직책·성명을 표기하며, 일반 조합원의 개인·재정 정보는 전면 비식별하여 공개합니다.</p>

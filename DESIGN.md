@@ -9,9 +9,10 @@
 - 브랜드·연대 색: 옵시디언 잉크 `#0B051A`(제호·굵은 괘선), 유니언 코발트 `#0F3899`(주 강조·잔액), 물류 심볼 블루 `#516DB2`(로고·회의록), 연대 진홍 `#B42318`(성명서·투쟁·지출), 조합비 녹색 `#1D6B39`(수입·원장 대조), 지부 황토 `#94530A`(교부·지원·현장소식지).
 - 모든 상태·범주는 색상 단독으로 표시하지 않고 한글 범주명·부호(`+`/`-`, `원장 대조 필`)를 병기한다.
 
-## 타이포그래피 (2서체 조합 · 본문 3단계 규율)
+## 타이포그래피 (본문 3단계 규율)
 - 기본 서체(`--font-sans`): `Pretendard Variable → SUIT → Apple SD Gothic Neo → Malgun Gothic → system-ui`(동적 서브셋 웹폰트 로드). UI·일반 본문·표·수치 전반과 성명서·포털 홈 대제목(`800`)을 담당한다.
-- 선언·헌장 본문 서체(`--font-serif`): `MaruBuri(400·600·700) → AppleMyungjo → Batang → serif`. 성명서 본문·결의문과 규약 전문 서문에 한정해 사용한다(신문 1면형 고딕 제목 × 화면용 명조 본문 조합).
+- 성명서 본문 서체(`--font-statement`): `IBM Plex Sans KR(400·500·600·700) → var(--font-sans)`. 성명서 본문·결의문·마무리 강조 구절에 사용한다.
+- 규약 서문 서체(`--font-serif`): `MaruBuri(400·600·700) → AppleMyungjo → Batang → serif`. 규약 전문 서문에 사용한다.
 - 본문 크기 규율: 첫 화면 대표 디스플레이(`--text-display`)와 브랜드 제호를 제외한 본문 영역은 `--text-heading` / `--text-body`(`1rem`) / `--text-sm`(`0.875rem`) 3단계 스케일을 기본으로 하며, 다열 회계 원장·결산표 내부에만 `--text-table`(`0.8125rem`)을 허용한다.
 - 숫자는 `font-variant-numeric: tabular-nums lining-nums`로 정렬하며 UI·수치에 별도 고정폭 글꼴을 쓰지 않는다.
 - 한국어 줄바꿈: `word-break: keep-all` + `overflow-wrap: anywhere`. 거래번호·운영기간·건수는 줄바꿈 금지.

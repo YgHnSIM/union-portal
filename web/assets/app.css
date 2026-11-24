@@ -221,8 +221,9 @@
     --minimap-lens-bg: rgba(15, 56, 153, 0.13);
     --minimap-fill: rgba(15, 56, 153, 0.14);
 
-    /* Typography (Option 2: Pretendard Gothic Headings/UI + MaruBuri Editorial Serif Body) */
+    /* Typography (Pretendard UI/Headings + IBM Plex Sans KR Statement Body + MaruBuri Preamble) */
     --font-sans: "Pretendard Variable", "Pretendard", "SUIT", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, -apple-system, sans-serif;
+    --font-statement: "IBM Plex Sans KR", var(--font-sans);
     --font-serif: "MaruBuri", "AppleMyungjo", "Batang", Georgia, serif;
     --font-mono: ui-monospace, "Cascadia Mono", "Consolas", "Liberation Mono", monospace;
 
@@ -5399,7 +5400,7 @@
   .statement-container .statement-body {
     max-inline-size: 68ch;
     margin-inline: auto;
-    font-family: var(--font-serif);
+    font-family: var(--font-statement);
     color: #111111;
     font-size: calc(1.03125rem * var(--font-scale));
     line-height: 1.82;
@@ -5449,14 +5450,14 @@
   }
 
   .statement-container .closing-highlight {
-    font-family: var(--font-serif);
+    font-family: var(--font-statement);
     color: #b42318;
     font-weight: 700;
     font-size: calc(1.25rem * var(--font-scale));
   }
 
   .statement-container .closing-text {
-    font-family: var(--font-serif);
+    font-family: var(--font-statement);
     color: #0b051a;
     font-weight: 700;
   }
