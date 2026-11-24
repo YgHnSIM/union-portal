@@ -168,6 +168,50 @@
       }
     },
     {
+      "id": "statement:성명서_20261124",
+      "category": "statement",
+      "route": "archive/statement/성명서_20261124.html",
+      "title": "이제 우본과 직접교섭이다 — 인천지방노동위원회 교섭참여 노동조합 인정 결정을 알리며 —",
+      "summary": "인천지방노동위원회의 교섭참여 노동조합 인정 결정을 알리고, 원청 우정사업본부와의 직접 교섭을 통한 냉·난방·환기 설비 개선, 휴게·노조 활동 공간 확충, 물류설비 안전 보강 및 물류망 재편 시 고용 보장을 촉구하는 노동조합 성명서입니다.",
+      "dates": {
+        "publishedOn": "2026-11-24",
+        "modifiedOn": "2026-11-24",
+        "reviewedOn": "2026-11-24",
+        "eventOn": "2026-11-24"
+      },
+      "workflow": {
+        "status": "final",
+        "visibility": "public"
+      },
+      "topicIds": [
+        "lead-employer-status",
+        "collective-bargaining",
+        "employment-stability",
+        "health-rights"
+      ],
+      "evidence": {
+        "count": 1,
+        "note": "노동조합 공식 성명서",
+        "noteVisibility": "public",
+        "sourceIds": [],
+        "complete": false
+      },
+      "relatedDocumentIds": [
+        "mom:202611",
+        "knowledge:principal-employer-bargaining-video-analysis",
+        "statement:성명서_20260921"
+      ],
+      "displayOrder": 10,
+      "presentation": {
+        "print": {
+          "titleLines": [
+            "이제 우본과 직접교섭이다",
+            "— 인천지방노동위원회 교섭참여 노동조합 인정 결정을 알리며 —"
+          ]
+        }
+      }
+    },
+    {
       "id": "newsletter:202610_대법원_연차휴가_현장소식지",
       "category": "newsletter",
       "route": "archive/newsletter/202610_대법원_연차휴가_현장소식지.html",
