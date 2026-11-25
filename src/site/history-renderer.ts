@@ -678,8 +678,8 @@ export function renderHistoryFeaturePage(params: {
           <a class="roadmap-step" href="${escapeAttr(safeAnchor('sec-5'))}">
             <div class="roadmap-step-top">
               <span class="roadmap-year">2026</span>
-              <h3>중노위 인용·대법 판결</h3>
-              <p>단시간 유급병가 축소 합의를 중노위 재심 인용으로 뒤집고, 퇴직 연차수당 부당 삭감의 위법성을 대법원 판결로 입증했습니다.</p>
+              <h3>중노위 인용·확정 판결</h3>
+              <p>단시간 유급병가 축소 합의를 중노위 재심 인용으로 뒤집고, 퇴직 연차수당 부당 삭감에 맞선 조합 주장의 정당성이 법원 확정 판결로 증명되었습니다.</p>
             </div>
             <span class="roadmap-jump no-print">해당 기록 보기 →</span>
           </a>
