@@ -636,7 +636,7 @@ export function renderHistoryFeaturePage(params: {
           </div>
           <div class="history-impact-cell" data-tone="solidarity">
             <strong>중노위 인용</strong>
-            <span>단시간 유급병가 차별 시정 판정 수용 확정</span>
+            <span>단시간 유급병가 차별 시정·조정 권고 수용</span>
           </div>
           <div class="history-impact-cell">
             <strong>원청 교섭 인정</strong>
