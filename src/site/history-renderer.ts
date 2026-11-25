@@ -444,6 +444,7 @@ function renderSubSectionChapter(
   if (chapter.subSections.length === 0) {
     bodyHtml = `<div class="history-prose">${renderTokens(chapter.rawTokens, env)}</div>`;
   } else if (
+    chapter.id === 'sec-3' &&
     chapter.subSections.length === 3 &&
     !hasPhases &&
     subTotalChars <= 1300
@@ -678,7 +679,7 @@ export function renderHistoryFeaturePage(params: {
             <div class="roadmap-step-top">
               <span class="roadmap-year">2026</span>
               <h3>중노위 인용·대법 판결</h3>
-              <p>단시간 유급병가 축소 합의를 중노위 재심 인용으로 뒤집고, 퇴직 연차수당 부당 삭감 환수에 나섰습니다.</p>
+              <p>단시간 유급병가 축소 합의를 중노위 재심 인용으로 뒤집고, 퇴직 연차수당 부당 삭감의 위법성을 대법원 판결로 입증했습니다.</p>
             </div>
             <span class="roadmap-jump no-print">해당 기록 보기 →</span>
           </a>
