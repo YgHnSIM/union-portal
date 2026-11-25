@@ -13,6 +13,7 @@ status: accepted
 
 ## Consequences
 
-- 향후 클라우드 서버 이전 시 도메인 로직과 공개 빌더를 수정하지 않고 저장소 구현체만 SQLite → PostgreSQL, `LocalFileStorage` → 클라우드 오브젝트 스토리지로 교체할 수 있다.
+- 향후 클라우드 서버 이전 시 도메인 로직과 공개 빌더를 수정하지 않고 저장소 구현체만 SQLite → PostgreSQL, `LocalFileStorage` → 클라우드 오브젝트 스토리지, `FileSystemContentSource` → 원격 콘텐츠 소스로 교체할 수 있다.
+- 비민감 마스터 설정(`config/units.json`, `config/coa.json`)은 `sync-config`(및 `sync-ledger` 연계)로 SQLite 마스터 테이블과 동기화한다.
 - Google Sheets 동기화 시 기존 `document_ledger_links`나 환급 이력이 참조하는 `tx_id`가 사라지면 즉시 오류로 차단해 참조 무결성을 지킨다.
 - 사람 열람·비상 복구용 `directory/*.md` 및 JSON 스냅샷 내보내기는 정본이 아닌 파생 뷰로 유지한다.

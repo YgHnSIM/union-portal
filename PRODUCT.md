@@ -18,4 +18,4 @@
 ## 지켜야 할 것
 - 공개 웹에는 **공적 직무 활동**에 한정해 공식 직무자·외부 공적 대표자의 실명·직책만 노출하고, 일반 조합원·소통간사·참관인 및 **모든 개인·재정 정보**는 전면 비식별한다.
 - 로컬 정본 DB(`data/local/union.db`), `_raw/`, `directory/`, `reports/`, `.env`는 절대 Git에 커밋하지 않는다.
-- 모든 데이터 접근은 Repository 인터페이스와 `BlobStorage`를 경유해 향후 클라우드 인증 웹앱·PostgreSQL 전환에 대비한다.
+- 모든 데이터·콘텐츠 접근은 `UnionRepositories`, `BlobStorage`, `ContentSource` 인터페이스를 경유해 향후 클라우드 인증 웹앱·PostgreSQL 전환에 대비한다.

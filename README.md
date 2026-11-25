@@ -5,7 +5,7 @@
 ## 아키텍처 개요
 - **용어 지도**: [GLOSSARY-MAP.md](./GLOSSARY-MAP.md) (`src/organization/GLOSSARY.md`, `src/accounting/GLOSSARY.md`, `src/archive/GLOSSARY.md`)
 - **아키텍처 결정 기록**: [docs/adr/](./docs/adr/) (`0001`~`0007`)
-- **아키텍처·인수인계 해설서**: [docs/ARCHITECTURE-HANDOVER.md](./docs/ARCHITECTURE-HANDOVER.md)
+- **아키텍처·인수인계 해설서**: [docs/ARCHITECTURE-HANDOVER.md](./docs/ARCHITECTURE-HANDOVER.md) · [브라우저용 HTML](./docs/ARCHITECTURE-HANDOVER.html)
 - **디자인·제품 기준**: [DESIGN.md](./DESIGN.md), [PRODUCT.md](./PRODUCT.md)
 
 ## 폴더 구조

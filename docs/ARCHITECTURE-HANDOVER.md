@@ -77,10 +77,10 @@ flowchart TB
 
     subgraph ENGINE["2. TypeScript 코어 엔진 (src/ · 단일 스택)"]
         direction LR
-        DOM["src/domain/ (순수 규칙: 회계검증, 인명정규화, 차등프라이버시, 콘텐츠그래프)"]
-        STO["src/storage/ (UnionRepositories & BlobStorage 추상화 계층)"]
-        SVC["src/services/ (조합원관리, 원장동기화, 공개투영추출, 개인정보감사)"]
-        SITE["src/site/ & src/pdf/ (정적 포털 빌더, SVG 차트, AST 검증기, PDF 생성)"]
+        DOM["src/domain/ (무 I/O 순수 규칙: 회계검증·결산, 인명정규화, 차등프라이버시, 공개투영 계약, 콘텐츠그래프)"]
+        STO["src/storage/ (UnionRepositories · BlobStorage · ContentSource · PrivacySalt 추상화 계층)"]
+        SVC["src/services/ (조합원관리, 마스터설정동기화, 원장동기화, 공개투영추출, 읽기전용 개인정보감사)"]
+        SITE["src/site/ & src/pdf/ & src/cli/ (build-site 오케스트레이터, pages/*, SVG 차트, AST 검증기, PDF, args 파서)"]
         DOM --- STO --- SVC --- SITE
     end
 
@@ -133,14 +133,14 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    CLI["진입 계층 (Entrypoints)\nsrc/cli/index.ts · src/site/ · src/reports/ · src/pdf/"]
-    SVC["서비스 계층 (Application Services)\nsrc/services/: MemberService · syncLedger · exportPublic · auditPrivacy"]
-    DOM["도메인 계층 (Pure Domain Rules — 외부 I/O 의존 없음)\nsrc/domain/: accounting · person-normalizer · privacy · content-graph · types"]
-    PORT["추상 경계 (Repository & Storage Interfaces)\nsrc/storage/repositories.ts (UnionRepositories)\nsrc/storage/blob-storage.ts (BlobStorage)"]
+    CLI["진입 계층 (Entrypoints)\nsrc/cli/{index,args}.ts · src/site/{build-site,pages/*} · src/reports/ · src/pdf/"]
+    SVC["서비스 계층 (Application Services)\nsrc/services/: MemberService · syncConfig · syncLedger · exportPublic · auditPrivacy"]
+    DOM["도메인 계층 (Pure Domain Rules — 외부 I/O 의존 없음)\nsrc/domain/: accounting · person-normalizer · privacy · public-projection · content-graph · types"]
+    PORT["추상 경계 (Repository & Storage Interfaces)\nsrc/storage/repositories.ts (UnionRepositories)\nsrc/storage/blob-storage.ts (BlobStorage) · content-source.ts (ContentSource)"]
 
     subgraph NOW["현재 구현체 (1단계: 로컬 우선)"]
         SQLITE["SqliteUnionRepositories\n(Drizzle ORM + @libsql/client → union.db)"]
-        LOCALFS["LocalFileStorage\n(_raw/ 디렉터리 + 경로 탈출 차단)"]
+        LOCALFS["LocalFileStorage (_raw/) & FileSystemContentSource (_source/)"]
     end
 
     subgraph FUTURE["향후 확장 구현체 (2단계: 클라우드 전환 시)"]
@@ -375,13 +375,13 @@ erDiagram
 
 | 경로 | 역할 및 포함 내용 | 관리 방식 / 주의사항 |
 | :--- | :--- | :--- |
-| `src/` | 시스템 전체 TypeScript 프로그램 코드 (`domain/`, `storage/`, `services/`, `site/`, `reports/`, `pdf/`, `cli/`) | 개발·유지보수 코드. 도메인/서비스는 `UnionRepositories` 인터페이스만 사용 |
+| `src/` | 시스템 전체 TypeScript 프로그램 코드 40개 모듈 (`domain/`, `storage/`, `services/`, `site/`, `reports/`, `pdf/`, `cli/`) | 개발·유지보수 코드. 도메인은 무 I/O 유지, 서비스는 `UnionRepositories`·`BlobStorage`·`ContentSource` 인터페이스만 사용 |
 | `drizzle/` | SQLite DB 테이블 생성 및 변경 SQL 설계도 (`0000_initial.sql`, `0001_officer_governance.sql`) | `union migrate` 실행 시 순서대로 자동 적용됨 |
-| `config/` | 비민감 마스터 설정 (`units.json` 조직단위 4종, `coa.json` 계정과목 3단계 체계) | 새 계정과목(목)이나 지부가 생기면 이 파일을 먼저 수정 후 동기화 |
+| `config/` | 비민감 마스터 설정 (`units.json` 조직단위 4종, `coa.json` 계정과목 3단계 체계) | 새 계정과목(목)이나 지부가 생기면 이 파일을 먼저 수정 후 `npm run db:sync-config` 또는 `sync-ledger` 실행 |
 | `_source/` | 자료실 및 규약 원본 데이터 (`catalog.json`, `topics.json`, `sources.json`, `schemas/*.json`, `mom/*.md`, `statement/*.body.html`, `newsletter/`, `knowledge/`, `notice/`, `union/bylaws*`) | 공개/미등재 문서 작성 시 수정. **실명 개인정보 입력 절대 금지** (공적 직무자만 공적 문맥에 허용) |
 | `data/public/` | 로컬 DB에서 개인정보를 제거하고 뽑아낸 공개 투영 JSON (`ledger_public.json`, `org_summary.json`, `public_officials.json`, `document_ledger_links.json`, `privacy_hashes.json`) | **손으로 직접 고치지 말고** 반드시 `npm run export:public` 명령으로 재생성 후 커밋 |
 | `web/assets/` | 포털 CSS 디자인(`app.css`, `newsletter.css`), 클라이언트 JS(`dashboard.js`, `ledger.js`, `bylaws*.js` 등), 로고/파비콘/소셜카드 이미지, `vendor/chart.umd.min.js` | 빌드 시 SHA-256 해시가 파일 주소에 붙어 캐시 갱신됨 |
-| `test/` | Node.js 내장 테스트 러너 기반 8개 자동화 테스트 스위트 (`*.test.ts`) | 가짜 인명(`홍길동`, `김철수`, `이영희`, `M-9001` 등)만 사용 |
+| `test/` | Node.js 내장 테스트 러너 기반 9개 자동화 테스트 스위트 · 24개 테스트 (`*.test.ts`) | 가짜 인명(`홍길동`, `김철수`, `이영희`, `M-9001` 등)만 사용 |
 | `docs/` | 아키텍처 결정 기록(`docs/adr/0001`~`0007`) 및 본 인수인계 해설서(`ARCHITECTURE-HANDOVER.md/.html`) | 인수인계 및 설계 기준 문서 |
 | `.github/workflows/` | GitHub Actions 자동 빌드·검증·GitHub Pages 배포 설정(`pages.yml`) | `main` 브랜치 푸시 시 자동 작동 |
 | `.githooks/` | 내 컴퓨터에서 `git push` 하기 직전 실수를 막아주는 안전장치(`pre-push`) | 최초 설치 후 `npm run prepare:hooks`로 활성화 필수 |
@@ -463,9 +463,9 @@ SQLite 정본 데이터베이스는 `src/storage/sqlite/schema.ts`에 Drizzle OR
 
 ## 제7장. 기능 단위별 작동 원리 (8대 핵심 서브시스템 심층 해부)
 
-### 7.1 조합원·외부인·직책·별칭 관리 시스템 (`MemberService`)
+### 7.1 조합원·외부인·직책·별칭·문서연계 관리 시스템 (`MemberService`)
 
-`src/services/member-service.ts`의 `MemberService` 클래스가 담당하며, 모든 변경 작업은 `repos.transaction(...)` 안에서 원자적으로(전부 성공하거나 전부 롤백) 실행됩니다.
+`src/services/member-service.ts`의 `MemberService` 클래스가 담당하며, 모든 변경 작업은 `repos.transaction(...)` 안에서 원자적으로(전부 성공하거나 전부 롤백) 실행됩니다. 첨부파일은 `prepareDocFiles()`로 트랜잭션 진입 전에 검증·읽기하며, DB 트랜잭션 실패 시 `runWithBlobCompensation()`이 업로드된 Blob 고아 파일을 자동 보상 삭제합니다.
 
 1. **가입(`joinMember`)과 자동 재가입 판정**:
    - 입력된 `unit`(코드 `AY`, 정식명 `안양지부`, 약칭 `안물` 중 무엇이든 가능)을 `resolveUnitCode`로 표준 코드로 변환합니다.
@@ -475,11 +475,12 @@ SQLite 정본 데이터베이스는 `src/storage/sqlite/schema.ts`에 Drizzle OR
    - `--id` 또는 `--name`으로 대상 조합원을 찾습니다(동명이인이 2명 이상이면 실수를 막기 위해 에러를 내고 `--id` 지정을 요구합니다).
    - `--refund-tx`로 조합비 환급 거래번호가 입력되면, `ledger_entries`에 실제 해당 `tx_id`가 존재하는지 먼저 검사합니다.
    - 조합원 상태를 `withdrawn`으로 바꾸고 `withdraw` 이벤트를 기록하는 동시에, **이 조합원이 맡고 있던 모든 현임 직책(`person_roles` 중 `validTo`와 `endedOn`이 비어 있는 행)을 `endReason: '탈퇴'`로 자동 종료**합니다. (역대 이력은 삭제하지 않고 보존합니다.)
-3. **임원 직책 거버넌스 (`appointRole`, `transferRole`, `endRole`, `setRoleDisclosure`)**:
-   - `appointRole`: `roleScope`를 주지 않으면 조합원은 `executive`, 외부인은 `external_rep`로 추론하며, `staff_rotating`(순번제 소통간사)과 `other`는 공개 등급을 자동으로 `masked`로 설정합니다. **특히 `roleScope === 'staff_rotating'`이면서 `publicDisclosure === 'public_official'`로 임명·전환하려 하면 `ADR-0003` 위반 오류를 내어 원천 차단**합니다.
+3. **임원 직책 거버넌스 (`appointRole`, `transferRole`, `endRole`, `setRoleDisclosure`) 및 문서-거래 연계 (`linkDocumentLedger`, `unlinkDocumentLedger`)**:
+   - `appointRole`: `roleScope`를 주지 않으면 조합원은 `executive`, 외부인은 `external_rep`로 추론하며, `staff_rotating`(순번제 소통간사)과 `other`는 공개 등급을 자동으로 `masked`로 설정합니다. **특히 `roleScope === 'staff_rotating'`이면서 `publicDisclosure === 'public_official'`로 임명·전환·등급 변경하려는 시도는 서비스와 저장소(`SqlitePeopleRepository`) 양쪽에서 도메인 가드(`assertValidRoleDisclosure`)로 원천 차단**합니다.
    - `transferRole`: 기존 직책(`R-XXXX`)을 `보직변경`으로 종료 마감하고(`validTo`, `endedOn` 기록), 같은 사람의 새 직책(`R-YYYY`)을 연속으로 생성합니다.
+   - `unlinkDocumentLedger`: `link remove --doc <doc_id> --tx <tx_id>`로 기존 문서-거래 연결을 안전하게 해제할 수 있습니다.
 4. **로컬 명부 Markdown 자동 생성 (`exportDirectoryMarkdown`)**:
-   - `export-md` 명령은 DB를 읽어 `directory/` 폴더에 `README.md`, `members.md`, `officers.md`, `external_people.md`, `title_rules.md` 5개 파일과 `_raw/applications/*.md` 개별 서류 카드(가입/재가입/탈퇴 요약 + 원본 이미지 미리보기 링크 포함)를 생성합니다.
+   - `export-md` 명령은 DB를 읽어 동적 단위 정렬(`UNIT_DISPLAY_ORDER`)과 `_raw/applications` 경로 탈출 검증을 거쳐 `directory/` 폴더에 `README.md`, `members.md`, `officers.md`, `external_people.md`, `title_rules.md` 5개 파일과 `_raw/applications/*.md` 개별 서류 카드(가입/재가입/탈퇴 요약 + 원본 이미지 미리보기 링크 포함)를 생성합니다.
 
 ### 7.2 인명 정규화 엔진 (`person-normalizer.ts`)
 
@@ -491,20 +492,21 @@ SQLite 정본 데이터베이스는 `src/storage/sqlite/schema.ts`에 Drizzle OR
 - **2단계 (등록 성명 앞뒤 호칭·수식어·직책 박리)**: `strip_tokens` 테이블(또는 기본값 `DEFAULT_STRIP_TOKENS`: 존칭 7종 `선생님/여사님/여사/선생/귀하/님/씨`, 수식어 4종 `직무대행/신임/전/현`, 직책 23종 `위원장/부위원장/사무국장/지부장/반장...`)을 조합한 정규식으로 등록된 성명 앞뒤에 반복적으로 붙은 수식·직책·존칭을 한꺼번에 벗겨냅니다.
 - **3단계 (미등록 인명·경조사 폴백 제거 + 비인명 보호)**: DB에 없는 한글 2~4글자 이름 뒤에 띄어쓰고 붙은 존칭(`SPACED_HONORIFIC_RE`)이나 경조사 앞 `OOO님`(`EVENT_NIM_RE`: `모친상`, `결혼`, `퇴직` 등 앞)에서 `님`을 제거하되, `NON_PERSON_WORDS`(`부모님`, `어머님`, `선생님`, `하느님` 등 10개 단어)는 절대 건드리지 않습니다.
 
-### 7.3 회계 원장 단방향 동기화 및 산술·참조 무결성 검증 (`sync-ledger.ts`, `accounting.ts`)
+### 7.3 마스터 설정·회계 원장 단방향 동기화 및 산술·참조 무결성 검증 (`sync-config.ts`, `sync-ledger.ts`, `accounting.ts`)
 
-`npm run union -- sync-ledger --file <경로>`는 Excel(`.xlsx`) 또는 JSON(`.json`) 원장을 읽어 SQLite `ledger_entries`에 반영합니다.
+`npm run union -- sync-config`는 `config/units.json`·`config/coa.json`을 DB 마스터 테이블과 동기화하며, `npm run union -- sync-ledger --file <경로>` 실행 시에도 `config/` 파일이 존재하면 자동으로 마스터 설정을 먼저 맞춘 뒤 Excel(`.xlsx`) 또는 JSON(`.json`) 원장을 SQLite `ledger_entries`에 반영합니다.
 
 1. **유연한 Excel 셀 파싱 (`parseLedgerFromXlsx`)**:
    - 반드시 `'통합원장'` 시트(18개 열: `tx_id`, `unit`, `year`, `ym`, `date`, `gubun`, `gwan`, `hang`, `mok`, `exp_type`, `fund`, `target`, `attr_ym`, `inc`, `exp`, `unit_bal`, `note`, `memo`)를 읽습니다.
    - Google Sheets에서 `.xlsx`로 내보낼 때 흔히 발생하는 배열/날짜 수식 wrapper(`IFERROR(__xludf.DUMMYFUNCTION("""COMPUTED_VALUE"""),"...")`)나 RichText 객체를 `unwrapExcelCell()`이 자동으로 풀어 실제 값만 추출합니다.
    - `.xlsx` 원본을 읽을 때는 자동으로 `normalizePersonMentions()`를 돌려 인명을 정식 성명으로 정규화합니다.
-2. **3대 원장 무결성 검증 (`validateLedgerRecords`)**:
+2. **확장 원장 무결성 검증 (`validateLedgerRecords`) 및 연간 결산 집계 (`summarizeAnnualCoa`)**:
    - **COA(계정과목) 일치 검사**: 모든 행의 `(구분, 관, 항, 목)` 조합이 `accounts` 테이블(`config/coa.json`)에 존재하는지 확인합니다. (`내부이전(전입)`/`내부이전(전출)`은 `내부이전`으로 묶어 대조)
-   - **시트 수식 오류 차단**: 주요 텍스트 필드에 `#REF!`, `#NAME?`, `#VALUE!`, `#N/A`가 남아 있으면 즉시 에러를 발생시킵니다.
+   - **수식 오류·중복·음수 차단**: 주요 텍스트 필드에 `#REF!`, `#NAME?`, `#VALUE!`, `#N/A`, `#DIV/0!` 또는 미평가 `=` 수식이 남아 있거나, 중복 `tx_id`·음수 금액(`inc`/`exp < 0`)이 존재하면 즉시 에러를 발생시킵니다.
    - **단위별 누적 잔액 1원 대조**: 각 `unitName`별로 `이전 잔액 + inc - exp`를 한 줄씩 누적 계산하여, 시트의 `unitBal` 값과 단 1원이라도 다르면 `Balance mismatch at <txId>` 오류를 내고 동기화를 중단합니다.
-3. **참조 무결성 보호 (`replaceAllAndSyncLinks`)**:
-   - 새 원장의 `tx_id` 집합에 기존 `document_ledger_links`나 `membership_events.refund_tx_id`가 참조하는 `tx_id`가 하나라도 빠져 있으면 **트랜잭션을 즉시 롤백**하여 데이터베이스를 손상시키지 않습니다.
+   - **연간 COA 결산 공통화**: 공개 연간 결산 페이지와 내부 대의원대회 결산 보고서 모두 도메인의 `summarizeAnnualCoa()`를 공유합니다.
+3. **참조 무결성 보호 및 배치 정리 (`replaceAllAndSyncLinks`)**:
+   - 새 원장의 `tx_id` 집합에 기존 `document_ledger_links`나 `membership_events.refund_tx_id`가 참조하는 `tx_id`가 하나라도 빠져 있으면 **트랜잭션을 즉시 롤백**하여 데이터베이스를 손상시키지 않습니다. 제거 대상 행은 청크 단위 `inArray` 배치로 삭제합니다.
 4. **인물 자동 매핑 (`computeLedgerPersonLinks`)**:
    - 원장 `target` 또는 `note`에 DB 등록 인물의 정식 성명이 포함되어 있으면 `ledger_person_links`에 기록해(내부 집계용) 사람별 거래 추적 기반을 마련합니다.
 
@@ -521,11 +523,11 @@ SQLite 정본 데이터베이스는 `src/storage/sqlite/schema.ts`에 Drizzle OR
 4. **`document_ledger_links.json`**: 문서 ID와 거래번호(`tx_id`) 연결 목록. (단, 실제 사이트 빌드 시 `internal_only` 문서에 연결된 링크는 공개하지 않습니다.)
 5. **`privacy_hashes.json`**: 모든 조합원·외부인 성명, 금칙어, `exact` 별칭, 전화번호(하이픈 제거 숫자 버전 포함), 이메일을 `PRIVACY_HMAC_SALT`로 HMAC-SHA256 해싱한 지문 목록과, 스캔에 필요한 한글 이름 글자 길이 배열(`hangulLengths`, 예: `[2, 3, 4]`), 다어절 구문 존재 여부(`phraseTokens`)만 저장합니다. 원문 이름이나 전화번호는 1바이트도 들어있지 않습니다.
 
-### 7.5 자료실 콘텐츠 그래프 v3 및 문서 렌더러 (`content-graph.ts`, `mom-renderer.ts`, `statement-fragment.ts`)
+### 7.5 자료실 콘텐츠 그래프 v3 및 문서 렌더러 (`content-graph.ts`, `content-source.ts`, `mom-renderer.ts`, `statement-fragment.ts`)
 
-1. **콘텐츠 그래프 로더 (`loadContentGraph` / `validateSourceTree`)**:
-   - `_source/topics.json`, `sources.json`, `catalog.json`과 `_source/mom/*.md` 파일들의 YAML Frontmatter를 모두 읽어 들여 `_source/schemas/*.schema.json`(JSON Schema Draft 2020-12)으로 `Ajv` 엄격 검증(`strict: true`)을 수행합니다.
-   - 검사 항목: ID 접두사 일치(`mom:...`, `statement:...`), 안전한 POSIX 상대 `.html` 경로(`validateRoute`), 날짜 논리(`modifiedOn >= publishedOn`, `reviewedOn >= publishedOn`), 존재하는 주제 ID(`topicIds`)와 출처 ID(`sourceIds`), 실제 본문 파일 및 `socialImage` 존재 여부, 관련 문서(`relatedDocumentIds`)의 자기참조 및 없는 ID 차단.
+1. **콘텐츠 소스 어댑터 & 순수 그래프 빌더 (`src/storage/content-source.ts`, `src/domain/content-graph.ts`)**:
+   - 파일시스템 I/O는 `src/storage/content-source.ts`(`ContentSource`, `FileSystemContentSource`, `loadContentGraph`, `validateSourceTree`)가 전담하여 `_source/topics.json`, `sources.json`, `catalog.json`, `_source/mom/*.md`, `_source/schemas/*.schema.json` 스냅샷을 읽습니다.
+   - 도메인의 `buildContentGraphFromSnapshot()`은 외부 I/O 없이 스냅샷만 받아 `Ajv` 엄격 검증(`strict: true`, JSON Schema Draft 2020-12)과 ID 접두사 일치(`mom:...`, `statement:...`), 안전한 POSIX 상대 `.html` 경로(`validateRoute`), 날짜 논리(`modifiedOn >= publishedOn`, `reviewedOn >= publishedOn`), 주제/출처/관련문서 상호 참조 및 실제 본문·`socialImage` 존재 여부를 순수 함수로 검증합니다.
 2. **운영위원회 회의록 렌더러 (`mom-renderer.ts`)**:
    - `markdown-it`을 `html: false`(원시 HTML 태그 차단) 모드로 안전하게 실행하되, 표 안의 줄바꿈용 `<br>`만 예외 허용합니다.
    - 링크 URL에서 `javascript:` 등 위험 스킴을 차단하고(`sanitizeLinkUrl`), 모든 표를 `<div class="table-wrapper" tabindex="0" role="region">`로 감싸며, 각 `<td>`에 열 머리글 이름(`data-label`)을 자동으로 붙여 모바일 카드형 표가 작동하도록 만듭니다.
@@ -550,9 +552,9 @@ SQLite 정본 데이터베이스는 `src/storage/sqlite/schema.ts`에 Drizzle OR
      - **실시간 개인정보 입력 차단(`detectPossiblePii`)**: 회의 기록 칸에 실수로 휴대전화 번호, 주민번호, 이메일, 혹은 `"OOO님/씨"` 같은 실명을 입력하면 경고를 띄워 직책·기구명만 적도록 안내합니다.
      - 회의 종료 후 **[정본 JSON 다운로드]** 버튼으로 `bylaws-revision.json` 파일을 내려받아 Git 저장소 `_source/union/bylaws-revision.json`에 덮어쓰고 커밋하면 전체 운영위원과 공유됩니다.
 
-### 7.7 정적 포털 빌더 및 프론트엔드 아키텍처 (`build-site.ts`, `shell.ts`, `svg-charts.ts`, `web/assets/*`)
+### 7.7 정적 포털 빌더 및 프론트엔드 아키텍처 (`build-site.ts`, `pages/*`, `site-context.ts`, `shell.ts`, `svg-charts.ts`, `web/assets/*`)
 
-1. **공개 포털 4축 정보구조(IA) 및 생성 파일 전체 목록 (`buildSite`)**:
+1. **공개 포털 4축 정보구조(IA) 오케스트레이션 (`build-site.ts` + `pages/{home,archive,accounting,union}.ts` + `site-context.ts`)**:
    - **홈 (`/`)**: `index.html` — 포털 3대 축 안내 카드, 최신 공적 자료실 카드, 최신 기준월 재정·조직 KPI 요약.
    - **자료실 (`/archive/`)**: `archive/index.html`, 5개 카테고리별 `index.html`, 각 `public` 및 `unlisted` 문서 상세 HTML(`archive/mom/202611.html` 등), `internal_only`는 제외. 회의록에는 `financePeriod` 기준월 재정 요약 및 관련 거래 링크 배지가 자동 삽입됨.
    - **회계 (`/accounting/`)**:
@@ -569,8 +571,10 @@ SQLite 정본 데이터베이스는 `src/storage/sqlite/schema.ts`에 Drizzle OR
 
 ### 7.8 이중 개인정보·무결성 검증 게이트 및 내부 보고서·PDF·리다이렉트
 
-1. **원본 및 투영 감사 (`audit-privacy.ts` — `npm run audit:privacy`)**:
-   - 로컬 정본 DB(`union.db`)와 `.env` 솔트가 있을 때 실행하며, ① `data/public/ledger_public.json` 회계 산술·COA 재검증, ② `data/public/*.json` 평문 및 HMAC 해시 대조 검사, ③ `_source/` 모든 비내부(`!== 'internal_only'`) 원본 문서를 줄 단위로 스캔(`auditDocumentPrivacy`)해 재정 구역 내 실명(`finance_context_name`), 비공식 직무자/임기 외 실명(`masked_person`), 휴대전화(`phone`), 개인 이메일(`email`), 경조사 실명(`family_event`)을 찾아 보고합니다.
+1. **읽기 전용 원본 및 투영 감사 (`audit-privacy.ts` — `npm run audit:privacy`)**:
+   - `readConfiguredPrivacySalt()`를 사용해 `.env`를 생성·변조하지 않는 **순수 읽기 전용 감사**로 동작합니다.
+   - 로컬 정본 DB(`union.db`)를 기준으로 ① `data/public/ledger_public.json` 회계 산술·COA·확장 무결성 재검증, ② `data/public/*.json` 평문·HMAC 해시 대조 및 `PRIVACY_HMAC_SALT` 미설정·`privacy_hashes.json` 해시 누락 검출, ③ `_source/` 모든 비내부(`!== 'internal_only'`) 원본 문서 본문과 `title`/`summary` 메타데이터, 그리고 `_source/union/bylaws*.{md,json}` 규약 정본의 제로-PII 여부를 줄 단위로 스캔(`auditDocumentPrivacy`)합니다(HTML 다중 행 주석·`<script>`·`<style>` 블록은 행 번호를 유지하면서 제외).
+   - 문서 유출이 1건이라도 발견되면 CLI가 비정상 종료 코드(`process.exitCode = 1`)를 반환해 `check:local`과 `pre-push`를 즉시 차단합니다.
 2. **빌드 사이트 최종 검문소 (`validate-site.ts` — `validate:site` 로컬 모드 / `validate:ci` CI 모드)**:
    - 생성된 `_site/`의 **모든 `.html` 파일**을 `parse5` AST로 파싱하여 검사합니다:
      1. **HTML 구문 & 반응형**: 문법 태그 오류 여부, `<meta name="viewport">` 필수 존재 확인.
@@ -672,21 +676,21 @@ SQLite 정본 데이터베이스는 `src/storage/sqlite/schema.ts`에 Drizzle OR
   - `bylaws-law.js`: 노조법 비교 분석 등급/주제 필터 및 근거 법령 일괄 펼치기/접기.
   - `bylaws-revision.js`: 다회차 규약 심의 `localStorage` 상태 관리, 조문별 인라인 편집기, 실시간 PII(실명·전화·이메일·주민번호) 차단 경고, `bylaws-revision.json` 및 회의자료 `.md` 다운로드.
   - `video-embed.js`: 유튜브 영상 클릭 시에만 `youtube-nocookie.com` iframe을 지연 로드하는 개인정보 친화 파사드(Facade).
-- **`test/` (8개 테스트 스위트 — `npm test`)**:
-  - `accounting.test.ts` (수지 합산·COA·수식오류·잔액검증), `person-normalizer.test.ts` (별칭·직책박리·비인명보호), `privacy.test.ts` (원장 마스킹·HMAC 해시·Dual-Zone 문서감사), `storage-sqlite.test.ts` (마이그레이션·FK·조합원 생애주기·Blob 경로탈출 차단), `sync-ledger.test.ts` (단방향 upsert 및 링크 누락 시 롤백), `bylaws.test.ts` (규약 파서·중복 제37조·미등재 심의 페이지 검증), `svg-reports.test.ts` (인라인 SVG 차트·내부 보고서 생성), `site-pipeline.test.ts` (전체 사이트 빌드·가시성 계약·리다이렉트·CI/로컬 검증 게이트 통합 테스트).
+- **`test/` (9개 테스트 스위트 · 24개 테스트 — `npm test`)**:
+  - `accounting.test.ts` (수지 합산·COA·수식오류·잔액검증), `architecture-and-services.test.ts` (아키텍처 경계·역할 공개 가드·Blob 보상 트랜잭션·마스터 설정 동기화·문서-거래 연결 해제·읽기 전용 감사·회계 확장 검증·CLI `--key=value` 파서), `person-normalizer.test.ts` (별칭·직책박리·비인명보호), `privacy.test.ts` (원장 마스킹·HMAC 해시·Dual-Zone 문서감사), `storage-sqlite.test.ts` (마이그레이션·FK·조합원 생애주기·Blob 경로탈출 차단), `sync-ledger.test.ts` (단방향 upsert 및 링크 누락 시 롤백), `bylaws.test.ts` (규약 파서·중복 제37조·미등재 심의 페이지 검증), `svg-reports.test.ts` (인라인 SVG 차트·내부 보고서 생성), `site-pipeline.test.ts` (전체 사이트 빌드·가시성 계약·리다이렉트·CI/로컬 검증 게이트 통합 테스트).
 
 ---
 
 ## 제9장. CLI 명령어 마스터 레퍼런스 (`npm run` & `union` 전체 명령)
 
-> **안전 알림**: 아래 모든 예시는 실제 조합원이 아닌 가상 인명(`홍길동`, `김철수`, `이영희`, `M-9001`, `E-9001`)을 사용합니다.
+> **안전 알림**: 아래 모든 예시는 실제 조합원이 아닌 가상 인명(`홍길동`, `김철수`, `이영희`, `M-9001`, `E-9001`)을 사용합니다. 모든 플래그는 `--key value`와 `--key=value` 형식을 모두 지원합니다(`src/cli/args.ts`).
 
 ### 9.1 `package.json` 빠른 단축 스크립트
 
 | 명령어 | 내부 실행 동작 | 언제 쓰는가? |
 | :--- | :--- | :--- |
 | `npm run typecheck` | `tsc --noEmit` | 코드 수정 후 문법·타입 오류 확인 시 |
-| `npm test` | `node --import tsx --test test/*.test.ts` | 8개 자동화 테스트 전체 실행 시 |
+| `npm test` | `node --import tsx --test test/*.test.ts` | 9개 자동화 테스트(24개 테스트) 전체 실행 시 |
 | `npm run db:migrate` | `tsx src/cli/index.ts migrate` | `data/local/union.db` 최초 생성 또는 스키마 업데이트 시 |
 | `npm run db:sync-config` | `tsx src/cli/index.ts sync-config` | `config/units.json`·`config/coa.json` 변경 사항을 DB에 반영할 때 |
 | `npm run export:public` | `tsx src/cli/index.ts export-public` | DB 변경 후 `data/public/` 비식별 JSON + 해시 갱신 시 |
@@ -777,7 +781,7 @@ npm run union -- generate-redirects --out redirects
 
 ### 시나리오 C: 매월 회계 원장(Excel/JSON) 동기화하고 보고서·공개 포털 갱신하기
 1. Google Sheets 통합 회계 원장을 `.xlsx` 파일로 내려받습니다(시트 이름 반드시 `'통합원장'`).
-2. 만약 이번 달에 새로운 활동 계정(`목`)이 생겼다면 먼저 `config/coa.json`에 추가합니다.
+2. 만약 이번 달에 새로운 활동 계정(`목`)이나 조직단위가 생겼다면 먼저 `config/coa.json`·`config/units.json`에 추가합니다(필요 시 `npm run db:sync-config` 실행; `sync-ledger`에서도 자동 동기화됩니다).
 3. 원장을 동기화합니다(오류 1건이라도 있으면 자동 롤백되므로 안전합니다):
    ```powershell
    npm run union -- sync-ledger --file "C:\다운로드\ledger.xlsx"
@@ -798,9 +802,10 @@ npm run union -- generate-redirects --out redirects
 3. **개인정보 작성 규칙(매우 중요)**:
    - 회의 참석·일반 발언 안건에는 현 임기 `public_official` 임원 실명만 적고, 일반 조합원이나 소통간사는 `"조합원 A"`, `"안양지부 소통간사"`로 적습니다.
    - `## 재정 현황` 또는 `## 찬조금` 제목 아래(재정 구역)에는 **위원장·사무국장 실명조차 절대 적지 마세요!** (`validate-site`가 자동 차단합니다.)
-4. 관련 회계 지출이 있다면 문서와 거래를 연결합니다:
+4. 관련 회계 지출이 있다면 문서와 거래를 연결합니다(연결 해제 시 `link remove` 사용):
    ```powershell
    npm run union -- link add --doc mom:202612 --tx HQ-2026-120 --note "12월 운영위 식대"
+   # 연결 해제: npm run union -- link remove --doc mom:202612 --tx HQ-2026-120
    npm run export:public
    ```
 5. `npm run check:local`로 검사 후 커밋·푸시합니다.
@@ -854,12 +859,12 @@ git push origin main       # 이때 .githooks/pre-push 가 자동 실행되며, 
 | :--- | :--- | :--- |
 | **`Invalid COA at <txId>: (...)`** | 원장에 새로 추가한 `(구분, 관, 항, 목)` 조합이 `config/coa.json`에 등록되지 않음 | `config/coa.json`에 해당 계정과목을 추가하거나, 엑셀의 오타를 수정 후 다시 `sync-ledger` 실행 |
 | **`Balance mismatch at <txId>: expected X, got Y`** | 엑셀 원장 중간 행이 삭제·수정되어 `이전 잔액 + 수입 - 지출`이 시트의 `unit_bal`과 어긋남 | 해당 거래번호(`txId`) 앞뒤 행의 금액 또는 수식(`unit_bal`)을 엑셀에서 바로잡은 뒤 재동기화 |
-| **`Formula error '#REF!' at <txId>`** | 엑셀/구글시트 셀에 `#REF!`, `#NAME?`, `#VALUE!`, `#N/A` 수식 오류 문자가 남아 있음 | 시트에서 오류 셀을 고친 후 다시 `.xlsx`로 내려받아 동기화 |
-| **`document_ledger_links가 참조하는 거래번호가 누락되었습니다`** | 자료실 문서에 이미 연결해 둔 `tx_id`가 새 엑셀 원장에서 지워졌거나 번호가 바뀜 | 엑셀 원장의 기존 `tx_id`를 복구(또는 `link` 정리)한 뒤 다시 동기화 |
-| **`순번제·비공개 관리 직책(staff_rotating)은 public_official로 공개할 수 없습니다`** | 소통간사를 `public_official`로 임명하려고 시도함 (`ADR-0003` 정책 차단) | `--disclosure masked`를 사용하거나 생략 |
+| **`Formula error '#REF!'` / `#DIV/0!` / `Duplicate tx_id` / `Negative amount`** | 엑셀/구글시트 셀에 `#REF!`, `#NAME?`, `#VALUE!`, `#N/A`, `#DIV/0!` 또는 미평가 `=` 수식이 남아 있거나, 거래번호 중복·음수 금액이 입력됨 | 시트에서 오류 셀·중복 거래번호·음수 금액을 고친 후 다시 `.xlsx`로 내려받아 동기화 |
+| **`document_ledger_links가 참조하는 거래번호가 누락되었습니다`** | 자료실 문서에 이미 연결해 둔 `tx_id`가 새 엑셀 원장에서 지워졌거나 번호가 바뀜 | 엑셀 원장의 기존 `tx_id`를 복구하거나, 의도된 정리라면 `npm run union -- link remove --doc <doc_id> --tx <tx_id>`로 연결을 먼저 해제한 뒤 다시 동기화 |
+| **`순번제·비공개 관리 직책(staff_rotating)은 public_official로 공개할 수 없습니다`** | 소통간사를 `public_official`로 임명·전환·등급 변경하려 시도함 (`ADR-0003` 서비스·저장소 이중 차단) | `--disclosure masked`를 사용하거나 생략 |
 | **`[finance-zone]: 비공개 인물 성명 노출` / `finance_context_name`** | 회의록의 `## 재정 현황` 등 재정 구역 제목 아래에(심지어 위원장이라도) 실명이 적혀 있음 | 재정·찬조·경조사 문맥에서는 임원 이름도 `"관계자"`, `"조합원"`, `"임원"` 등으로 비식별 수정 |
 | **`해시 비공개 인물 노출 [홍*동]` (`validate:ci` 실패)** | 로컬에서는 통과했으나 GitHub 웹 편집 등으로 실명이 들어감, 또는 `public_official` 임기 날짜(`validFrom`~`validTo`)가 문서 `eventOn` 날짜와 맞지 않음 | 문서 날짜 기준 재임 기간이 맞는지 `person_roles`를 확인하거나, 일반 인물 실명이라면 익명 처리 후 `export:public` 재실행 |
-| **`PRIVACY_HMAC_SALT` 불일치 또는 누락 경고** | `.env`의 솔트 값과 GitHub Secrets의 솔트 값이 달라 CI가 해시 인덱스를 못 읽거나, `export:public`을 안 돌림 | `.env`와 GitHub Actions Secret의 `PRIVACY_HMAC_SALT`를 일치시킨 뒤 로컬에서 `npm run export:public` 후 `data/public/privacy_hashes.json` 커밋 |
+| **`PRIVACY_HMAC_SALT` 불일치·누락 또는 `누락된 해시` 경고** | `audit:privacy`는 읽기 전용이므로 `.env` 솔트가 없거나 DB 변경 후 `export:public`을 생략해 해시가 빠지면 즉시 오류를 보고함 | `.env`와 GitHub Actions Secret의 `PRIVACY_HMAC_SALT`를 일치시킨 뒤 로컬에서 `npm run export:public` 후 `data/public/privacy_hashes.json` 커밋 |
 | **`unbalanced-strong-marker` / `escaped-bracket-residue`** | 회의록 마크다운에 `**굵기**` 표시가 한쪽만 열려 닫히지 않았거나 `\[`가 남음 | 에러가 알려준 줄 번호(`L...`)로 가서 `**` 짝과 역슬래시를 정리 |
 | **`Chrome 또는 Edge 실행 파일을 찾을 수 없습니다` (`union pdf`)** | 비표준 경로에 브라우저가 설치되어 PDF 변환기가 못 찾음 | `.env` 또는 PowerShell에 `$env:CHROME_PATH="C:\실제경로\chrome.exe"` 지정 후 다시 실행 |
 

@@ -13,5 +13,5 @@ status: accepted
 
 ## Consequences
 
-- 모든 데이터 읽기·쓰기는 저장소 인터페이스(Repository)를 경유해야 하며, 빌드 스크립트가 로컬 파일 경로에 직접 결합되지 않아야 한다.
+- 모든 데이터·콘텐츠 읽기·쓰기는 저장소 인터페이스(`UnionRepositories`, `BlobStorage`, `ContentSource`)를 경유해야 하며, 순수 도메인 계층(`src/domain/`)은 파일시스템·로컬 경로·DB 드라이버에 직접 결합되지 않아야 한다.
 - 민감 원본(조합원 명부, 가입서, 원본 원장, 내부 보고서)은 로컬 전용 격리 경계 안에만 보관한다.

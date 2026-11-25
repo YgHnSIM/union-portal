@@ -14,5 +14,5 @@ status: accepted
 ## Consequences
 
 - 조합원 명부나 별칭이 변경되면 로컬에서 공개 투영 및 해시 인덱스를 재생성해 함께 커밋해야 한다.
-- `PRIVACY_HMAC_SALT`는 로컬 `.env`(Git 제외)와 GitHub Actions Repository Secret에 동일하게 보관해야 하며, 솔트 없이 해시 파일만으로는 실명을 역산할 수 없다.
+- `PRIVACY_HMAC_SALT`는 로컬 `.env`(Git 제외)와 GitHub Actions Repository Secret에 동일하게 보관해야 하며, 솔트 없이 해시 파일만으로는 실명을 역산할 수 없다. 로컬 감사(`audit:privacy`)는 `.env`를 생성·변조하지 않는 순수 읽기 전용으로 동작하며, 솔트 미설정·`privacy_hashes.json` 해시 누락·비내부 문서 메타데이터(`title`/`summary`) 및 규약 정본(`bylaws*.{md,json}`)의 제로-PII 여부까지 함께 검증한다.
 - CI는 매 푸시·PR마다 `_source/`와 `data/public/`만으로 `_site/`를 결정적으로 재빌드하고 회계 산술·HTML·링크·해시 기반 개인정보 검사를 통과해야만 GitHub Pages에 배포한다.
