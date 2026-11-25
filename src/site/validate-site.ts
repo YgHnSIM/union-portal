@@ -3,7 +3,7 @@ import path from 'node:path';
 import * as parse5 from 'parse5';
 import type { DefaultTreeAdapterTypes } from 'parse5';
 import { validateLedgerRecords } from '../domain/accounting.js';
-import { CATEGORY_REGISTRY, loadContentGraph } from '../domain/content-graph.js';
+import { CATEGORY_REGISTRY } from '../domain/content-graph.js';
 import {
   collectPersonEmails,
   collectPersonNames,
@@ -11,6 +11,7 @@ import {
 } from '../domain/person-normalizer.js';
 import {
   GENERIC_FAMILY_EVENT_RE,
+  isFinanceHeading,
   isPublicOfficialOn,
   maskToken,
   PERSONAL_EMAIL_RE,
@@ -18,13 +19,20 @@ import {
   type PrivacyHashIndex,
   scanTextWithHashes,
 } from '../domain/privacy.js';
+import {
+  isActiveUnionOfficialForPortal,
+  type PublicLedgerJson,
+  type PublicOfficialsJson,
+  publicLedgerToEntries,
+} from '../domain/public-projection.js';
 import type {
   Account,
   DirectoryBundle,
   DocumentRecordV3,
-  LedgerEntry,
   PersonRole,
 } from '../domain/types.js';
+import { loadContentGraph } from '../storage/content-source.js';
+import { readConfiguredPrivacySalt } from '../storage/privacy-salt.js';
 import type { UnionRepositories } from '../storage/repositories.js';
 import { findMarkdownSyntaxResidues } from './mom-renderer.js';
 import { isElement } from './statement-fragment.js';
@@ -48,44 +56,6 @@ export interface ValidateSiteResult {
   warnings: string[];
 }
 
-interface PublicLedgerJson {
-  records: Array<{
-    tx_id: string;
-    unit: string;
-    year: number;
-    ym: string;
-    date: string;
-    gubun: string;
-    gwan: string;
-    hang: string;
-    mok: string;
-    exp_type: string;
-    fund: string;
-    target: string;
-    attr_ym: string;
-    inc: number;
-    exp: number;
-    unit_bal: number;
-    note: string;
-    memo: string;
-  }>;
-}
-
-interface PublicOfficialsJson {
-  officials: Array<{
-    roleId: string;
-    personId: string;
-    kind: string;
-    roleScope?: string;
-    name: string;
-    org: string;
-    title: string;
-    validFrom: string | null;
-    validTo: string | null;
-    isPrimary: boolean;
-  }>;
-}
-
 function readJson<T>(filePath: string): T {
   return JSON.parse(fs.readFileSync(filePath, 'utf8').replace(/^\uFEFF/, '')) as T;
 }
@@ -104,30 +74,6 @@ function listFilesRecursive(dir: string, suffix?: string): string[] {
   };
   walk(dir);
   return results;
-}
-
-function tryReadLocalSalt(projectRoot: string): string | undefined {
-  const fromEnv = process.env.PRIVACY_HMAC_SALT?.trim();
-  if (fromEnv) return fromEnv;
-  const envFile = path.join(projectRoot, '.env');
-  if (!fs.existsSync(envFile)) return undefined;
-  const content = fs.readFileSync(envFile, 'utf8');
-  for (const line of content.split(/\r?\n/)) {
-    const m = line.match(/^\s*PRIVACY_HMAC_SALT\s*=\s*(.+?)\s*$/);
-    if (m?.[1]) {
-      const val = m[1].replace(/^['"]|['"]$/g, '').trim();
-      if (val && val !== 'change-me-local-secret-32bytes-hex') {
-        return val;
-      }
-    }
-  }
-  return undefined;
-}
-
-function isFinanceHeading(text: string): boolean {
-  return /(?:재정\s*(?:현황|운영|결산|과\s*운영)|조합원\s*및\s*재정|찬조금|통장\s*잔액|수입·지출|지출\s*내역)/.test(
-    text,
-  );
 }
 
 interface ExtractedZones {
@@ -390,7 +336,7 @@ export async function validateSite(
   if (fs.existsSync(hashIndexPath)) {
     hashIndex = readJson<PrivacyHashIndex>(hashIndexPath);
   }
-  const salt = options.salt?.trim() || (ciMode ? process.env.PRIVACY_HMAC_SALT?.trim() : tryReadLocalSalt(projectRoot));
+  const salt = options.salt?.trim() || (ciMode ? process.env.PRIVACY_HMAC_SALT?.trim() : readConfiguredPrivacySalt(projectRoot));
 
   if (ciMode && (!salt || !hashIndex)) {
     errors.push(
@@ -421,27 +367,7 @@ export async function validateSite(
     }
     const pub = readJson<PublicLedgerJson>(ledgerRel);
     ledgerRecordsChecked = pub.records.length;
-    const entries: LedgerEntry[] = pub.records.map((r) => ({
-      txId: r.tx_id,
-      unitCode: '',
-      unitName: r.unit,
-      year: r.year,
-      ym: r.ym,
-      date: r.date,
-      gubun: r.gubun,
-      gwan: r.gwan,
-      hang: r.hang,
-      mok: r.mok,
-      expType: r.exp_type,
-      fund: r.fund,
-      target: r.target,
-      attrYm: r.attr_ym,
-      inc: r.inc,
-      exp: r.exp,
-      unitBal: r.unit_bal,
-      note: r.note,
-      memo: r.memo,
-    }));
+    const entries = publicLedgerToEntries(pub);
     const math = validateLedgerRecords(entries, coaCfg.accounts);
     errors.push(...math.errors);
 
@@ -582,15 +508,7 @@ export async function validateSite(
   // Active union officials allowlist (for /union/index.html: strictly our union's active members)
   const activeOfficialNames = new Set(
     officialsJson.officials
-      .filter((o) => {
-        if (o.kind !== 'member') return false;
-        if (o.roleScope === 'external_rep' || o.roleScope === 'staff_rotating') {
-          return false;
-        }
-        const fromOk = !o.validFrom || o.validFrom.slice(0, 7) <= currentYm;
-        const toOk = !o.validTo || o.validTo.slice(0, 7) >= currentYm;
-        return fromOk && toOk && Boolean(o.name);
-      })
+      .filter((o) => isActiveUnionOfficialForPortal(o, currentYm))
       .map((o) => o.name),
   );
 

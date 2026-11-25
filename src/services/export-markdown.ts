@@ -51,6 +51,13 @@ export async function exportDirectoryMarkdown(options: {
   const outDir = path.resolve(options.outDir ?? path.join(projectRoot, 'directory'));
   const rawDirAbs = path.join(projectRoot, '_raw');
   const appDir = path.join(rawDirAbs, 'applications');
+  const absProjectRoot = path.resolve(projectRoot);
+  const UNIT_DISPLAY_ORDER = new Map<string, number>([
+    ['AY', 0],
+    ['BP', 1],
+    ['HQ', 2],
+    ['SS', 3],
+  ]);
 
   await fs.mkdir(outDir, { recursive: true });
   await fs.mkdir(appDir, { recursive: true });
@@ -77,7 +84,16 @@ export async function exportDirectoryMarkdown(options: {
     const m = memberMap.get(ev.personId);
     if (!m) continue;
     const evDocs = docsByEvent.get(ev.eventId) ?? [];
-    const outPath = path.join(projectRoot, ...ev.docMdPath.split('/'));
+    const normDocPath = ev.docMdPath.replace(/\\/g, '/').replace(/^\/+/, '');
+    const outPath = path.resolve(absProjectRoot, ...normDocPath.split('/'));
+    const relFromAppDir = path.relative(appDir, outPath);
+    if (
+      !relFromAppDir ||
+      relFromAppDir.startsWith('..') ||
+      path.isAbsolute(relFromAppDir)
+    ) {
+      throw new Error(`허용되지 않은 서류 카드 출력 경로입니다: ${ev.docMdPath}`);
+    }
     await fs.mkdir(path.dirname(outPath), { recursive: true });
 
     let lines: string[];
@@ -157,11 +173,16 @@ export async function exportDirectoryMarkdown(options: {
     }
   }
 
-  const unitRows = ['AY', 'BP', 'HQ', 'SS'].map((code) => {
-    const u = unitMap.get(code);
-    const cnt = byUnitActive.get(code) ?? 0;
-    const tot = bundle.members.filter((m) => m.unitCode === code).length;
-    return `| \`${code}\` | ${u?.officialName ?? code} (${u?.shortName ?? code}) | ${u?.fullName ?? ''} | **${cnt}명** | ${tot}명 |`;
+  const orderedUnits = [...units].sort(
+    (a, b) =>
+      (UNIT_DISPLAY_ORDER.get(a.code) ?? 99) - (UNIT_DISPLAY_ORDER.get(b.code) ?? 99) ||
+      a.code.localeCompare(b.code),
+  );
+
+  const unitRows = orderedUnits.map((u) => {
+    const cnt = byUnitActive.get(u.code) ?? 0;
+    const tot = bundle.members.filter((m) => m.unitCode === u.code).length;
+    return `| \`${u.code}\` | ${u.officialName} (${u.shortName}) | ${u.fullName} | **${cnt}명** | ${tot}명 |`;
   });
 
   const shiftSummary = [...byShiftActive.entries()]
@@ -209,13 +230,10 @@ export async function exportDirectoryMarkdown(options: {
     `> 기준: \`${nowStr}\` · 현직 \`${activeMembers.length}명\` · 과거/비현역 \`${formerMembers.length}명\` · 전체 \`${bundle.members.length}명\` · 증빙 \`${bundle.memberDocuments.length}건\``,
     '',
   ];
-  for (const [code, heading] of [
-    ['AY', '안양지부 (`AY`)'],
-    ['BP', '부평지부 (`BP`)'],
-    ['HQ', '본조 (`HQ`)'],
-  ] as const) {
-    const sub = activeMembers.filter((m) => m.unitCode === code);
+  for (const u of orderedUnits.filter((unit) => unit.status === 'active')) {
+    const sub = activeMembers.filter((m) => m.unitCode === u.code);
     if (sub.length === 0) continue;
+    const heading = `${u.officialName} (\`${u.code}\`)`;
     const subShift = countBy(sub, (m) => m.shift || '미지정');
     const subEmp = countBy(sub, (m) => m.employmentType || '미지정');
     memLines.push(

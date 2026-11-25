@@ -39,6 +39,11 @@ export function fmtWon(n: number): string {
   return Math.round(n).toLocaleString('ko-KR');
 }
 
+export function fmtSigned(n: number): string {
+  const r = Math.round(n);
+  return `${r >= 0 ? '+' : ''}${r.toLocaleString('ko-KR')}`;
+}
+
 export function fmtMan(n: number): string {
   if (!n) return '0원';
   const abs = Math.abs(n);

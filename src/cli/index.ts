@@ -14,6 +14,7 @@ import { exportDirectoryMarkdown } from '../services/export-markdown.js';
 import { exportPublicProjection } from '../services/export-public.js';
 import { importLegacyData } from '../services/import-legacy.js';
 import { MemberService, parseRoleScope } from '../services/member-service.js';
+import { syncMasterConfig } from '../services/sync-config.js';
 import { syncLedgerFromFile } from '../services/sync-ledger.js';
 import { buildSite } from '../site/build-site.js';
 import { generateRedirects } from '../site/generate-redirects.js';
@@ -22,6 +23,7 @@ import { LocalFileStorage } from '../storage/blob-storage.js';
 import { openSqliteConnection } from '../storage/sqlite/client.js';
 import { migrateSqlite } from '../storage/sqlite/migrate.js';
 import { SqliteUnionRepositories } from '../storage/sqlite/repositories.js';
+import { flagAll, flagOne, parseArgs, requireFlag } from './args.js';
 
 const ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -32,57 +34,12 @@ const DEFAULT_DB_PATH = path.join(ROOT, 'data', 'local', 'union.db');
 const DEFAULT_MIGRATIONS_DIR = path.join(ROOT, 'drizzle');
 const DEFAULT_RAW_DIR = path.join(ROOT, '_raw');
 
-interface ParsedArgs {
-  positionals: string[];
-  flags: Map<string, string[]>;
-}
-
-function parseArgs(argv: string[]): ParsedArgs {
-  const positionals: string[] = [];
-  const flags = new Map<string, string[]>();
-  for (let i = 0; i < argv.length; i += 1) {
-    const tok = argv[i]!;
-    if (tok.startsWith('--')) {
-      const key = tok.slice(2);
-      const next = argv[i + 1];
-      if (next !== undefined && !next.startsWith('--')) {
-        const arr = flags.get(key) ?? [];
-        arr.push(next);
-        flags.set(key, arr);
-        i += 1;
-      } else {
-        const arr = flags.get(key) ?? [];
-        arr.push('true');
-        flags.set(key, arr);
-      }
-    } else {
-      positionals.push(tok);
-    }
-  }
-  return { positionals, flags };
-}
-
-function flagOne(parsed: ParsedArgs, name: string): string | undefined {
-  return parsed.flags.get(name)?.[0];
-}
-
-function flagAll(parsed: ParsedArgs, name: string): string[] {
-  return parsed.flags.get(name) ?? [];
-}
-
-function requireFlag(parsed: ParsedArgs, name: string): string {
-  const val = flagOne(parsed, name);
-  if (!val) {
-    throw new Error(`필수 옵션이 누락되었습니다: --${name}`);
-  }
-  return val;
-}
-
 function printHelp(): void {
   console.log(`union-portal CLI
 
 사용법:
   union migrate
+  union sync-config
   union import-legacy --accounting <path> --workplace <path>
   union sync-ledger --file <ledger.xlsx|ledger.json>
   union member list [--unit <CODE>] [--status <status|all>] [--include-external]
@@ -102,6 +59,7 @@ function printHelp(): void {
   union alias add --alias <alias> --person <person_id> [--mode exact|context_title]
   union link list [--doc <doc_id> | --tx <tx_id>]
   union link add --doc <doc_id> --tx <tx_id> [--note ...]
+  union link remove --doc <doc_id> --tx <tx_id>
   union export-md
   union export-public
   union audit-privacy
@@ -234,6 +192,12 @@ async function main(): Promise<void> {
     const blobs = new LocalFileStorage(DEFAULT_RAW_DIR);
     const service = new MemberService(repos, blobs);
 
+    if (cmd === 'sync-config') {
+      const res = await syncMasterConfig({ projectRoot: ROOT, repos });
+      console.log('마스터 설정 동기화 완료:', JSON.stringify(res));
+      return;
+    }
+
     if (cmd === 'import-legacy') {
       const acc = requireFlag(parsed, 'accounting');
       const wp = requireFlag(parsed, 'workplace');
@@ -250,6 +214,12 @@ async function main(): Promise<void> {
 
     if (cmd === 'sync-ledger') {
       const file = requireFlag(parsed, 'file');
+      const hasConfig =
+        fs.existsSync(path.join(ROOT, 'config', 'units.json')) &&
+        fs.existsSync(path.join(ROOT, 'config', 'coa.json'));
+      if (hasConfig) {
+        await syncMasterConfig({ projectRoot: ROOT, repos });
+      }
       const res = await syncLedgerFromFile(repos, file);
       console.log('원장 단방향 동기화 완료:', JSON.stringify(res));
       return;
@@ -550,6 +520,18 @@ async function main(): Promise<void> {
         console.log(`연결 추가 완료: ${row.docId} <-> ${row.txId}`);
         return;
       }
+      if (sub === 'remove') {
+        const res = await service.unlinkDocumentLedger({
+          docId: requireFlag(parsed, 'doc'),
+          txId: requireFlag(parsed, 'tx'),
+        });
+        console.log(
+          res.removed
+            ? `연결 해제 완료: ${res.docId} <-> ${res.txId}`
+            : `해제할 연결이 없습니다: ${res.docId} <-> ${res.txId}`,
+        );
+        return;
+      }
     }
 
     if (cmd === 'export-md') {
@@ -620,7 +602,8 @@ async function main(): Promise<void> {
 
       if (
         report.publicLedgerErrors.length > 0 ||
-        report.publicPrivacyErrors.length > 0
+        report.publicPrivacyErrors.length > 0 ||
+        report.documentFindings.length > 0
       ) {
         process.exitCode = 1;
       }

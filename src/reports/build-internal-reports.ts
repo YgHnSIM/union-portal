@@ -1,7 +1,16 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { summarizePeriod, validateLedgerRecords } from '../domain/accounting.js';
-import type { Account, LedgerEntry, Unit } from '../domain/types.js';
+import {
+  summarizeAnnualCoa,
+  summarizePeriod,
+  validateLedgerRecords,
+} from '../domain/accounting.js';
+import type { Account, Unit } from '../domain/types.js';
+import {
+  escapeHtml as esc,
+  fmtSigned,
+  fmtWon,
+} from '../site/shell.js';
 import {
   CHART_PALETTE_HEX,
   renderActivityBarsSvg,
@@ -31,32 +40,6 @@ interface CoaConfigJson {
   accounts: Account[];
   expenseTypes: string[];
   fundTypes: string[];
-}
-
-function esc(value: unknown): string {
-  return String(value ?? '').replace(/[&<>"']/g, (ch) => {
-    switch (ch) {
-      case '&':
-        return '&amp;';
-      case '<':
-        return '&lt;';
-      case '>':
-        return '&gt;';
-      case '"':
-        return '&quot;';
-      default:
-        return '&#39;';
-    }
-  });
-}
-
-function fmtWon(n: number): string {
-  return Math.round(n).toLocaleString('ko-KR');
-}
-
-function fmtSigned(n: number): string {
-  const r = Math.round(n);
-  return `${r >= 0 ? '+' : ''}${r.toLocaleString('ko-KR')}`;
 }
 
 const STANDALONE_CSS = `
@@ -574,55 +557,18 @@ export async function buildInternalReports(
       { standalone: true },
     );
 
-    const coaRows: string[] = [];
-    for (const acc of coaCfg.accounts) {
-      const { category: cat, gwan: gw, hang: ha, mok: mo } = acc;
-      if (cat === '기초이월' || cat === '이월차액') continue;
-      let curV = 0;
-      let prvV = 0;
-      let cnt = 0;
-      let pctS = '-';
-      if (cat === '내부이전') {
-        for (const r of yRecs) {
-          if (r.gwan === gw && r.hang === ha && r.mok === mo) {
-            curV += r.gubun.includes('전출') ? r.exp : r.inc;
-            cnt += 1;
-          }
-        }
-        for (const r of prevRecs) {
-          if (r.gwan === gw && r.hang === ha && r.mok === mo) {
-            prvV += r.gubun.includes('전출') ? r.exp : r.inc;
-          }
-        }
-      } else {
-        const useInc = cat === '수입';
-        for (const r of yRecs) {
-          if (r.gubun === cat && r.gwan === gw && r.hang === ha && r.mok === mo) {
-            curV += useInc ? r.inc : r.exp;
-            cnt += 1;
-          }
-        }
-        for (const r of prevRecs) {
-          if (r.gubun === cat && r.gwan === gw && r.hang === ha && r.mok === mo) {
-            prvV += useInc ? r.inc : r.exp;
-          }
-        }
-        const denom = useInc ? currSum.inc || 1 : currSum.exp || 1;
-        pctS = `${((curV / denom) * 100).toFixed(1)}%`;
-      }
-      if (curV === 0 && prvV === 0) continue;
-      coaRows.push(
-        `<tr><th scope="row">${esc(mo)}</th>
-          <td class="ctr" data-label="구분">${esc(cat)}</td>
-          <td data-label="관(대분류)">${esc(gw)}</td>
-          <td data-label="항(중분류)">${esc(ha)}</td>
-          <td class="ctr" data-label="건수">${cnt}</td>
-          <td class="num" data-label="${prevYear}년">${prevSum ? fmtWon(prvV) : '-'}</td>
-          <td class="num" data-label="${targetYear}년"><b>${fmtWon(curV)}</b></td>
-          <td class="num" data-label="전년 대비 증감">${prevSum ? fmtSigned(curV - prvV) : '-'}</td>
-          <td class="num" data-label="비중">${pctS}</td></tr>`,
-      );
-    }
+    const annualSummaryRows = summarizeAnnualCoa(yRecs, prevRecs, coaCfg.accounts, currSum);
+    const coaRows = annualSummaryRows.map(
+      (row) => `<tr><th scope="row">${esc(row.mok)}</th>
+          <td class="ctr" data-label="구분">${esc(row.category)}</td>
+          <td data-label="관(대분류)">${esc(row.gwan)}</td>
+          <td data-label="항(중분류)">${esc(row.hang)}</td>
+          <td class="ctr" data-label="건수">${row.count}</td>
+          <td class="num" data-label="${prevYear}년">${prevSum ? fmtWon(row.prevAmount) : '-'}</td>
+          <td class="num" data-label="${targetYear}년"><b>${fmtWon(row.currentAmount)}</b></td>
+          <td class="num" data-label="전년 대비 증감">${prevSum ? fmtSigned(row.diffAmount) : '-'}</td>
+          <td class="num" data-label="비중">${row.pctText}</td></tr>`,
+    );
 
     const fundRows = coaCfg.fundTypes
       .map((fName) => {

@@ -602,10 +602,11 @@ SQLite 정본 데이터베이스는 `src/storage/sqlite/schema.ts`에 Drizzle OR
 | 파일 경로 | 핵심 역할 | 주요 함수 · 클래스 · 타입 | 수정이 필요한 경우 |
 | :--- | :--- | :--- | :--- |
 | `src/domain/types.ts` | 시스템 전체 공통 데이터 타입(계약서) 정의 | `Unit`, `Account`, `Person`, `MemberRecord`, `ExternalRecord`, `MembershipEvent`, `MemberDocument`, `PersonAlias`, `PersonRole`, `RoleScope`, `LedgerEntry`, `DocumentLedgerLink`, `DirectoryBundle`, `DocumentRecordV3` | 새 DB 컬럼이나 문서 메타데이터 필드를 추가할 때 |
-| `src/domain/accounting.ts` | 회계 기간 합산 및 원장 3대 무결성 검증 | `PeriodSummary`, `summarizePeriod()`, `validateLedgerRecords()` | 거래 구분 규칙이나 원장 산술·수식오류 검증 로직을 바꿀 때 |
+| `src/domain/accounting.ts` | 회계 기간 합산·연간 COA 결산 집계 및 원장 무결성 검증 | `PeriodSummary`, `AnnualCoaSummaryRow`, `summarizePeriod()`, `summarizeAnnualCoa()`, `validateLedgerRecords()` | 거래 구분 규칙이나 원장 산술·수식오류 검증·연간 집계 로직을 바꿀 때 |
 | `src/domain/person-normalizer.ts` | 별칭 치환 및 존칭·수식어·직책 박리 인명 정규화 | `DEFAULT_STRIP_TOKENS`, `NON_PERSON_WORDS`, `collectPersonNames()`, `collectPersonEmails()`, `collectPersonPhones()`, `normalizePersonMentions()` | 새 호칭/직책 제거 패턴이나 비인명 보호 단어를 추가할 때 |
-| `src/domain/privacy.ts` | 차등 프라이버시 비식별, HMAC 해싱 및 문서 감사 | `isPublicOfficialOn()`, `sanitizeLedgerRecords()`, `hmacToken()`, `computePrivacyHashes()`, `scanTextWithHashes()`, `auditDocumentPrivacy()`, `maskToken()` | 재정 구역 판정 제목 키워드(`isFinanceHeading`), 마스킹 규칙, 개인정보 정규식을 손볼 때 |
-| `src/domain/content-graph.ts` | `_source/` v3 문서·주제·출처 로드 및 스키마 검증 | `CATEGORY_REGISTRY`, `parseYamlFrontMatter()`, `validateRoute()`, `validateSourceTree()`, `loadContentGraph()` | 자료실에 새 카테고리(문서 유형)를 신설하거나 검증 규칙을 바꿀 때 |
+| `src/domain/privacy.ts` | 차등 프라이버시 비식별, 역할 공개 등급 가드, HMAC 해싱 및 문서 감사 | `VALID_ROLE_SCOPES`, `parseRoleScope()`, `assertValidRoleDisclosure()`, `isFinanceHeading()`, `isPublicOfficialOn()`, `sanitizeLedgerRecords()`, `hmacToken()`, `computePrivacyHashes()`, `scanTextWithHashes()`, `auditDocumentPrivacy()`, `maskToken()` | 재정 구역 판정 제목 키워드(`isFinanceHeading`), 마스킹 규칙, 역할 공개 가드, 개인정보 정규식을 손볼 때 |
+| `src/domain/public-projection.ts` | 공개 투영 JSON 공통 계약·변환기 및 포털 직무자 필터 | `PublicLedgerJson`, `OrgSummaryJson`, `PublicOfficialsJson`, `PublicLinkEntry`, `toPublicLedgerRecord()`, `publicLedgerToEntries()`, `isActiveUnionOfficialForPortal()` | `data/public/*.json` 스키마나 포털 `/union/` 임원 노출 규칙 변경 시 |
+| `src/domain/content-graph.ts` | `_source/` v3 문서·주제·출처 순수 스키마·그래프 빌더(무 I/O) | `CATEGORY_REGISTRY`, `parseYamlFrontMatter()`, `validateRoute()`, `sourceRelativePathForDocument()`, `buildContentGraphFromSnapshot()` | 자료실에 새 카테고리(문서 유형)를 신설하거나 검증 규칙을 바꿀 때 |
 
 ### 8.2 `src/storage/` — 저장소 추상화 및 SQLite 구현체
 
@@ -613,28 +614,36 @@ SQLite 정본 데이터베이스는 `src/storage/sqlite/schema.ts`에 Drizzle OR
 | :--- | :--- | :--- | :--- |
 | `src/storage/repositories.ts` | DB 구현 기술로부터 도메인/서비스를 분리하는 인터페이스 | `UnitsRepository`, `AccountsRepository`, `PeopleRepository`, `PrivacyRepository`, `LedgerRepository`, `DocumentLinksRepository`, `SyncMetadataRepository`, `UnionRepositories` | 새 데이터 조회/저장 메서드를 추가하거나 추후 PostgreSQL로 전환할 때 |
 | `src/storage/blob-storage.ts` | 증빙 파일 저장소 추상화 및 경로 탈출 보안 차단 | `BlobStorage`, `normalizeBlobKey()`, `LocalFileStorage` (`put`, `get`, `exists`, `delete`, `list`) | 파일 키 보안 규칙 변경 또는 추후 클라우드 S3/R2 어댑터 추가 시 |
+| `src/storage/content-source.ts` | `_source/` 파일시스템 로더 및 `ContentSource` 어댑터 | `ContentSource`, `FileSystemContentSource`, `validateSourceTree()`, `loadContentGraph()` | 원격/DB 기반 콘텐츠 소스로 확장할 때 |
+| `src/storage/privacy-salt.ts` | `.env` / 환경변수 `PRIVACY_HMAC_SALT` 읽기(읽기전용) 및 생성 | `readConfiguredPrivacySalt()`, `ensureLocalPrivacySalt()` | 솔트 로딩·생성 정책을 변경할 때 |
 | `src/storage/sqlite/schema.ts` | Drizzle ORM SQLite 테이블 13개 및 CHECK 제약 정의 | `units`, `accounts`, `people`, `memberProfiles`, `externalProfiles`, `ledgerEntries`, `membershipEvents`, `memberDocuments`, `personAliases`, `personRoles`, `stripTokens`, `privacyRules`, `ledgerPersonLinks`, `documentLedgerLinks`, `syncMetadata` | DB 테이블 구조·컬럼·제약조건 변경 시 (`drizzle/*.sql`과 함께 수정) |
 | `src/storage/sqlite/client.ts` | LibSQL SQLite 연결 오픈 및 PRAGMA 설정 | `openSqliteConnection()` (`foreign_keys=ON`, `journal_mode=WAL`, `busy_timeout=5000`) | DB 연결 옵션 조정 시 |
 | `src/storage/sqlite/migrate.ts` | `drizzle/*.sql` 마이그레이션 파일 자동 순차 실행기 | `migrateSqlite()` (`__union_migrations` 테이블 관리) | 마이그레이션 실행 방식 변경 시 |
-| `src/storage/sqlite/repositories.ts` | `UnionRepositories`의 SQLite/Drizzle 실제 구현체 | `SqliteUnionRepositories` (트랜잭션 스코핑 및 참조 `tx_id` 누락 시 롤백 포함) | SQL 쿼리 로직, 정렬 순서, 업서트 동작 수정 시 |
+| `src/storage/sqlite/repositories.ts` | `UnionRepositories`의 SQLite/Drizzle 실제 구현체 | `SqliteUnionRepositories` (트랜잭션 스코핑, SQL 필터링, 역할 공개 가드, 참조 `tx_id` 누락 시 롤백 포함) | SQL 쿼리 로직, 정렬 순서, 업서트 동작 수정 시 |
 
 ### 8.3 `src/services/` — 애플리케이션 유즈케이스 계층
 
 | 파일 경로 | 핵심 역할 | 주요 함수 · 클래스 | 수정이 필요한 경우 |
 | :--- | :--- | :--- | :--- |
-| `src/services/member-service.ts` | 조합원 입·탈퇴·재가입·이동, 외부인, 임원 직책 거버넌스, 별칭, 문서-거래 연결 | `MemberService` (`joinMember`, `rejoinMember`, `withdrawMember`, `transferMember`, `addExternal`, `appointRole`, `transferRole`, `endRole`, `setRoleDisclosure`, `addAlias`, `linkDocumentLedger`), `parseRoleScope()`, `resolveUnitCode()`, `normalizeWithdrawCategory()` | 조합원/임원 처리 업무 규칙이나 허용 탈퇴 사유·직책 구분을 바꿀 때 |
+| `src/services/sync-config.ts` | `config/units.json`·`config/coa.json` → DB 마스터 설정 동기화 | `syncMasterConfig()`, `DEFAULT_OFFICIAL_UNIT_NAMES` | 조직단위나 계정과목 설정 파일을 DB에 반영할 때 |
+| `src/services/member-service.ts` | 조합원 입·탈퇴·재가입·이동, 외부인, 임원 직책 거버넌스, 별칭, 문서-거래 연결·해제 | `MemberService` (`joinMember`, `rejoinMember`, `withdrawMember`, `transferMember`, `addExternal`, `appointRole`, `transferRole`, `endRole`, `setRoleDisclosure`, `addAlias`, `linkDocumentLedger`, `unlinkDocumentLedger`), `resolveUnitCode()`, `normalizeWithdrawCategory()` | 조합원/임원 처리 업무 규칙이나 허용 탈퇴 사유·직책 구분을 바꿀 때 |
 | `src/services/sync-ledger.ts` | `.xlsx`/`json` 원장 단방향 동기화 & 인물 매핑 | `parseLedgerFromXlsx()`, `parseLedgerFromJson()`, `buildUnitLookup()`, `computeLedgerPersonLinks()`, `syncLedgerFromFile()` | 엑셀 시트 이름(`통합원장`)이나 열 배치가 바뀔 때 |
 | `src/services/export-public.ts` | `data/public/` 비식별 투영 4종 + HMAC 해시 인덱스 추출 | `ensureLocalPrivacySalt()`, `exportPublicProjection()` | 공개 투영 JSON 구조나 집계 기준을 수정할 때 |
 | `src/services/export-markdown.ts` | 로컬 `directory/` 5종 명부 & `_raw/applications/*.md` 생성 | `exportDirectoryMarkdown()` | 로컬 명부 Markdown 서식·표 열을 바꿀 때 |
-| `src/services/audit-privacy.ts` | 공개 투영 및 `_source/` 원본 문서 정밀 개인정보 감사 | `runPrivacyAudit()` | 감사 출력 형식이나 제외/허용 정책 수정 시 |
+| `src/services/audit-privacy.ts` | 읽기 전용 공개 투영(해시 최신성 포함) 및 `_source/` 원본(메타·규약 포함) 정밀 개인정보 감사 | `runPrivacyAudit()` | 감사 출력 형식이나 제외/허용 정책 수정 시 |
 | `src/services/import-legacy.ts` | 구 `accounting` + `workplace` 저장소 일회성 마이그레이션기 | `importLegacyData()` | 과거 저장소 구조 참고용 (초기 이관 완료 후 일상 사용 안 함) |
 
 ### 8.4 `src/site/`, `src/reports/`, `src/pdf/`, `src/cli/` — 빌드 · 출력 · 검증 · CLI
 
 | 파일 경로 | 핵심 역할 | 주요 함수 · 심볼 | 수정이 필요한 경우 |
 | :--- | :--- | :--- | :--- |
-| `src/site/shell.ts` | 포털 공통 HTML 뼈대, 내비게이션, 에셋 해시 매니페스트, FOUC 스크립트 | `SITE_BASE_URL`, `copyAndHashAssets()`, `assetHref()`, `renderPageShell()`, `renderAccountingSubnav()`, `renderUnionSubnav()`, `renderArchiveCategoryNav()`, `renderDocumentToolsWidget()` | 상단 메뉴, 푸터, OG/SEO 메타태그, 기본 URL 변경 시 |
-| `src/site/build-site.ts` | 정적 포털 `_site/` 전체 빌드 오케스트레이터 | `buildSite()` (홈·자료실·회계·조합·`sitemap.xml`·`robots.txt`·`.nojekyll` 생성) | 새 페이지 추가, 레이아웃 개편, 공개 결산/대시보드 구조 변경 시 |
+| `src/site/shell.ts` | 포털 공통 HTML 뼈대, 내비게이션, 에셋 해시 매니페스트, FOUC 스크립트, 공통 포맷터 | `SITE_BASE_URL`, `copyAndHashAssets()`, `assetHref()`, `fmtWon()`, `fmtSigned()`, `renderPageShell()`, `renderAccountingSubnav()`, `renderUnionSubnav()`, `renderArchiveCategoryNav()`, `renderDocumentToolsWidget()` | 상단 메뉴, 푸터, OG/SEO 메타태그, 기본 URL 변경 시 |
+| `src/site/site-context.ts` | 정적 빌더 공통 JSON I/O·정렬·문서 제목 헬퍼 | `CoaConfigJson`, `readJsonFile()`, `writeOutFile()`, `yearTone()`, `primaryDateOf()`, `sortDocumentsDesc()`, `cardTitleOf()` | 정적 페이지 공통 메타·정렬 규칙 수정 시 |
+| `src/site/pages/home.ts` | 포털 홈(`/`) 페이지 빌더 | `buildPortalHomeHtml()` | 첫 화면(브로드시트 헤더, 최신 자료, 이달의 조합 살림) 개편 시 |
+| `src/site/pages/archive.ts` | 자료실(`/archive/`) 목록 및 카테고리별 상세 빌더 | `buildArchiveIndexPages()`, `buildArchiveDetailPages()` | 자료실 필터 카드, 회의록 재정 패널, 성명서·소식지 렌더링 수정 시 |
+| `src/site/pages/accounting.ts` | 회계(`/accounting/`) 대시보드, 탐색기, 회계기준, 월간·연간 결산 빌더 | `buildAccountingPages()` | 공개 대시보드, 거래 탐색기, COA 다이어그램, 결산 보고서 개편 시 |
+| `src/site/pages/union.ts` | 조합(`/union/`) 조직·임원 현황 및 규약·심의 스위트 라우팅 | `buildUnionPages()` | 지부 통계, 현직 임원 카드, 규약 페이지 연계 수정 시 |
+| `src/site/build-site.ts` | 정적 포털 `_site/` 전체 빌드 오케스트레이터 | `buildSite()` (4축 IA 빌더 조합 + `sitemap.xml`·`robots.txt`·`.nojekyll` 생성) | 전체 빌드 파이프라인 순서·출력 구조 조정 시 |
 | `src/site/validate-site.ts` | 로컬 & CI 겸용 HTML/링크/산술/Dual-Zone 개인정보 검증 게이트 | `validateSite()`, `inspectHtmlAst()`, `checkTextPrivacy()`, `allowedOfficialsForDoc()` | 배포 전 차단 조건 추가 또는 허용 구역 정책 수정 시 |
 | `src/site/mom-renderer.ts` | 회의록 Markdown → 안전 HTML, 목차(TOC), 잔재 검사기 | `renderMomMarkdown()`, `findMarkdownSyntaxResidues()`, `sanitizeLinkUrl()` | 회의록 마크다운 렌더링 규칙이나 잔재 검사 규칙 수정 시 |
 | `src/site/statement-fragment.ts` | 성명서 본문 AST 화이트리스트 검증 및 A2 인쇄 밀도 선택 | `analyzeStatementFragment()`, `inspectStatementFragment()`, `selectPrintDensity()` | 성명서 허용 HTML 태그/클래스 추가 또는 `short`/`standard`/`long` 임계치 조정 시 |
@@ -645,7 +654,8 @@ SQLite 정본 데이터베이스는 `src/storage/sqlite/schema.ts`에 Drizzle OR
 | `src/site/generate-redirects.ts` | 구 `accounting`/`workplace` 사이트 경로 리다이렉트 HTML 생성 | `generateRedirects()` | 구 저장소 리다이렉트 매핑 추가/수정 시 |
 | `src/reports/build-internal-reports.ts` | 내부 회의용 실명 결산(`monthly`, `annual`) 스탠드얼론 HTML 생성 | `buildInternalReports()` | 운영위·대의원대회 내부 결산서 양식 수정 시 |
 | `src/pdf/generate-pdf.ts` | Chrome/Edge 헤드리스 기반 A2/A3/A4 범용 PDF 출력기 | `findBrowserExecutable()`, `generateDocumentPdf()` | 인쇄 여백(`@page`), 용지 크기 규칙, 숨김 선택자 변경 시 |
-| `src/cli/index.ts` | `npm run union -- <명령>` CLI 진입점 및 인자 파서 | `parseArgs()`, `main()`, `printHelp()` | 새로운 CLI 명령어나 옵션 플래그 추가 시 |
+| `src/cli/args.ts` | CLI 인자·플래그(`--key val`, `--key=val`) 파서 | `ParsedArgs`, `parseArgs()`, `flagOne()`, `flagAll()`, `requireFlag()` | CLI 플래그 파싱 규칙 확장 시 |
+| `src/cli/index.ts` | `npm run union -- <명령>` CLI 진입점 및 커맨드 라우터 | `main()`, `printHelp()` | 새로운 CLI 명령어나 옵션 플래그 추가 시 |
 
 ### 8.5 `web/assets/` (프론트엔드 스타일·스크립트) & `test/` (자동 테스트)
 
@@ -678,6 +688,7 @@ SQLite 정본 데이터베이스는 `src/storage/sqlite/schema.ts`에 Drizzle OR
 | `npm run typecheck` | `tsc --noEmit` | 코드 수정 후 문법·타입 오류 확인 시 |
 | `npm test` | `node --import tsx --test test/*.test.ts` | 8개 자동화 테스트 전체 실행 시 |
 | `npm run db:migrate` | `tsx src/cli/index.ts migrate` | `data/local/union.db` 최초 생성 또는 스키마 업데이트 시 |
+| `npm run db:sync-config` | `tsx src/cli/index.ts sync-config` | `config/units.json`·`config/coa.json` 변경 사항을 DB에 반영할 때 |
 | `npm run export:public` | `tsx src/cli/index.ts export-public` | DB 변경 후 `data/public/` 비식별 JSON + 해시 갱신 시 |
 | `npm run audit:privacy` | `tsx src/cli/index.ts audit-privacy` | `_source/` 원본 문서 및 `data/public/` 개인정보 정밀 감사 시 |
 | `npm run build:site` | `tsx src/cli/index.ts build-site` | `_site/` 정적 웹사이트 로컬 빌드 시 |
@@ -692,8 +703,9 @@ SQLite 정본 데이터베이스는 `src/storage/sqlite/schema.ts`에 Drizzle OR
 ### 9.2 `npm run union -- <서브커맨드>` 전체 목록 (`--db <경로>` 공통 지정 가능)
 
 ```powershell
-# 1. DB 마이그레이션 및 초기 이관/원장 동기화
+# 1. DB 마이그레이션 · 마스터 설정 동기화 · 초기 이관 · 원장 동기화
 npm run union -- migrate
+npm run union -- sync-config
 npm run union -- import-legacy --accounting c:\Accounting --workplace c:\workplace
 npm run union -- sync-ledger --file "C:\경로\ledger.xlsx"   # 또는 .json
 
@@ -720,6 +732,7 @@ npm run union -- alias list
 npm run union -- alias add --alias 길동 --person M-9001 --mode context_title --note "회의록 약칭"
 npm run union -- link list --doc mom:202611
 npm run union -- link add --doc mom:202611 --tx HQ-2026-015 --note "11월 정기 운영위원회 식대"
+npm run union -- link remove --doc mom:202611 --tx HQ-2026-015
 
 # 6. 내보내기 · 감사 · 사이트 빌드 · 보고서 · PDF
 npm run union -- export-md

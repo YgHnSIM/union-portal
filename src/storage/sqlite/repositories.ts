@@ -1,4 +1,5 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, inArray, sql, type SQL } from 'drizzle-orm';
+import { assertValidRoleDisclosure } from '../../domain/privacy.js';
 import type {
   Account,
   DirectoryBundle,
@@ -221,23 +222,7 @@ class SqlitePeopleRepository implements PeopleRepository {
     private readonly privacyRepo: PrivacyRepository,
   ) {}
 
-  async listPeople(): Promise<Person[]> {
-    const rows = await this.exec.select().from(people).orderBy(asc(people.personId));
-    return rows.map((r) => ({
-      personId: r.personId,
-      kind: r.kind as Person['kind'],
-      name: r.name,
-      phone: r.phone,
-      email: r.email,
-      status: r.status as Person['status'],
-      note: r.note,
-    }));
-  }
-
-  async findPersonById(personId: string): Promise<Person | null> {
-    const rows = await this.exec.select().from(people).where(eq(people.personId, personId));
-    const r = rows[0];
-    if (!r) return null;
+  private mapPersonRow(r: typeof people.$inferSelect): Person {
     return {
       personId: r.personId,
       kind: r.kind as Person['kind'],
@@ -249,13 +234,11 @@ class SqlitePeopleRepository implements PeopleRepository {
     };
   }
 
-  async listMembers(): Promise<MemberRecord[]> {
-    const rows = await this.exec
-      .select()
-      .from(people)
-      .innerJoin(memberProfiles, eq(people.personId, memberProfiles.personId))
-      .orderBy(asc(people.personId));
-    return rows.map(({ people: p, member_profiles: mp }) => ({
+  private mapMemberRow(
+    p: typeof people.$inferSelect,
+    mp: typeof memberProfiles.$inferSelect,
+  ): MemberRecord {
+    return {
       personId: p.personId,
       kind: 'member',
       name: p.name,
@@ -272,7 +255,27 @@ class SqlitePeopleRepository implements PeopleRepository {
       leftOn: mp.leftOn,
       memberWish: mp.memberWish,
       applicationDocKey: mp.applicationDocKey,
-    }));
+    };
+  }
+
+  async listPeople(): Promise<Person[]> {
+    const rows = await this.exec.select().from(people).orderBy(asc(people.personId));
+    return rows.map((r) => this.mapPersonRow(r));
+  }
+
+  async findPersonById(personId: string): Promise<Person | null> {
+    const rows = await this.exec.select().from(people).where(eq(people.personId, personId));
+    const r = rows[0];
+    return r ? this.mapPersonRow(r) : null;
+  }
+
+  async listMembers(): Promise<MemberRecord[]> {
+    const rows = await this.exec
+      .select()
+      .from(people)
+      .innerJoin(memberProfiles, eq(people.personId, memberProfiles.personId))
+      .orderBy(asc(people.personId));
+    return rows.map(({ people: p, member_profiles: mp }) => this.mapMemberRow(p, mp));
   }
 
   async findMemberById(personId: string): Promise<MemberRecord | null> {
@@ -282,26 +285,7 @@ class SqlitePeopleRepository implements PeopleRepository {
       .innerJoin(memberProfiles, eq(people.personId, memberProfiles.personId))
       .where(eq(people.personId, personId));
     const row = rows[0];
-    if (!row) return null;
-    const { people: p, member_profiles: mp } = row;
-    return {
-      personId: p.personId,
-      kind: 'member',
-      name: p.name,
-      phone: p.phone,
-      email: p.email,
-      status: p.status as Person['status'],
-      note: p.note,
-      unitCode: mp.unitCode,
-      birthDate: mp.birthDate,
-      shift: mp.shift,
-      employmentType: mp.employmentType,
-      firstJoinedOn: mp.firstJoinedOn,
-      joinedOn: mp.joinedOn,
-      leftOn: mp.leftOn,
-      memberWish: mp.memberWish,
-      applicationDocKey: mp.applicationDocKey,
-    };
+    return row ? this.mapMemberRow(row.people, row.member_profiles) : null;
   }
 
   async listExternals(): Promise<ExternalRecord[]> {
@@ -585,6 +569,7 @@ class SqlitePeopleRepository implements PeopleRepository {
 
   async upsertRole(role: PersonRole): Promise<void> {
     const scope: RoleScope = role.roleScope ?? 'other';
+    assertValidRoleDisclosure(scope, role.publicDisclosure);
     const termLabel = role.termLabel ?? '';
     const appointedOn = role.appointedOn ?? null;
     const endedOn = role.endedOn ?? null;
@@ -635,6 +620,11 @@ class SqlitePeopleRepository implements PeopleRepository {
   }
 
   async setRoleDisclosure(roleId: string, disclosure: PublicDisclosure): Promise<void> {
+    const existing = await this.findRoleById(roleId);
+    if (!existing) {
+      throw new Error(`직책을 찾을 수 없습니다: ${roleId}`);
+    }
+    assertValidRoleDisclosure(existing.roleScope, disclosure);
     await this.exec
       .update(personRoles)
       .set({ publicDisclosure: disclosure })
@@ -700,49 +690,7 @@ class SqlitePeopleRepository implements PeopleRepository {
 class SqliteLedgerRepository implements LedgerRepository {
   constructor(private readonly exec: QueryExecutor) {}
 
-  async listEntries(filter?: {
-    unitCode?: string;
-    ym?: string;
-    year?: number;
-  }): Promise<LedgerEntry[]> {
-    const rows = await this.exec.select().from(ledgerEntries);
-    return rows
-      .filter((r) => {
-        if (filter?.unitCode && r.unitCode !== filter.unitCode) return false;
-        if (filter?.ym && r.ym !== filter.ym) return false;
-        if (filter?.year !== undefined && r.year !== filter.year) return false;
-        return true;
-      })
-      .map((r) => ({
-        txId: r.txId,
-        unitCode: r.unitCode,
-        unitName: r.unitName,
-        year: r.year,
-        ym: r.ym,
-        date: r.date,
-        gubun: r.gubun,
-        gwan: r.gwan,
-        hang: r.hang,
-        mok: r.mok,
-        expType: r.expType,
-        fund: r.fund,
-        target: r.target,
-        attrYm: r.attrYm,
-        inc: r.inc,
-        exp: r.exp,
-        unitBal: r.unitBal,
-        note: r.note,
-        memo: r.memo,
-      }));
-  }
-
-  async findByTxId(txId: string): Promise<LedgerEntry | null> {
-    const rows = await this.exec
-      .select()
-      .from(ledgerEntries)
-      .where(eq(ledgerEntries.txId, txId));
-    const r = rows[0];
-    if (!r) return null;
+  private mapLedgerRow(r: typeof ledgerEntries.$inferSelect): LedgerEntry {
     return {
       txId: r.txId,
       unitCode: r.unitCode,
@@ -764,6 +712,37 @@ class SqliteLedgerRepository implements LedgerRepository {
       note: r.note,
       memo: r.memo,
     };
+  }
+
+  async listEntries(filter?: {
+    unitCode?: string;
+    ym?: string;
+    year?: number;
+  }): Promise<LedgerEntry[]> {
+    const conditions: SQL[] = [];
+    if (filter?.unitCode) {
+      conditions.push(eq(ledgerEntries.unitCode, filter.unitCode));
+    }
+    if (filter?.ym) {
+      conditions.push(eq(ledgerEntries.ym, filter.ym));
+    }
+    if (filter?.year !== undefined) {
+      conditions.push(eq(ledgerEntries.year, filter.year));
+    }
+
+    const base = this.exec.select().from(ledgerEntries);
+    const filtered = conditions.length > 0 ? base.where(and(...conditions)) : base;
+    const rows = await filtered.orderBy(asc(sql`rowid`));
+    return rows.map((r) => this.mapLedgerRow(r));
+  }
+
+  async findByTxId(txId: string): Promise<LedgerEntry | null> {
+    const rows = await this.exec
+      .select()
+      .from(ledgerEntries)
+      .where(eq(ledgerEntries.txId, txId));
+    const r = rows[0];
+    return r ? this.mapLedgerRow(r) : null;
   }
 
   async listReferencedTxIds(): Promise<{
@@ -858,14 +837,16 @@ class SqliteLedgerRepository implements LedgerRepository {
         });
     }
 
-    // Delete obsolete ledger rows not in incomingIds (safe because ref check passed above)
+    // Delete obsolete ledger rows in chunks (safe because ref check passed above)
     const existingRows = await this.exec
       .select({ txId: ledgerEntries.txId })
       .from(ledgerEntries);
-    for (const row of existingRows) {
-      if (!incomingIds.has(row.txId)) {
-        await this.exec.delete(ledgerEntries).where(eq(ledgerEntries.txId, row.txId));
-      }
+    const obsoleteIds = existingRows
+      .map((row) => row.txId)
+      .filter((txId) => !incomingIds.has(txId));
+    for (let i = 0; i < obsoleteIds.length; i += 400) {
+      const chunk = obsoleteIds.slice(i, i + 400);
+      await this.exec.delete(ledgerEntries).where(inArray(ledgerEntries.txId, chunk));
     }
 
     for (const link of links) {

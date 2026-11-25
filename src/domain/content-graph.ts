@@ -1,6 +1,5 @@
-import fs from 'node:fs';
 import { createRequire } from 'node:module';
-import path from 'node:path';
+import { posix as pathPosix } from 'node:path';
 import YAML from 'yaml';
 import type { DocCategory, DocumentRecordV3 } from './types.js';
 
@@ -103,6 +102,26 @@ export interface ContentGraph {
   momSourcesById: Map<string, MomSourceItem>;
 }
 
+export interface ContentSchemaBundle {
+  documentSchema: Record<string, unknown>;
+  catalogSchema: Record<string, unknown>;
+  topicsSchema: Record<string, unknown>;
+  sourcesSchema: Record<string, unknown>;
+}
+
+export interface ContentSourceSnapshot {
+  projectRoot: string;
+  schemas: ContentSchemaBundle;
+  topicsRaw?: unknown;
+  sourcesRaw?: unknown;
+  catalogRaw?: unknown;
+  preErrors?: string[];
+  momFiles: Array<{ filePath: string; label: string; rawText: string }>;
+  hasManualSourceFile: (doc: DocumentRecordV3, relPosixPath: string) => boolean;
+  resolveManualSourcePath: (doc: DocumentRecordV3, relPosixPath: string) => string;
+  hasSocialImage: (socialImage: string) => boolean;
+}
+
 export class ContentGraphValidationError extends Error {
   constructor(public readonly errors: string[]) {
     super(errors.join('\n'));
@@ -110,16 +129,8 @@ export class ContentGraphValidationError extends Error {
   }
 }
 
-function readText(filePath: string): string {
-  return fs.readFileSync(filePath, 'utf8').replace(/^\uFEFF/, '');
-}
-
 function normalizeKey(value: string): string {
   return String(value).normalize('NFC').toLocaleLowerCase('en-US');
-}
-
-function relativePosix(projectRoot: string, filePath: string): string {
-  return path.relative(projectRoot, filePath).replace(/\\/g, '/');
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -164,25 +175,7 @@ export function parseYamlFrontMatter(
   return { metadata, body: source.slice(match[0].length) };
 }
 
-function readDirectoryFiles(
-  directory: string,
-  predicate: (filePath: string, name: string) => boolean,
-): string[] {
-  if (!fs.existsSync(directory)) return [];
-  const files: string[] = [];
-  const visit = (cur: string): void => {
-    for (const entry of fs.readdirSync(cur, { withFileTypes: true })) {
-      const target = path.join(cur, entry.name);
-      if (entry.isDirectory()) visit(target);
-      else if (entry.isFile() && predicate(target, entry.name)) files.push(target);
-    }
-  };
-  visit(directory);
-  return files;
-}
-
-function sourcePathForDocument(
-  projectRoot: string,
+export function sourceRelativePathForDocument(
   document: DocumentRecordV3,
 ): string | undefined {
   if (document.category === 'mom') return undefined;
@@ -191,14 +184,9 @@ function sourcePathForDocument(
     ? document.route.slice(catPrefix.length)
     : document.route.split('/').slice(1).join('/');
   if (document.category === 'statement') {
-    return path.join(
-      projectRoot,
-      '_source',
-      'statement',
-      `${rel.slice(0, -'.html'.length)}.body.html`,
-    );
+    return `_source/statement/${rel.slice(0, -'.html'.length)}.body.html`;
   }
-  return path.join(projectRoot, '_source', document.category, rel);
+  return `_source/${document.category}/${rel}`;
 }
 
 export function validateRoute(
@@ -233,7 +221,7 @@ export function validateRoute(
       `${label}.route: must be inside ${categoryMeta.directory}/ for category ${category}`,
     );
   }
-  if (path.posix.normalize(value) !== value) {
+  if (pathPosix.normalize(value) !== value) {
     errors.push(`${label}.route: must not contain redundant path segments`);
   }
   return value;
@@ -249,63 +237,42 @@ interface AjvInstance {
   compile<T>(schema: object): AjvValidator<T>;
 }
 
-function loadSchemaValidators(projectRoot: string) {
-  const schemasDir = path.join(projectRoot, '_source', 'schemas');
-  const readSchema = (name: string) =>
-    JSON.parse(readText(path.join(schemasDir, name))) as Record<string, unknown>;
-
-  const documentSchema = readSchema('document.schema.json');
-  const catalogSchema = readSchema('catalog.schema.json');
-  const topicsSchema = readSchema('topics.schema.json');
-  const sourcesSchema = readSchema('sources.schema.json');
-
+function compileSchemaValidators(schemas: ContentSchemaBundle) {
   const Ajv2020 = require('ajv/dist/2020') as new (
     opts: Record<string, unknown>,
   ) => AjvInstance;
   const addFormats = require('ajv-formats') as (ajv: AjvInstance) => void;
   const ajv = new Ajv2020({ allErrors: true, strict: true, allowUnionTypes: true });
   addFormats(ajv);
-  ajv.addSchema(documentSchema, String(documentSchema.$id));
+  ajv.addSchema(schemas.documentSchema, String(schemas.documentSchema.$id));
 
   return {
-    validateDocument: ajv.compile<DocumentRecordV3>(documentSchema),
+    validateDocument: ajv.compile<DocumentRecordV3>(schemas.documentSchema),
     validateCatalog: ajv.compile<{
       $schema: string;
       schemaVersion: number;
       documents: DocumentRecordV3[];
-    }>(catalogSchema),
-    validateTopics: ajv.compile<{ topics: TopicEntry[] }>(topicsSchema),
-    validateSources: ajv.compile<{ sources: SourceEntry[] }>(sourcesSchema),
+    }>(schemas.catalogSchema),
+    validateTopics: ajv.compile<{ topics: TopicEntry[] }>(schemas.topicsSchema),
+    validateSources: ajv.compile<{ sources: SourceEntry[] }>(schemas.sourcesSchema),
   };
 }
 
-export function validateSourceTree(projectRoot: string): {
+export function buildContentGraphFromSnapshot(
+  snapshot: ContentSourceSnapshot,
+): {
   success: boolean;
   data?: ContentGraph;
   errors: string[];
 } {
-  const errors: string[] = [];
-  const absRoot = path.resolve(projectRoot);
+  const errors: string[] = [...(snapshot.preErrors ?? [])];
 
-  let validators: ReturnType<typeof loadSchemaValidators>;
+  let validators: ReturnType<typeof compileSchemaValidators>;
   try {
-    validators = loadSchemaValidators(absRoot);
+    validators = compileSchemaValidators(snapshot.schemas);
   } catch (err) {
     return { success: false, errors: [(err as Error).message] };
   }
-
-  const readJson = (filePath: string, label: string): unknown => {
-    if (!fs.existsSync(filePath)) {
-      errors.push(`${label}: file is missing`);
-      return undefined;
-    }
-    try {
-      return JSON.parse(readText(filePath));
-    } catch (err) {
-      errors.push(`${label}: invalid JSON (${(err as Error).message})`);
-      return undefined;
-    }
-  };
 
   const addAjvErrors = (
     validator: { errors?: Array<{ instancePath?: string; message?: string }> | null },
@@ -317,54 +284,43 @@ export function validateSourceTree(projectRoot: string): {
     }
   };
 
-  const topicsRaw = readJson(
-    path.join(absRoot, '_source', 'topics.json'),
-    '_source/topics.json',
-  );
-  const sourcesRaw = readJson(
-    path.join(absRoot, '_source', 'sources.json'),
-    '_source/sources.json',
-  );
-  const catalogRaw = readJson(
-    path.join(absRoot, '_source', 'catalog.json'),
-    '_source/catalog.json',
-  );
-
   const topics: TopicEntry[] =
-    topicsRaw && validators.validateTopics(topicsRaw)
-      ? topicsRaw.topics
-      : (topicsRaw ? addAjvErrors(validators.validateTopics, '_source/topics.json') : undefined,
+    snapshot.topicsRaw !== undefined && validators.validateTopics(snapshot.topicsRaw)
+      ? snapshot.topicsRaw.topics
+      : (snapshot.topicsRaw !== undefined
+          ? addAjvErrors(validators.validateTopics, '_source/topics.json')
+          : undefined,
         []);
   const sources: SourceEntry[] =
-    sourcesRaw && validators.validateSources(sourcesRaw)
-      ? sourcesRaw.sources
-      : (sourcesRaw ? addAjvErrors(validators.validateSources, '_source/sources.json') : undefined,
+    snapshot.sourcesRaw !== undefined && validators.validateSources(snapshot.sourcesRaw)
+      ? snapshot.sourcesRaw.sources
+      : (snapshot.sourcesRaw !== undefined
+          ? addAjvErrors(validators.validateSources, '_source/sources.json')
+          : undefined,
         []);
 
   const topicsById = new Map(topics.map((t) => [t.id, t]));
   const sourcesById = new Map(sources.map((s) => [s.id, s]));
 
   let manualDocs: DocumentRecordV3[] = [];
-  if (catalogRaw) {
-    if (validators.validateCatalog(catalogRaw)) {
-      manualDocs = catalogRaw.documents;
+  if (snapshot.catalogRaw !== undefined) {
+    if (validators.validateCatalog(snapshot.catalogRaw)) {
+      manualDocs = snapshot.catalogRaw.documents;
     } else {
       addAjvErrors(validators.validateCatalog, '_source/catalog.json');
     }
   }
 
-  const momDir = path.join(absRoot, '_source', 'mom');
-  const momFiles = readDirectoryFiles(
-    momDir,
-    (_p, name) => path.extname(name).toLowerCase() === '.md' && name !== 'README.md',
-  ).sort((a, b) => relativePosix(absRoot, a).localeCompare(relativePosix(absRoot, b), 'ko'));
-
   const momSources: MomSourceItem[] = [];
-  for (const filePath of momFiles) {
-    const label = relativePosix(absRoot, filePath);
+  for (const file of snapshot.momFiles) {
     try {
-      const parsed = parseYamlFrontMatter(readText(filePath), label);
-      momSources.push({ filePath, label, metadata: parsed.metadata, body: parsed.body });
+      const parsed = parseYamlFrontMatter(file.rawText, file.label);
+      momSources.push({
+        filePath: file.filePath,
+        label: file.label,
+        metadata: parsed.metadata,
+        body: parsed.body,
+      });
     } catch (err) {
       errors.push((err as Error).message);
     }
@@ -460,12 +416,8 @@ export function validateSourceTree(projectRoot: string): {
       }
     });
 
-    if (record.socialImage) {
-      const imgAbs = path.join(absRoot, '_source', ...record.socialImage.split('/'));
-      const legacyImgAbs = path.join(absRoot, ...record.socialImage.split('/'));
-      if (!fs.existsSync(imgAbs) && !fs.existsSync(legacyImgAbs)) {
-        errors.push(`${entry.label}.socialImage: image file is missing (${record.socialImage})`);
-      }
+    if (record.socialImage && !snapshot.hasSocialImage(record.socialImage)) {
+      errors.push(`${entry.label}.socialImage: image file is missing (${record.socialImage})`);
     }
 
     const idKey = normalizeKey(record.id);
@@ -483,11 +435,14 @@ export function validateSourceTree(projectRoot: string): {
       routes.set(routeKey, entry.label);
     }
 
-    const sourcePath = sourcePathForDocument(absRoot, record);
+    const relSourcePath = sourceRelativePathForDocument(record);
+    const sourcePath = relSourcePath
+      ? snapshot.resolveManualSourcePath(record, relSourcePath)
+      : undefined;
     if (entry.kind === 'manual') {
-      if (!sourcePath || !fs.existsSync(sourcePath)) {
+      if (!relSourcePath || !snapshot.hasManualSourceFile(record, relSourcePath)) {
         errors.push(
-          `${entry.label}: source file is missing (${sourcePath ? relativePosix(absRoot, sourcePath) : 'unknown'})`,
+          `${entry.label}: source file is missing (${relSourcePath ?? 'unknown'})`,
         );
       }
     }
@@ -527,7 +482,7 @@ export function validateSourceTree(projectRoot: string): {
   const documents = items.map((i) => i.record);
   const data: ContentGraph = {
     schemaVersion: SCHEMA_VERSION,
-    projectRoot: absRoot,
+    projectRoot: snapshot.projectRoot,
     documents,
     listedDocuments: documents.filter((d) => d.workflow.visibility === 'public'),
     documentsById: new Map(documents.map((d) => [d.id, d])),
@@ -544,12 +499,4 @@ export function validateSourceTree(projectRoot: string): {
   };
 
   return { success: errors.length === 0, data, errors };
-}
-
-export function loadContentGraph(projectRoot: string): ContentGraph {
-  const result = validateSourceTree(projectRoot);
-  if (!result.success || !result.data) {
-    throw new ContentGraphValidationError(result.errors);
-  }
-  return result.data;
 }

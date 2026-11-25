@@ -1,13 +1,13 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { validateLedgerRecords } from '../domain/accounting.js';
-import { loadContentGraph } from '../domain/content-graph.js';
 import {
   collectPersonEmails,
   collectPersonNames,
 } from '../domain/person-normalizer.js';
 import {
   auditDocumentPrivacy,
+  computePrivacyHashes,
   GENERIC_FAMILY_EVENT_RE,
   maskToken,
   PERSONAL_EMAIL_RE,
@@ -16,9 +16,16 @@ import {
   type PrivacyFinding,
   type PrivacyHashIndex,
 } from '../domain/privacy.js';
-import type { LedgerEntry } from '../domain/types.js';
+import {
+  publicLedgerToEntries,
+  type PublicLedgerJson,
+} from '../domain/public-projection.js';
+import {
+  FileSystemContentSource,
+  type ContentSource,
+} from '../storage/content-source.js';
+import { readConfiguredPrivacySalt } from '../storage/privacy-salt.js';
 import type { UnionRepositories } from '../storage/repositories.js';
-import { ensureLocalPrivacySalt } from './export-public.js';
 
 export interface DocumentAuditSummary {
   docId: string;
@@ -39,6 +46,7 @@ export interface PrivacyAuditReport {
 export async function runPrivacyAudit(options: {
   projectRoot: string;
   repos: UnionRepositories;
+  contentSource?: ContentSource;
 }): Promise<PrivacyAuditReport> {
   const { projectRoot, repos } = options;
   const publicDir = path.join(projectRoot, 'data', 'public');
@@ -47,7 +55,7 @@ export async function runPrivacyAudit(options: {
     repos.people.getDirectoryBundle(),
   ]);
 
-  const salt = await ensureLocalPrivacySalt(projectRoot);
+  const salt = readConfiguredPrivacySalt(projectRoot);
   const hashIndex = JSON.parse(
     await fs.readFile(path.join(publicDir, 'privacy_hashes.json'), 'utf8'),
   ) as PrivacyHashIndex;
@@ -56,54 +64,28 @@ export async function runPrivacyAudit(options: {
   const publicLedgerErrors: string[] = [];
   const pubLedgerRaw = JSON.parse(
     await fs.readFile(path.join(publicDir, 'ledger_public.json'), 'utf8'),
-  ) as {
-    records: Array<{
-      tx_id: string;
-      unit: string;
-      year: number;
-      ym: string;
-      date: string;
-      gubun: string;
-      gwan: string;
-      hang: string;
-      mok: string;
-      exp_type: string;
-      fund: string;
-      target: string;
-      attr_ym: string;
-      inc: number;
-      exp: number;
-      unit_bal: number;
-      note: string;
-      memo: string;
-    }>;
-  };
-  const pubEntries: LedgerEntry[] = pubLedgerRaw.records.map((r) => ({
-    txId: r.tx_id,
-    unitCode: '',
-    unitName: r.unit,
-    year: r.year,
-    ym: r.ym,
-    date: r.date,
-    gubun: r.gubun,
-    gwan: r.gwan,
-    hang: r.hang,
-    mok: r.mok,
-    expType: r.exp_type,
-    fund: r.fund,
-    target: r.target,
-    attrYm: r.attr_ym,
-    inc: r.inc,
-    exp: r.exp,
-    unitBal: r.unit_bal,
-    note: r.note,
-    memo: r.memo,
-  }));
+  ) as PublicLedgerJson;
+  const pubEntries = publicLedgerToEntries(pubLedgerRaw);
   const mathRes = validateLedgerRecords(pubEntries, accounts);
   publicLedgerErrors.push(...mathRes.errors);
 
   // 2. Scan data/public/* (excluding public_officials.json where official names are intentional, and privacy_hashes.json)
   const publicPrivacyErrors: string[] = [];
+  if (!salt) {
+    publicPrivacyErrors.push(
+      'PRIVACY_HMAC_SALT가 설정되지 않아 해시 대조 검사를 수행할 수 없습니다 (.env 또는 환경변수 확인).',
+    );
+  } else {
+    const expectedHashes = computePrivacyHashes(bundle, salt);
+    const actualHashSet = new Set(hashIndex.hashes);
+    const missingHashes = expectedHashes.hashes.filter((h) => !actualHashSet.has(h));
+    if (missingHashes.length > 0) {
+      publicPrivacyErrors.push(
+        `privacy_hashes.json: 로컬 정본 대비 누락된 해시 ${missingHashes.length}건 (export:public 재실행 또는 PRIVACY_HMAC_SALT 일치 확인 필요)`,
+      );
+    }
+  }
+
   const forbiddenNames = collectPersonNames(bundle);
   const forbiddenEmails = collectPersonEmails(bundle);
   const publicFiles = (await fs.readdir(publicDir)).filter((f) =>
@@ -124,9 +106,11 @@ export async function runPrivacyAudit(options: {
           );
         }
       }
-      const hashHits = scanTextWithHashes(text, hashIndex, salt);
-      for (const h of hashHits) {
-        publicPrivacyErrors.push(`${fname}: hash match (${h.maskedToken})`);
+      if (salt) {
+        const hashHits = scanTextWithHashes(text, hashIndex, salt);
+        for (const h of hashHits) {
+          publicPrivacyErrors.push(`${fname}: hash match (${h.maskedToken})`);
+        }
       }
     }
 
@@ -147,32 +131,88 @@ export async function runPrivacyAudit(options: {
   }
 
   // 3. Audit all _source documents under tiered privacy policy (ADR-0003)
-  const graph = loadContentGraph(projectRoot);
+  const contentSource =
+    options.contentSource ?? new FileSystemContentSource(projectRoot);
+  const graph = contentSource.load();
   const documentFindings: DocumentAuditSummary[] = [];
+  let documentsAudited = 0;
 
   for (const doc of graph.documents) {
     if (doc.workflow.visibility === 'internal_only') continue;
-    const srcPath = graph.sourcePathsById.get(doc.id);
-    if (!srcPath) continue;
-    const rawText = await fs.readFile(srcPath, 'utf8');
-    const isHtml = srcPath.endsWith('.html');
-    const findings = auditDocumentPrivacy(
-      {
-        eventOn: doc.dates.eventOn ?? doc.dates.publishedOn,
-        category: doc.category,
-        isHtml,
-        allowHistoricalOfficials:
-          !doc.dates.eventOn && doc.topicIds.includes('union-history'),
-      },
-      rawText,
+    documentsAudited += 1;
+
+    const auditOpts = {
+      eventOn: doc.dates.eventOn ?? doc.dates.publishedOn,
+      category: doc.category,
+      allowHistoricalOfficials:
+        !doc.dates.eventOn && doc.topicIds.includes('union-history'),
+    };
+    const combinedFindings: PrivacyFinding[] = [];
+
+    // Audit title & summary metadata for non-internal documents
+    const metaFindings = auditDocumentPrivacy(
+      { ...auditOpts, isHtml: false },
+      `${doc.title}\n${doc.summary}`,
       bundle,
+    ).map((f) => ({ ...f, line: 0, section: 'metadata' }));
+    combinedFindings.push(...metaFindings);
+
+    const srcPath = graph.sourcePathsById.get(doc.id);
+    if (srcPath) {
+      const rawText = await fs.readFile(srcPath, 'utf8');
+      const isHtml = srcPath.endsWith('.html');
+      const bodyFindings = auditDocumentPrivacy(
+        { ...auditOpts, isHtml },
+        rawText,
+        bundle,
+      );
+      combinedFindings.push(...bodyFindings);
+    }
+
+    if (combinedFindings.length > 0) {
+      documentFindings.push({
+        docId: doc.id,
+        file: srcPath
+          ? path.relative(projectRoot, srcPath).replace(/\\/g, '/')
+          : '_source/catalog.json',
+        category: doc.category,
+        visibility: doc.workflow.visibility,
+        findings: combinedFindings,
+      });
+    }
+  }
+
+  // 4. Audit union bylaws & revision sources strictly (zero PII allowed)
+  const zeroOfficialBundle = { ...bundle, roles: [] };
+  const unionZeroPiiFiles: Array<{ rel: string; docId: string; visibility: string }> = [
+    { rel: '_source/union/bylaws.md', docId: 'union:bylaws', visibility: 'public' },
+    { rel: '_source/union/bylaws-law.json', docId: 'union:bylaws-law', visibility: 'unlisted' },
+    {
+      rel: '_source/union/bylaws-revision.json',
+      docId: 'union:bylaws-revision',
+      visibility: 'unlisted',
+    },
+  ];
+  for (const item of unionZeroPiiFiles) {
+    const absFile = path.join(projectRoot, ...item.rel.split('/'));
+    let rawText: string;
+    try {
+      rawText = await fs.readFile(absFile, 'utf8');
+    } catch {
+      continue;
+    }
+    documentsAudited += 1;
+    const findings = auditDocumentPrivacy(
+      { category: 'union', isHtml: false, allowHistoricalOfficials: false },
+      rawText,
+      zeroOfficialBundle,
     );
     if (findings.length > 0) {
       documentFindings.push({
-        docId: doc.id,
-        file: path.relative(projectRoot, srcPath).replace(/\\/g, '/'),
-        category: doc.category,
-        visibility: doc.workflow.visibility,
+        docId: item.docId,
+        file: item.rel,
+        category: 'union',
+        visibility: item.visibility,
         findings,
       });
     }
@@ -182,9 +222,7 @@ export async function runPrivacyAudit(options: {
     publicFilesScanned,
     publicLedgerErrors,
     publicPrivacyErrors,
-    documentsAudited: graph.documents.filter(
-      (d) => d.workflow.visibility !== 'internal_only',
-    ).length,
+    documentsAudited,
     documentFindings,
   };
 }

@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { loadContentGraph } from '../domain/content-graph.js';
+import { loadContentGraph } from '../storage/content-source.js';
 
 export type PdfPaperSize = 'A2' | 'A3' | 'A4';
 

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { CATEGORY_REGISTRY, loadContentGraph } from '../domain/content-graph.js';
+import { CATEGORY_REGISTRY } from '../domain/content-graph.js';
+import { loadContentGraph } from '../storage/content-source.js';
 import { SITE_BASE_URL, escapeAttr, escapeHtml } from './shell.js';
 
 export interface GenerateRedirectsOptions {

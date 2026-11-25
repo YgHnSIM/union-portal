@@ -12,6 +12,7 @@
     "test": "node --import tsx --test test/*.test.ts",
     "union": "tsx src/cli/index.ts",
     "db:migrate": "tsx src/cli/index.ts migrate",
+    "db:sync-config": "tsx src/cli/index.ts sync-config",
     "export:public": "tsx src/cli/index.ts export-public",
     "audit:privacy": "tsx src/cli/index.ts audit-privacy",
     "build:site": "tsx src/cli/index.ts build-site",

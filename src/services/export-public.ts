@@ -1,40 +1,17 @@
-import { randomBytes } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { computePrivacyHashes, sanitizeLedgerRecords } from '../domain/privacy.js';
+import {
+  toPublicLedgerRecord,
+  type OrgSummaryJson,
+  type PublicDocumentLinksJson,
+  type PublicLedgerJson,
+  type PublicOfficialsJson,
+} from '../domain/public-projection.js';
+import { ensureLocalPrivacySalt } from '../storage/privacy-salt.js';
 import type { UnionRepositories } from '../storage/repositories.js';
 
-export async function ensureLocalPrivacySalt(projectRoot: string): Promise<string> {
-  const fromEnv = process.env.PRIVACY_HMAC_SALT?.trim();
-  if (fromEnv) return fromEnv;
-
-  const envPath = path.join(projectRoot, '.env');
-  let existingContent = '';
-  try {
-    existingContent = await fs.readFile(envPath, 'utf8');
-    for (const line of existingContent.split(/\r?\n/)) {
-      const m = line.match(/^\s*PRIVACY_HMAC_SALT\s*=\s*(.+?)\s*$/);
-      if (m && m[1]) {
-        const val = m[1].replace(/^['"]|['"]$/g, '').trim();
-        if (val && val !== 'change-me-local-secret-32bytes-hex') {
-          return val;
-        }
-      }
-    }
-  } catch {
-    // .env not created yet
-  }
-
-  const generated = randomBytes(32).toString('hex');
-  const nextLines = existingContent
-    ? existingContent
-        .split(/\r?\n/)
-        .filter((l) => !/^\s*PRIVACY_HMAC_SALT\s*=/.test(l))
-    : [];
-  nextLines.push(`PRIVACY_HMAC_SALT=${generated}`);
-  await fs.writeFile(envPath, nextLines.join('\n').trimEnd() + '\n', 'utf8');
-  return generated;
-}
+export { ensureLocalPrivacySalt };
 
 export async function exportPublicProjection(options: {
   projectRoot: string;
@@ -76,33 +53,14 @@ export async function exportPublicProjection(options: {
     yms[0] ?? '',
     yms[yms.length - 1] ?? '',
   ];
-  const ledgerPayload = {
+  const ledgerPayload: PublicLedgerJson = {
     meta: {
       syncedAt: syncMeta.syncedAt ?? new Date().toISOString().slice(0, 19),
       totalRecords: sanitizedEntries.length,
       monthsRange,
       sanitized: true,
     },
-    records: sanitizedEntries.map((r) => ({
-      tx_id: r.txId,
-      unit: r.unitName,
-      year: r.year,
-      ym: r.ym,
-      date: r.date,
-      gubun: r.gubun,
-      gwan: r.gwan,
-      hang: r.hang,
-      mok: r.mok,
-      exp_type: r.expType,
-      fund: r.fund,
-      target: r.target,
-      attr_ym: r.attrYm,
-      inc: r.inc,
-      exp: r.exp,
-      unit_bal: r.unitBal,
-      note: r.note,
-      memo: r.memo,
-    })),
+    records: sanitizedEntries.map(toPublicLedgerRecord),
   };
   await fs.writeFile(
     path.join(outDir, 'ledger_public.json'),
@@ -155,7 +113,7 @@ export async function exportPublicProjection(options: {
     monthlyFlowsMap.set(ym, cur);
   }
 
-  const orgSummaryPayload = {
+  const orgSummaryPayload: OrgSummaryJson = {
     generatedAt: new Date().toISOString().slice(0, 19),
     totalActive: activeMembers.length,
     totalHistorical: bundle.members.length,
@@ -205,16 +163,18 @@ export async function exportPublicProjection(options: {
         isPrimary: r.isPrimary,
       };
     });
+  const officialsPayload: PublicOfficialsJson = { officials: officialEntries };
   await fs.writeFile(
     path.join(outDir, 'public_officials.json'),
-    JSON.stringify({ officials: officialEntries }, null, 2) + '\n',
+    JSON.stringify(officialsPayload, null, 2) + '\n',
     'utf8',
   );
 
   // 4. data/public/document_ledger_links.json
+  const docLinksPayload: PublicDocumentLinksJson = { links: docLinks };
   await fs.writeFile(
     path.join(outDir, 'document_ledger_links.json'),
-    JSON.stringify({ links: docLinks }, null, 2) + '\n',
+    JSON.stringify(docLinksPayload, null, 2) + '\n',
     'utf8',
   );
 

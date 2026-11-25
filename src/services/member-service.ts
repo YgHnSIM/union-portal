@@ -1,5 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import {
+  assertValidRoleDisclosure,
+  parseRoleScope,
+  VALID_ROLE_SCOPES,
+} from '../domain/privacy.js';
 import type {
   AliasMatchMode,
   DocumentLedgerLink,
@@ -16,29 +21,10 @@ import type {
   Unit,
   WithdrawReasonCategory,
 } from '../domain/types.js';
-
-export const VALID_ROLE_SCOPES = new Set<RoleScope>([
-  'executive',
-  'branch_head',
-  'auditor',
-  'committee',
-  'staff_rotating',
-  'external_rep',
-  'other',
-]);
-
-export function parseRoleScope(raw: string | undefined, fallback: RoleScope): RoleScope {
-  if (!raw?.trim()) return fallback;
-  const val = raw.trim() as RoleScope;
-  if (!VALID_ROLE_SCOPES.has(val)) {
-    throw new Error(
-      `허용되지 않은 직책 구분(role_scope)입니다: ${raw} (허용: ${[...VALID_ROLE_SCOPES].join(', ')})`,
-    );
-  }
-  return val;
-}
 import type { BlobStorage } from '../storage/blob-storage.js';
 import type { UnionRepositories } from '../storage/repositories.js';
+
+export { parseRoleScope, VALID_ROLE_SCOPES };
 
 const VALID_DOC_TYPES = new Set<MemberDocType>(['가입서', '탈퇴서', '기타']);
 
@@ -113,28 +99,24 @@ function parseDocSpec(
   return { docType: defaultType, sourcePath: spec };
 }
 
+interface PreparedDocFile {
+  docType: MemberDocType;
+  ext: string;
+  data: Buffer;
+  suffix: string;
+}
+
 export class MemberService {
   constructor(
     private readonly repos: UnionRepositories,
     private readonly blobs: BlobStorage,
   ) {}
 
-  private async archiveDocFiles(
+  private async prepareDocFiles(
     rawSpecs: string[],
     defaultType: MemberDocType,
-    prefixTag: 'JOIN' | 'WITHDRAW',
-    eventDate: string,
-    eventId: string,
-    personId: string,
-    name: string,
-    docNote: string,
-    txRepos: UnionRepositories,
-  ): Promise<MemberDocument[]> {
-    const existingDocs = await txRepos.people.listMemberDocuments();
-    const docIds = existingDocs.map((d) => d.docId);
-    const added: MemberDocument[] = [];
-    const ymd = eventDate.replaceAll('-', '');
-
+  ): Promise<PreparedDocFile[]> {
+    const prepared: PreparedDocFile[] = [];
     for (let i = 0; i < rawSpecs.length; i += 1) {
       const spec = rawSpecs[i]!.trim();
       if (!spec) continue;
@@ -142,10 +124,46 @@ export class MemberService {
       const absSource = path.resolve(sourcePath);
       const ext = path.extname(absSource).toLowerCase() || '.bin';
       const suffix = i > 0 ? `_${i + 1}` : '';
-      const targetKey = `applications/${prefixTag}_${ymd}_${personId}_${name}${suffix}${ext}`;
+      const data = await fs.readFile(absSource);
+      prepared.push({ docType, ext, data, suffix });
+    }
+    return prepared;
+  }
 
-      const buf = await fs.readFile(absSource);
-      const storedKey = await this.blobs.put(targetKey, buf);
+  private async runWithBlobCompensation<T>(
+    fn: (txRepos: UnionRepositories, storedKeys: string[]) => Promise<T>,
+  ): Promise<T> {
+    const storedKeys: string[] = [];
+    try {
+      return await this.repos.transaction((txRepos) => fn(txRepos, storedKeys));
+    } catch (err) {
+      if (storedKeys.length > 0) {
+        await Promise.allSettled(storedKeys.map((key) => this.blobs.delete(key)));
+      }
+      throw err;
+    }
+  }
+
+  private async persistPreparedDocs(
+    preparedDocs: PreparedDocFile[],
+    prefixTag: 'JOIN' | 'WITHDRAW',
+    eventDate: string,
+    eventId: string,
+    personId: string,
+    name: string,
+    docNote: string,
+    txRepos: UnionRepositories,
+    storedKeys: string[],
+  ): Promise<MemberDocument[]> {
+    const existingDocs = await txRepos.people.listMemberDocuments();
+    const docIds = existingDocs.map((d) => d.docId);
+    const added: MemberDocument[] = [];
+    const ymd = eventDate.replaceAll('-', '');
+
+    for (const item of preparedDocs) {
+      const targetKey = `applications/${prefixTag}_${ymd}_${personId}_${name}${item.suffix}${item.ext}`;
+      const storedKey = await this.blobs.put(targetKey, item.data);
+      storedKeys.push(storedKey);
 
       const docId = nextSeqId(docIds, 'DOC-');
       docIds.push(docId);
@@ -153,7 +171,7 @@ export class MemberService {
         docId,
         eventId,
         personId,
-        docType,
+        docType: item.docType,
         blobKey: storedKey,
         note: docNote.trim(),
         createdAt: eventDate,
@@ -232,8 +250,9 @@ export class MemberService {
     const cleanName = input.name.trim();
     const cleanBirth = (input.birth ?? '').trim();
     const joinDate = input.date?.trim() || new Date().toISOString().slice(0, 10);
+    const preparedDocs = await this.prepareDocFiles(input.docs ?? [], '가입서');
 
-    return this.repos.transaction(async (txRepos) => {
+    return this.runWithBlobCompensation(async (txRepos, storedKeys) => {
       const [units, members, events] = await Promise.all([
         txRepos.units.listAll(),
         txRepos.people.listMembers(),
@@ -255,6 +274,8 @@ export class MemberService {
             unitCode,
             joinDate,
             events,
+            preparedDocs,
+            storedKeys,
             input,
           );
           return { mode: 'rejoin', ...res };
@@ -308,9 +329,8 @@ export class MemberService {
       await txRepos.people.upsertMember(member);
       await txRepos.people.addEvent(event);
 
-      const documents = await this.archiveDocFiles(
-        input.docs ?? [],
-        '가입서',
+      const documents = await this.persistPreparedDocs(
+        preparedDocs,
         'JOIN',
         joinDate,
         eventId,
@@ -318,6 +338,7 @@ export class MemberService {
         cleanName,
         input.docNote ?? '',
         txRepos,
+        storedKeys,
       );
       const primaryKey = documents.find((d) => d.blobKey)?.blobKey ?? '';
       if (primaryKey) {
@@ -344,6 +365,8 @@ export class MemberService {
     nextUnit: string,
     rejoinDate: string,
     events: MembershipEvent[],
+    preparedDocs: PreparedDocFile[],
+    storedKeys: string[],
     input: {
       birth?: string;
       phone?: string;
@@ -413,9 +436,8 @@ export class MemberService {
     await txRepos.people.upsertMember(updated);
     await txRepos.people.addEvent(event);
 
-    const documents = await this.archiveDocFiles(
-      input.docs ?? [],
-      '가입서',
+    const documents = await this.persistPreparedDocs(
+      preparedDocs,
       'JOIN',
       rejoinDate,
       eventId,
@@ -423,6 +445,7 @@ export class MemberService {
       existing.name,
       input.docNote ?? '',
       txRepos,
+      storedKeys,
     );
     const primaryKey = documents.find((d) => d.blobKey)?.blobKey ?? '';
     if (primaryKey) {
@@ -460,7 +483,8 @@ export class MemberService {
     note?: string;
   }) {
     const rejoinDate = input.date?.trim() || new Date().toISOString().slice(0, 10);
-    return this.repos.transaction(async (txRepos) => {
+    const preparedDocs = await this.prepareDocFiles(input.docs ?? [], '가입서');
+    return this.runWithBlobCompensation(async (txRepos, storedKeys) => {
       const [units, members, events] = await Promise.all([
         txRepos.units.listAll(),
         txRepos.people.listMembers(),
@@ -476,6 +500,8 @@ export class MemberService {
         nextUnit,
         rejoinDate,
         events,
+        preparedDocs,
+        storedKeys,
         input,
       );
     });
@@ -493,8 +519,9 @@ export class MemberService {
   }) {
     const withdrawDate = input.date?.trim() || new Date().toISOString().slice(0, 10);
     const category = normalizeWithdrawCategory(input.category ?? '기타');
+    const preparedDocs = await this.prepareDocFiles(input.docs ?? [], '탈퇴서');
 
-    return this.repos.transaction(async (txRepos) => {
+    return this.runWithBlobCompensation(async (txRepos, storedKeys) => {
       const [members, events] = await Promise.all([
         txRepos.people.listMembers(),
         txRepos.people.listEvents(),
@@ -551,9 +578,8 @@ export class MemberService {
         }
       }
 
-      const documents = await this.archiveDocFiles(
-        input.docs ?? [],
-        '탈퇴서',
+      const documents = await this.persistPreparedDocs(
+        preparedDocs,
         'WITHDRAW',
         withdrawDate,
         eventId,
@@ -561,6 +587,7 @@ export class MemberService {
         target.name,
         input.docNote ?? '',
         txRepos,
+        storedKeys,
       );
 
       return { member: updated, event, documents };
@@ -689,11 +716,7 @@ export class MemberService {
           ? 'masked'
           : 'public_official');
 
-      if (inferredScope === 'staff_rotating' && inferredDisclosure === 'public_official') {
-        throw new Error(
-          '순번제·비공개 관리 직책(staff_rotating)은 public_official로 공개할 수 없습니다 (ADR-0003).',
-        );
-      }
+      assertValidRoleDisclosure(inferredScope, inferredDisclosure);
 
       const roles = await txRepos.people.listRoles();
       const roleId = nextSeqId(
@@ -769,11 +792,7 @@ export class MemberService {
         (nextScope === 'staff_rotating' || nextScope === 'other'
           ? 'masked'
           : existing.publicDisclosure);
-      if (nextScope === 'staff_rotating' && nextDisclosure === 'public_official') {
-        throw new Error(
-          '순번제·비공개 관리 직책(staff_rotating)은 public_official로 공개할 수 없습니다 (ADR-0003).',
-        );
-      }
+      assertValidRoleDisclosure(nextScope, nextDisclosure);
 
       const allRoles = await txRepos.people.listRoles();
       const newRoleId = nextSeqId(
@@ -850,7 +869,15 @@ export class MemberService {
   }
 
   async setRoleDisclosure(roleId: string, disclosure: PublicDisclosure): Promise<void> {
-    await this.repos.people.setRoleDisclosure(roleId, disclosure);
+    const normalizedId = roleId.trim().toUpperCase();
+    await this.repos.transaction(async (txRepos) => {
+      const existing = await txRepos.people.findRoleById(normalizedId);
+      if (!existing) {
+        throw new Error(`직책을 찾을 수 없습니다: ${roleId}`);
+      }
+      assertValidRoleDisclosure(existing.roleScope, disclosure);
+      await txRepos.people.setRoleDisclosure(normalizedId, disclosure);
+    });
   }
 
   async addAlias(input: {
@@ -904,6 +931,26 @@ export class MemberService {
       };
       await txRepos.links.upsert(link);
       return link;
+    });
+  }
+
+  async unlinkDocumentLedger(input: {
+    docId: string;
+    txId: string;
+  }): Promise<{ docId: string; txId: string; removed: boolean }> {
+    const docId = input.docId.trim();
+    const txId = input.txId.trim();
+    if (!docId || !txId) {
+      throw new Error('문서 ID와 거래번호를 모두 지정해야 합니다.');
+    }
+    return this.repos.transaction(async (txRepos) => {
+      const existing = await txRepos.links.listByDocId(docId);
+      const matched = existing.some((l) => l.txId === txId);
+      if (!matched) {
+        return { docId, txId, removed: false };
+      }
+      await txRepos.links.remove(docId, txId);
+      return { docId, txId, removed: true };
     });
   }
 }

@@ -1,3 +1,5 @@
+import { escapeHtml as esc } from './shell.js';
+
 export interface SvgChartOptions {
   standalone?: boolean;
   hideTitle?: boolean;
@@ -69,23 +71,6 @@ export interface UnitComparisonSeriesItem {
 export interface UnitComparisonGroup {
   label: string;
   series: UnitComparisonSeriesItem[];
-}
-
-function esc(value: unknown): string {
-  return String(value ?? '').replace(/[&<>"']/g, (ch) => {
-    switch (ch) {
-      case '&':
-        return '&amp;';
-      case '<':
-        return '&lt;';
-      case '>':
-        return '&gt;';
-      case '"':
-        return '&quot;';
-      default:
-        return '&#39;';
-    }
-  });
 }
 
 function niceMax(val: number): number {

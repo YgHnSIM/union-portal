@@ -6,7 +6,48 @@ import {
   escapeRegExp,
   normalizePersonMentions,
 } from './person-normalizer.js';
-import type { DirectoryBundle, LedgerEntry, PersonRole } from './types.js';
+import type {
+  DirectoryBundle,
+  LedgerEntry,
+  PersonRole,
+  PublicDisclosure,
+  RoleScope,
+} from './types.js';
+
+export const VALID_ROLE_SCOPES = new Set<RoleScope>([
+  'executive',
+  'branch_head',
+  'auditor',
+  'committee',
+  'staff_rotating',
+  'external_rep',
+  'other',
+]);
+
+export function parseRoleScope(raw: string | undefined, fallback: RoleScope): RoleScope {
+  if (!raw?.trim()) return fallback;
+  const val = raw.trim() as RoleScope;
+  if (!VALID_ROLE_SCOPES.has(val)) {
+    throw new Error(
+      `허용되지 않은 직책 구분(role_scope)입니다: ${raw} (허용: ${[...VALID_ROLE_SCOPES].join(', ')})`,
+    );
+  }
+  return val;
+}
+
+/**
+ * Enforces ADR-0003 invariant: rotating staff roles may never be marked public_official.
+ */
+export function assertValidRoleDisclosure(
+  roleScope: RoleScope | undefined,
+  disclosure: PublicDisclosure,
+): void {
+  if (roleScope === 'staff_rotating' && disclosure === 'public_official') {
+    throw new Error(
+      '순번제·비공개 관리 직책(staff_rotating)은 public_official로 공개할 수 없습니다 (ADR-0003).',
+    );
+  }
+}
 
 export const PHONE_RE = /01[016789]-?\d{3,4}-?\d{4}/g;
 export const PERSONAL_EMAIL_RE =
@@ -225,9 +266,16 @@ export function scanTextWithHashes(
   return hits;
 }
 
-function isFinanceHeading(headingText: string): boolean {
+export function isFinanceHeading(headingText: string): boolean {
   return /(?:재정\s*(?:현황|운영|결산|과\s*운영)|조합원\s*및\s*재정|찬조금|통장\s*잔액|수입·지출|지출\s*내역)/.test(
     headingText,
+  );
+}
+
+function stripNonVisibleHtmlBlocksPreservingLines(html: string): string {
+  return html.replace(
+    /<!--[\s\S]*?-->|<script\b[^>]*>[\s\S]*?<\/script>|<style\b[^>]*>[\s\S]*?<\/style>/gi,
+    (block) => block.replace(/[^\r\n]/g, ' '),
   );
 }
 
@@ -261,7 +309,10 @@ export function auditDocumentPrivacy(
   }
 
   const candidateNames = collectPersonNames(bundle);
-  const lines = content.split(/\r?\n/);
+  const preparedContent = options.isHtml
+    ? stripNonVisibleHtmlBlocksPreservingLines(content)
+    : content;
+  const lines = preparedContent.split(/\r?\n/);
 
   let inYamlFrontmatter = false;
   let inFinanceSection = false;

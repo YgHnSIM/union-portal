@@ -23,6 +23,7 @@ import type {
 } from '../domain/types.js';
 import type { BlobStorage } from '../storage/blob-storage.js';
 import type { UnionRepositories } from '../storage/repositories.js';
+import { DEFAULT_OFFICIAL_UNIT_NAMES } from './sync-config.js';
 import { syncLedgerFromFile } from './sync-ledger.js';
 
 interface LegacyUnitsJson {
@@ -89,13 +90,6 @@ interface LegacyPrivacyJson {
   targetMask?: Record<string, string>;
   exactNoteReplacements?: Record<string, string>;
 }
-
-const DEFAULT_OFFICIAL_UNIT_NAMES: Record<string, { official: string; short: string }> = {
-  HQ: { official: '본조', short: '본부' },
-  AY: { official: '안양지부', short: '안물' },
-  BP: { official: '부평지부', short: '부평물' },
-  SS: { official: '서서울지부', short: '서물' },
-};
 
 function classifyLegacyRoleDisclosure(org: string, title: string): PublicDisclosure {
   if (org.includes('개인찬조') || title.includes('개인 찬조')) {
