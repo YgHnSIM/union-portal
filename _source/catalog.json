@@ -374,7 +374,7 @@
       },
       "workflow": {
         "status": "final",
-        "visibility": "public"
+        "visibility": "internal_only"
       },
       "topicIds": [
         "union-history",
