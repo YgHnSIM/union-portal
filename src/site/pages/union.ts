@@ -3,6 +3,7 @@ import {
   type OrgSummaryJson,
   type PublicOfficialsJson,
 } from '../../domain/public-projection.js';
+import type { DocumentRecordV3 } from '../../domain/types.js';
 import {
   type BylawsDocument,
   buildBylawsFullHtml,
@@ -23,6 +24,7 @@ import {
   escapeAttr,
   escapeHtml,
   renderPageShell,
+  renderUnionEmblemSvg,
   renderUnionSubnav,
 } from '../shell.js';
 import { writeOutFile } from '../site-context.js';
@@ -38,6 +40,7 @@ export function buildUnionPages(
   currentYm: string,
   assets: AssetManifest,
   baseUrl: string,
+  historyDoc: DocumentRecordV3 | null = null,
 ): number {
   let pages = 0;
   const route = 'union/index.html';
@@ -152,6 +155,25 @@ export function buildUnionPages(
   </section>`
     : '';
 
+  const historyFeatureHtml = historyDoc
+    ? `
+  <section class="section-band" aria-labelledby="sec-union-history">
+    <div class="union-history-feature">
+      <div class="union-history-mark" aria-hidden="true">
+        ${renderUnionEmblemSvg('union-history-emblem')}
+        <span class="union-history-years">2017-2026</span>
+      </div>
+      <div class="union-history-copy">
+        <h2 id="sec-union-history">${escapeHtml(historyDoc.title)}</h2>
+        <p>${escapeHtml(historyDoc.summary)}</p>
+      </div>
+      <div class="portal-actions">
+        <a class="btn" href="${escapeAttr(`${prefix}${historyDoc.route}`)}">9년의 기록 읽기 →</a>
+      </div>
+    </div>
+  </section>`
+    : '';
+
   const bodyHtml = `
   <header class="page-masthead">
     <div>
@@ -162,6 +184,7 @@ export function buildUnionPages(
       <span class="data-stamp">활동 조합원 ${orgSummary.totalActive}명 · 기준월 ${escapeHtml(currentYm)}</span>
     </div>
   </header>
+  ${historyFeatureHtml}
 
   <section class="section-band" aria-labelledby="sec-units-org">
     <div class="section-head">

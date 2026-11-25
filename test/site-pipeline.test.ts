@@ -224,7 +224,7 @@ presentation:
     path.join(tmpDir, '_source', 'notice', 'unlisted_2026.html'),
     `<!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8"><title>미등재 안내 테스트</title></head>
-<body><main class="archive-container document-article"><header class="document-header"><h1 class="document-title">미등재 안내 테스트</h1></header><p class="body-text">미등재 본문입니다.</p></main></body></html>`,
+<body><main class="archive-container document-article" data-skip-auto-toc="true"><header class="document-header"><h1 class="document-title">미등재 안내 테스트</h1></header><p class="body-text">미등재 본문입니다.</p></main></body></html>`,
     'utf8',
   );
 
@@ -458,6 +458,7 @@ test('buildSite, validateSite(--ci), 프라이버시 누출 차단 및 generateR
       'utf8',
     );
     assert.match(unlistedHtml, /noindex,follow/);
+    assert.match(unlistedHtml, /data-skip-auto-toc="true"/);
     const sitemap = await fs.readFile(path.join(siteDir, 'sitemap.xml'), 'utf8');
     assert.ok(!sitemap.includes('unlisted_2026.html'));
     assert.ok(sitemap.includes('archive/mom/202605.html'));

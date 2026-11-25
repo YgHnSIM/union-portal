@@ -1,0 +1,1142 @@
+@charset "UTF-8";
+
+/* Broadsheet Special Edition — 우체국물류지원단 물류노동조합 9년의 투쟁과 역사 */
+
+.history-feature.document-article {
+  inline-size: 100%;
+  max-inline-size: 1120px;
+  margin-inline: auto;
+  color: var(--color-ink-2);
+}
+
+.history-feature [id] {
+  scroll-margin-block-start: 5.5rem;
+}
+
+/* 1. 상단 슬림 스크롤 진행 바 (Scroll-driven animation, Progressive Enhancement) */
+.history-scroll-progress {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 3px;
+  z-index: 45;
+  pointer-events: none;
+  background-color: var(--color-accent);
+  transform-origin: 0 50%;
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: scroll()) {
+    @keyframes history-scroll-grow {
+      from {
+        transform: scaleX(0);
+      }
+      to {
+        transform: scaleX(1);
+      }
+    }
+
+    .history-scroll-progress {
+      display: block;
+      animation: history-scroll-grow auto linear;
+      animation-timeline: scroll(root block);
+    }
+  }
+
+  @supports ((animation-timeline: view()) and (animation-range: entry)) {
+    @keyframes history-section-enter {
+      entry 0% {
+        opacity: 0.15;
+        transform: translateY(16px);
+      }
+      entry 100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .history-reveal {
+      animation: history-section-enter auto cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 24%;
+    }
+  }
+}
+
+/* 2. 오프닝 특집 히어로 + 4대 핵심 성과 괘선 띠 */
+.history-hero {
+  position: relative;
+  overflow: clip;
+  background-color: var(--color-sheet);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-block-start: 3px solid var(--color-rule-strong);
+  padding: clamp(1.35rem, 3vw, 2.5rem) clamp(1.15rem, 3vw, 2.5rem) 0;
+  margin-block-end: 2rem;
+}
+
+.history-hero-emblem {
+  position: absolute;
+  inset-block-start: clamp(0.85rem, 2vw, 1.5rem);
+  inset-inline-end: clamp(0.85rem, 2.5vw, 2rem);
+  inline-size: clamp(5.5rem, 14vw, 11.5rem);
+  block-size: auto;
+  opacity: 0.11;
+  pointer-events: none;
+  forced-color-adjust: none;
+}
+
+.history-hero-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding-block-end: 0.9rem;
+  border-block-end: var(--rule-hair) solid var(--color-rule);
+}
+
+.history-hero-top .document-breadcrumb ol {
+  margin-block-end: 0;
+}
+
+.history-hero-years {
+  font-size: clamp(1rem, 0.9rem + 0.75vw, 1.4rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -0.02em;
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+.history-hero-headline {
+  position: relative;
+  z-index: 1;
+  padding-block: clamp(1.35rem, 3vw, 2.25rem) clamp(1.5rem, 3vw, 2.25rem);
+}
+
+.history-hero .document-title {
+  font-size: clamp(calc(1.75rem * var(--heading-scale)), 1.1rem + 2.6vw, calc(3.05rem * var(--heading-scale)));
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: var(--color-ink);
+  max-inline-size: 20ch;
+  margin: 0 0 1rem;
+  word-break: keep-all;
+}
+
+.history-hero-lead {
+  font-size: calc(var(--text-body) * var(--font-scale));
+  line-height: 1.78;
+  color: var(--color-ink-2);
+  max-inline-size: 62ch;
+  margin: 0;
+  word-break: keep-all;
+}
+
+.history-impact-band {
+  container: history-stats / inline-size;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background-color: var(--color-rule);
+  border-block-start: 2px solid var(--color-rule-strong);
+  margin-inline: calc(-1 * clamp(1.15rem, 3vw, 2.5rem));
+}
+
+.history-impact-cell {
+  background-color: var(--color-sheet);
+  padding: 1.15rem clamp(0.9rem, 2vw, 1.35rem);
+  min-inline-size: 0;
+  border-block-start: 3px solid var(--color-accent);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.history-impact-cell[data-tone="solidarity"] {
+  border-block-start-color: var(--color-expense);
+}
+
+.history-impact-cell[data-tone="win"] {
+  border-block-start-color: var(--color-income);
+}
+
+.history-impact-cell strong {
+  display: block;
+  color: var(--color-ink);
+  font-size: clamp(calc(1.35rem * var(--heading-scale)), 1.15rem + 0.85vw, calc(1.95rem * var(--heading-scale)));
+  font-weight: 800;
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -0.025em;
+  line-height: 1.16;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+@supports (font-size: 1cqi) {
+  .history-impact-cell strong {
+    font-size: clamp(calc(1.35rem * var(--heading-scale)), 2.9cqi, calc(1.95rem * var(--heading-scale)));
+  }
+}
+
+.history-impact-cell span {
+  display: block;
+  font-size: calc(var(--text-sm) * var(--font-scale));
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--color-muted);
+  word-break: keep-all;
+}
+
+/* 3. 인터랙티브 9년 로드맵 */
+.history-roadmap {
+  background-color: var(--color-sheet);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-block-start: 3px solid var(--color-rule-strong);
+  margin-block-end: 3rem;
+}
+
+.roadmap-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1.25rem;
+  padding: 1.15rem clamp(1.1rem, 2.5vw, 1.6rem);
+  border-block-end: var(--rule-hair) solid var(--color-rule);
+}
+
+.roadmap-head h2 {
+  font-size: clamp(calc(1.25rem * var(--heading-scale)), 1.05rem + 0.7vw, calc(1.6rem * var(--heading-scale)));
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.roadmap-range {
+  font-size: clamp(1.15rem, 0.95rem + 1vw, 1.65rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums lining-nums;
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+.roadmap-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1px;
+  background-color: var(--color-rule);
+}
+
+.roadmap-step {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-inline-size: 0;
+  padding: 1.2rem 1.05rem;
+  background-color: var(--color-sheet);
+  border-block-start: 3px solid var(--color-accent);
+  color: var(--color-ink-2);
+  text-decoration: none;
+  transition: background-color 180ms cubic-bezier(0.22, 1, 0.36, 1), transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.roadmap-step:hover,
+.roadmap-step:focus-visible {
+  background-color: var(--color-well);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.roadmap-step-top {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.roadmap-year {
+  font-size: calc(0.875rem * var(--font-scale));
+  font-weight: 800;
+  font-variant-numeric: tabular-nums lining-nums;
+  color: var(--color-accent);
+}
+
+.roadmap-step h3 {
+  font-size: calc(1.06rem * var(--heading-scale));
+  font-weight: 800;
+  line-height: 1.28;
+  color: var(--color-ink);
+  word-break: keep-all;
+}
+
+.roadmap-step p {
+  font-size: calc(var(--text-sm) * var(--font-scale));
+  line-height: 1.55;
+  color: var(--color-ink-2);
+  word-break: keep-all;
+}
+
+.roadmap-jump {
+  font-size: calc(var(--text-sm) * var(--font-scale));
+  font-weight: 700;
+  color: var(--color-accent);
+  margin-block-start: 0.25rem;
+}
+
+.roadmap-outcome {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.22fr) minmax(0, 1fr);
+  border-block-start: var(--rule-hair) solid var(--color-rule);
+}
+
+.roadmap-outcome strong {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background-color: var(--color-accent);
+  color: var(--color-accent-ink);
+  font-size: calc(var(--text-body) * var(--font-scale));
+  font-weight: 800;
+}
+
+.roadmap-outcome span {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.35rem;
+  font-size: calc(var(--text-body) * var(--font-scale));
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--color-ink);
+  word-break: keep-all;
+}
+
+/* 공통 섹션 헤더 */
+.history-section {
+  margin-block-start: 3.25rem;
+}
+
+.history-section-head {
+  position: relative;
+  border-block-start: 2px solid var(--color-rule-strong);
+  padding-block-start: 1rem;
+  margin-block-end: 1.5rem;
+}
+
+.history-section-head::before {
+  content: "";
+  position: absolute;
+  inset-block-start: -2px;
+  inset-inline-start: 0;
+  inline-size: 4.5rem;
+  block-size: 3px;
+  background-color: var(--color-accent);
+}
+
+.history-section-head h2 {
+  font-size: clamp(calc(1.3rem * var(--heading-scale)), 1.05rem + 0.85vw, calc(1.7rem * var(--heading-scale)));
+  font-weight: 800;
+  line-height: 1.28;
+  color: var(--color-ink);
+}
+
+.history-section-lead {
+  font-size: calc(var(--text-body) * var(--font-scale));
+  line-height: 1.76;
+  color: var(--color-ink-2);
+  max-inline-size: 65ch;
+  margin-block-start: 0.65rem;
+  word-break: keep-all;
+}
+
+/* 4. 1장 — 에디토리얼 스플릿 연표 */
+.history-split-timeline {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.36fr) minmax(0, 0.64fr);
+  gap: 1.5rem clamp(1.5rem, 3vw, 2.75rem);
+  align-items: start;
+  border-block-start: 2px solid var(--color-rule-strong);
+  padding-block-start: 1.25rem;
+}
+
+.split-intro {
+  position: sticky;
+  inset-block-start: 5.5rem;
+}
+
+.split-intro h2 {
+  font-size: clamp(calc(1.3rem * var(--heading-scale)), 1.05rem + 0.85vw, calc(1.7rem * var(--heading-scale)));
+  font-weight: 800;
+  line-height: 1.28;
+  color: var(--color-ink);
+  margin-block-end: 0.85rem;
+}
+
+.split-intro p {
+  font-size: calc(var(--text-body) * var(--font-scale));
+  line-height: 1.78;
+  color: var(--color-ink-2);
+  max-inline-size: 42ch;
+  word-break: keep-all;
+}
+
+.timeline-rail {
+  position: relative;
+  border-inline-start: 2px solid var(--color-accent);
+  padding-inline-start: 1.4rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.timeline-row {
+  position: relative;
+  background-color: var(--color-sheet);
+  border: var(--rule-hair) solid var(--color-rule);
+  padding: 0.95rem 1.15rem;
+  display: grid;
+  grid-template-columns: 7.25rem minmax(0, 1fr);
+  gap: 0.45rem 1rem;
+  align-items: baseline;
+}
+
+.timeline-row::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: calc(-1.4rem - 6px);
+  inset-block-start: 1.18rem;
+  inline-size: 10px;
+  block-size: 10px;
+  border-radius: 50%;
+  background-color: var(--color-sheet);
+  border: 2px solid var(--color-accent);
+}
+
+.timeline-row.is-milestone {
+  background-color: var(--color-accent-soft);
+  border-color: var(--color-accent);
+  border-inline-start: 4px solid var(--color-accent);
+}
+
+.timeline-row.is-milestone::before {
+  background-color: var(--color-accent);
+  inset-inline-start: calc(-1.4rem - 9px);
+}
+
+.timeline-date {
+  font-size: calc(var(--text-body) * var(--font-scale));
+  font-weight: 800;
+  font-variant-numeric: tabular-nums lining-nums;
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+.timeline-row.is-milestone .timeline-date {
+  color: var(--color-accent-soft-ink);
+}
+
+.timeline-text {
+  font-size: calc(var(--text-body) * var(--font-scale));
+  line-height: 1.68;
+  color: var(--color-ink-2);
+  word-break: keep-all;
+}
+
+.timeline-row.is-milestone .timeline-text {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+/* 5. 2장 — 3대 승부처 스토리 카드 */
+.battle-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.battle-card {
+  background-color: var(--color-sheet);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-block-start: 3px solid var(--color-rule-strong);
+  padding: 1.35rem 1.25rem;
+  display: grid;
+  grid-template-rows: auto auto auto 1fr;
+  gap: 1rem;
+  min-inline-size: 0;
+}
+
+.battle-card-head {
+  padding-block-end: 0.85rem;
+  border-block-end: var(--rule-hair) solid var(--color-rule);
+}
+
+.battle-metric {
+  display: block;
+  font-size: clamp(calc(1.2rem * var(--heading-scale)), 1rem + 0.7vw, calc(1.5rem * var(--heading-scale)));
+  font-weight: 800;
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -0.02em;
+  color: var(--color-accent);
+  margin-block-end: 0.35rem;
+}
+
+.battle-card-head h3 {
+  font-size: calc(var(--text-heading) * var(--heading-scale));
+  font-weight: 800;
+  line-height: 1.32;
+  color: var(--color-ink);
+  word-break: keep-all;
+}
+
+.battle-stage {
+  min-inline-size: 0;
+  padding-inline-start: 0.85rem;
+  border-inline-start: 3px solid var(--color-rule);
+}
+
+.battle-stage--crisis {
+  border-inline-start-color: var(--color-expense);
+}
+
+.battle-stage--action {
+  border-inline-start-color: var(--color-accent);
+}
+
+.battle-stage--win {
+  border-inline-start-color: var(--color-income);
+  background-color: var(--color-income-soft);
+  padding: 0.85rem 0.95rem;
+}
+
+.battle-stage h4 {
+  font-size: calc(var(--text-sm) * var(--font-scale));
+  font-weight: 800;
+  line-height: 1.3;
+  margin-block-end: 0.35rem;
+}
+
+.battle-stage--crisis h4 {
+  color: var(--color-expense);
+}
+
+.battle-stage--action h4 {
+  color: var(--color-accent);
+}
+
+.battle-stage--win h4 {
+  color: var(--color-income);
+}
+
+.battle-stage p {
+  font-size: calc(var(--text-sm) * var(--font-scale));
+  line-height: 1.65;
+  color: var(--color-ink-2);
+  word-break: keep-all;
+}
+
+.battle-stage--win p {
+  color: var(--color-ink);
+}
+
+/* 6. 3장 — 차별 철폐 Before/After 비교 매트릭스 */
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.compare-card {
+  background-color: var(--color-sheet);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-block-start: 3px solid var(--color-accent);
+  padding: 1.35rem;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 1rem;
+  min-inline-size: 0;
+}
+
+.compare-card h3 {
+  font-size: calc(var(--text-heading) * var(--heading-scale));
+  font-weight: 800;
+  line-height: 1.32;
+  color: var(--color-ink);
+}
+
+.compare-shift {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  background-color: var(--color-well);
+  border: var(--rule-hair) solid var(--color-rule);
+}
+
+.compare-before,
+.compare-after {
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.compare-label {
+  font-size: calc(0.8125rem * var(--font-scale));
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.compare-before strong {
+  font-size: calc(var(--text-sm) * var(--font-scale));
+  font-weight: 700;
+  color: var(--color-muted);
+  word-break: keep-all;
+}
+
+.compare-after strong {
+  font-size: calc(var(--text-body) * var(--font-scale));
+  font-weight: 800;
+  color: var(--color-income);
+  word-break: keep-all;
+}
+
+.compare-arrow {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.point-progression {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin-block-start: 0.25rem;
+}
+
+.point-step {
+  padding: 0.55rem 0.65rem;
+  background-color: var(--color-well);
+  border-block-end: 3px solid var(--color-rule-ui);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.point-step.is-mid {
+  border-block-end-color: var(--color-accent);
+}
+
+.point-step.is-final {
+  background-color: var(--color-accent-soft);
+  border-block-end-color: var(--color-income);
+}
+
+.point-step span {
+  display: block;
+  font-size: calc(0.8125rem * var(--font-scale));
+  color: var(--color-muted);
+}
+
+.point-step strong {
+  display: block;
+  font-size: calc(var(--text-sm) * var(--font-scale));
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.compare-details {
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.compare-details-row {
+  padding-block-start: 0.75rem;
+  border-block-start: var(--rule-hair) solid var(--color-rule);
+}
+
+.compare-details dt {
+  font-size: calc(0.8125rem * var(--font-scale));
+  font-weight: 800;
+  color: var(--color-accent);
+  margin-block-end: 0.25rem;
+}
+
+.compare-details dd {
+  margin: 0;
+  font-size: calc(var(--text-sm) * var(--font-scale));
+  line-height: 1.66;
+  color: var(--color-ink-2);
+  word-break: keep-all;
+}
+
+/* 7. 4장 — 임금·통상임금 선언 리스트 */
+.wage-manifesto {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-block-start: var(--rule-hair) solid var(--color-rule);
+}
+
+.wage-item {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.34fr) minmax(0, 0.66fr);
+  gap: 0.6rem 1.5rem;
+  align-items: baseline;
+  padding: 1.25rem 1.35rem;
+  background-color: var(--color-sheet);
+  border-block-end: var(--rule-hair) solid var(--color-rule);
+  border-inline-end: var(--rule-hair) solid var(--color-rule);
+  border-inline-start: 4px solid var(--color-rule-strong);
+}
+
+.wage-item.is-ongoing {
+  border-inline-start-color: var(--color-expense);
+  background-color: var(--color-expense-soft);
+}
+
+.wage-item h3 {
+  font-size: calc(1.06rem * var(--heading-scale));
+  font-weight: 800;
+  color: var(--color-ink);
+  word-break: keep-all;
+}
+
+.wage-item.is-ongoing h3 {
+  color: var(--color-expense);
+}
+
+.wage-item p {
+  font-size: calc(var(--text-body) * var(--font-scale));
+  line-height: 1.72;
+  color: var(--color-ink-2);
+  max-inline-size: 65ch;
+  word-break: keep-all;
+}
+
+.wage-item.is-ongoing p {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+/* 8. 5장 — 현장 환경·안전 2x2 개방형 헤어라인 그리드 */
+.safety-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background-color: var(--color-rule);
+  border: var(--rule-hair) solid var(--color-rule);
+}
+
+.safety-item {
+  background-color: var(--color-sheet);
+  padding: 1.45rem 1.35rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  min-inline-size: 0;
+}
+
+.safety-icon {
+  inline-size: 2.65rem;
+  block-size: 2.65rem;
+  display: grid;
+  place-items: center;
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent-soft-ink);
+  border: var(--rule-hair) solid var(--color-rule);
+}
+
+.safety-icon svg {
+  inline-size: 1.45rem;
+  block-size: 1.45rem;
+}
+
+.safety-copy h3 {
+  font-size: calc(1.06rem * var(--heading-scale));
+  font-weight: 800;
+  line-height: 1.32;
+  color: var(--color-ink);
+  margin-block-end: 0.45rem;
+  word-break: keep-all;
+}
+
+.safety-meta {
+  font-size: calc(0.8125rem * var(--font-scale));
+  font-weight: 700;
+  color: var(--color-accent);
+  margin-block-end: 0.35rem;
+}
+
+.safety-copy p {
+  font-size: calc(var(--text-sm) * var(--font-scale));
+  line-height: 1.68;
+  color: var(--color-ink-2);
+  word-break: keep-all;
+}
+
+/* 9. 피날레 선언 밴드 + 인라인 공유 + 신뢰 허브 */
+.history-finale {
+  --finale-bg: #0b051a;
+  --finale-ink: #f5f3ee;
+  --finale-muted: #ced7ee;
+  --finale-border: rgba(245, 243, 238, 0.25);
+
+  position: relative;
+  overflow: clip;
+  margin-block-start: 3.5rem;
+  padding: clamp(1.75rem, 4vw, 3rem) clamp(1.25rem, 3.5vw, 2.75rem);
+  background-color: var(--finale-bg);
+  color: var(--finale-ink);
+  border-block-start: 4px solid var(--color-accent);
+}
+
+:root:has(> head > meta[name="color-scheme"][content="dark"]) .history-finale,
+:root[data-theme="dark"] .history-finale {
+  --finale-bg: #16203a;
+  --finale-border: rgba(132, 169, 255, 0.35);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not(:has(> head > meta[name="color-scheme"][content="light"])) .history-finale {
+    --finale-bg: #16203a;
+    --finale-border: rgba(132, 169, 255, 0.35);
+  }
+}
+
+.history-finale-watermark {
+  position: absolute;
+  inset-block-end: -1rem;
+  inset-inline-end: 1.5rem;
+  inline-size: clamp(7rem, 15vw, 11rem);
+  block-size: auto;
+  opacity: 0.08;
+  pointer-events: none;
+  forced-color-adjust: none;
+}
+
+.history-finale h2 {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(calc(1.35rem * var(--heading-scale)), 1.05rem + 1vw, calc(1.85rem * var(--heading-scale)));
+  font-weight: 800;
+  color: var(--finale-ink);
+  margin-block-end: 1.25rem;
+}
+
+.history-finale-copy {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-statement);
+  max-inline-size: 65ch;
+  display: grid;
+  gap: 1rem;
+}
+
+.history-finale-copy p {
+  font-size: clamp(calc(1rem * var(--font-scale)), 0.95rem + 0.3vw, calc(1.14rem * var(--font-scale)));
+  font-weight: 600;
+  line-height: 1.78;
+  color: var(--finale-ink);
+  word-break: keep-all;
+}
+
+.history-share-bar {
+  position: relative;
+  z-index: 1;
+  margin-block-start: 1.75rem;
+  padding-block-start: 1.25rem;
+  border-block-start: var(--rule-hair) solid var(--finale-border);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+
+.btn-finale-primary {
+  background-color: #fdfcf9;
+  border-color: #fdfcf9;
+  color: #0b051a;
+  font-weight: 700;
+}
+
+.btn-finale-primary:hover:not(:disabled) {
+  background-color: #e4eaf8;
+  border-color: #e4eaf8;
+  filter: none;
+}
+
+.btn-finale-secondary {
+  background-color: transparent;
+  border-color: var(--finale-border);
+  color: var(--finale-ink);
+  font-weight: 600;
+}
+
+.btn-finale-secondary:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--finale-ink);
+  filter: none;
+}
+
+.history-share-bar svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.history-inline-status {
+  font-size: calc(var(--text-sm) * var(--font-scale));
+  font-weight: 600;
+  color: var(--finale-muted);
+  min-block-size: 1.2em;
+}
+
+.history-inline-status[data-state="success"] {
+  color: #8ee5ac;
+}
+
+.history-inline-status[data-state="error"] {
+  color: #ffb4ae;
+}
+
+/* 포털 신뢰 허브 3열 */
+.history-trust-hub {
+  margin-block-start: 2.25rem;
+}
+
+.history-trust-hub h2 {
+  font-size: calc(var(--text-heading) * var(--heading-scale));
+  font-weight: 800;
+  color: var(--color-ink);
+  margin-block-end: 0.85rem;
+}
+
+.trust-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background-color: var(--color-rule);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-block-start: 2px solid var(--color-rule-strong);
+}
+
+.trust-hub-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 1.2rem 1.15rem;
+  background-color: var(--color-sheet);
+  color: var(--color-ink);
+  text-decoration: none;
+  transition: background-color 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.trust-hub-card:hover,
+.trust-hub-card:focus-visible {
+  background-color: var(--color-well);
+  text-decoration: none;
+}
+
+.trust-hub-card strong {
+  font-size: calc(1.02rem * var(--heading-scale));
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.trust-hub-card p {
+  font-size: calc(var(--text-sm) * var(--font-scale));
+  line-height: 1.58;
+  color: var(--color-ink-2);
+  word-break: keep-all;
+}
+
+.trust-hub-link {
+  font-size: calc(var(--text-sm) * var(--font-scale));
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+/* 하단 문서 콜로폰 */
+.history-colophon.document-facts {
+  margin-block-start: 2.25rem;
+  margin-block-end: 0;
+  border-radius: 0;
+}
+
+.history-colophon-note {
+  margin-block-start: 0.75rem;
+  padding-block-start: 0.65rem;
+  border-block-start: var(--rule-hair) solid var(--color-rule);
+  font-size: calc(var(--text-sm) * var(--font-scale));
+  color: var(--color-muted);
+}
+
+/* 반응형 브레이크포인트 & 컨테이너 쿼리 */
+@media (min-width: 960px) {
+  @supports (grid-template-rows: subgrid) {
+    .battle-card {
+      grid-row: span 4;
+      grid-template-rows: subgrid;
+    }
+
+    .compare-card {
+      grid-row: span 3;
+      grid-template-rows: subgrid;
+    }
+  }
+}
+
+@media (max-width: 960px) {
+  .roadmap-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .roadmap-step:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .battle-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .history-split-timeline {
+    grid-template-columns: 1fr;
+  }
+
+  .split-intro {
+    position: static;
+  }
+
+  .history-impact-band {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .compare-grid,
+  .safety-grid,
+  .trust-hub-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .roadmap-grid,
+  .roadmap-outcome,
+  .wage-item {
+    grid-template-columns: 1fr;
+  }
+
+  .roadmap-step:last-child {
+    grid-column: auto;
+  }
+
+  .timeline-row {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .compare-shift {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .compare-arrow {
+    transform: rotate(90deg);
+  }
+
+  .point-progression {
+    grid-template-columns: 1fr;
+  }
+}
+
+@container history-stats (inline-size < 360px) {
+  .history-impact-band {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 인쇄 전용 규칙: 순백 지면 복원 및 장식/공유 바 숨김 */
+@media print {
+  .history-scroll-progress,
+  .history-share-bar,
+  .history-trust-hub,
+  .history-hero-emblem,
+  .history-finale-watermark {
+    display: none !important;
+  }
+
+  .history-feature.document-article {
+    max-inline-size: 100%;
+    color: #111111 !important;
+  }
+
+  .history-hero,
+  .history-roadmap,
+  .history-impact-cell,
+  .roadmap-step,
+  .timeline-row,
+  .battle-card,
+  .compare-card,
+  .wage-item,
+  .safety-item {
+    background-color: #ffffff !important;
+    color: #111111 !important;
+    border-color: #333333 !important;
+  }
+
+  .history-hero .document-title,
+  .history-impact-cell strong,
+  .roadmap-head h2,
+  .roadmap-step h3,
+  .history-section-head h2,
+  .split-intro h2,
+  .battle-card-head h3,
+  .compare-card h3,
+  .wage-item h3,
+  .safety-copy h3 {
+    color: #111111 !important;
+  }
+
+  .history-hero-years,
+  .roadmap-range,
+  .roadmap-year,
+  .timeline-date,
+  .battle-metric {
+    color: #0f3899 !important;
+  }
+
+  .roadmap-jump {
+    display: none !important;
+  }
+
+  .history-finale {
+    background-color: #ffffff !important;
+    color: #111111 !important;
+    border: 1px solid #111111 !important;
+    border-inline-start: 6px solid #0f3899 !important;
+    break-inside: avoid;
+  }
+
+  .history-finale h2,
+  .history-finale-copy p {
+    color: #111111 !important;
+  }
+
+  .battle-card,
+  .compare-card,
+  .timeline-row,
+  .wage-item,
+  .safety-item {
+    break-inside: avoid;
+  }
+}

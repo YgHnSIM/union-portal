@@ -193,6 +193,10 @@ export async function buildSite(options: BuildSiteOptions): Promise<BuildSiteRes
     baseUrl,
   );
 
+  const historyDoc = graph.documentsById.get('notice:logistics-union-9-years');
+  const publicHistoryDoc =
+    historyDoc && historyDoc.workflow.visibility === 'public' ? historyDoc : null;
+
   // 4. Union Pages (Organization + Bylaws Guide + Bylaws Full Text + Unlisted Review Suite)
   const unionPages = buildUnionPages(
     outDir,
@@ -204,6 +208,7 @@ export async function buildSite(options: BuildSiteOptions): Promise<BuildSiteRes
     currentYm,
     assets,
     baseUrl,
+    publicHistoryDoc,
   );
 
   // 5. Meta files (.nojekyll, robots.txt, sitemap.xml)

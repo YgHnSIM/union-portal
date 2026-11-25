@@ -681,14 +681,20 @@ export function buildArchiveDetailPages(
       mainEl.attrs.find((a) => a.name === 'class')?.value ?? 'archive-container document-article';
     const origId = mainEl.attrs.find((a) => a.name === 'id')?.value;
     const idAttr = origId ? ` id="${escapeAttr(origId)}"` : '';
+    const skipAutoToc = mainEl.attrs.find((a) => a.name === 'data-skip-auto-toc')?.value;
+    const skipAutoTocAttr = skipAutoToc ? ` data-skip-auto-toc="${escapeAttr(skipAutoToc)}"` : '';
+    const isHistoryFeature = origClasses.includes('history-feature');
     const usesLightWrapper =
-      inlineStyles.length > 0 || origClasses.includes('archive-container') || origClasses.includes('history-container');
+      !isHistoryFeature &&
+      (inlineStyles.length > 0 ||
+        origClasses.includes('archive-container') ||
+        origClasses.includes('history-container'));
     const articleClasses = usesLightWrapper
       ? `${origClasses} print-light-surface`
       : origClasses;
 
     const bodyHtml = `
-  <article class="${escapeAttr(articleClasses)}"${idAttr} data-document-category="${escapeAttr(CATEGORY_BY_ID.get(doc.category)?.label ?? doc.category)}">
+  <article class="${escapeAttr(articleClasses)}"${idAttr}${skipAutoTocAttr} data-document-category="${escapeAttr(CATEGORY_BY_ID.get(doc.category)?.label ?? doc.category)}">
     ${mainInnerHtml}
     ${linkedLedgerHtml}
   </article>
@@ -700,6 +706,15 @@ export function buildArchiveDetailPages(
         ? `<script src="${escapeAttr(assetHref(prefix, 'video-embed.js', assets))}" defer></script>`
         : '',
       `<script src="${escapeAttr(assetHref(prefix, 'document-tools.js', assets))}" defer></script>`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const extraHeadHtml = [
+      inlineStyles,
+      isHistoryFeature
+        ? `<link rel="stylesheet" href="${escapeAttr(assetHref(prefix, 'history.css', assets))}">`
+        : '',
     ]
       .filter(Boolean)
       .join('\n');
@@ -717,7 +732,7 @@ export function buildArchiveDetailPages(
       publishedTime: doc.dates.publishedOn,
       modifiedTime: doc.dates.modifiedOn,
       keywords: topicLabels,
-      extraHeadHtml: inlineStyles,
+      extraHeadHtml,
       bodyHtml,
       extraScriptsHtml: extraScripts,
     });

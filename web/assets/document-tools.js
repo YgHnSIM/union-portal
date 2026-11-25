@@ -429,9 +429,75 @@
     updateFromScroll();
   }
 
+  function announceInline(container, message, isError) {
+    const status = container && container.querySelector('[data-inline-status]');
+    if (!status) return;
+    status.dataset.state = isError ? 'error' : 'success';
+    status.textContent = '';
+    window.requestAnimationFrame(() => {
+      status.textContent = message;
+    });
+  }
+
+  function setupInlineShareActions() {
+    document.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-inline-action]');
+      if (!button) return;
+      const bar = button.closest('.history-share-bar');
+      const action = button.dataset.inlineAction;
+      const shareData = { title: document.title, url: window.location.href };
+      const copyWithInline = (text, successMessage, failureMessage) => {
+        const finishWithFallback = () => {
+          const copied = fallbackCopy(text);
+          announceInline(bar, copied ? successMessage : failureMessage, !copied);
+        };
+        if (window.isSecureContext && navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(
+            () => announceInline(bar, successMessage, false),
+            finishWithFallback,
+          );
+          return;
+        }
+        finishWithFallback();
+      };
+
+      if (action === 'copy-link') {
+        copyWithInline(
+          shareData.url,
+          '링크를 클립보드에 복사했습니다.',
+          '링크를 복사하지 못했습니다. 주소창의 링크를 직접 복사해주세요.',
+        );
+      } else if (action === 'share') {
+        if (navigator.share) {
+          navigator.share(shareData).then(
+            () => announceInline(bar, '공유했습니다.', false),
+            (error) => {
+              if (error && error.name === 'AbortError') {
+                announceInline(bar, '공유를 취소했습니다.', false);
+                return;
+              }
+              copyWithInline(
+                shareData.url,
+                '링크를 클립보드에 복사했습니다.',
+                '링크를 복사하지 못했습니다. 주소창의 링크를 직접 복사해주세요.',
+              );
+            },
+          );
+          return;
+        }
+        copyWithInline(
+          shareData.url,
+          '링크를 클립보드에 복사했습니다.',
+          '링크를 복사하지 못했습니다. 주소창의 링크를 직접 복사해주세요.',
+        );
+      }
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     applyTextScale(false);
     setupDocumentTools();
+    setupInlineShareActions();
     prepareResponsiveTables();
     setupToc();
   });
