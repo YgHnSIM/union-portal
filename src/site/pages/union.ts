@@ -181,7 +181,7 @@ export function buildUnionPages(
       <p class="lead">지부별 조합원 현황과 현 임기 임원, 조합 규약 안내입니다.</p>
     </div>
     <div class="masthead-meta">
-      <span class="data-stamp">활동 조합원 ${orgSummary.totalActive}명 · 기준월 ${escapeHtml(currentYm)}</span>
+      <span class="data-stamp">기준월 ${escapeHtml(currentYm)}</span>
     </div>
   </header>
   ${historyFeatureHtml}
