@@ -105,6 +105,30 @@ async function createSiteFixture(tmpDir: string): Promise<void> {
             displayOrder: 20,
             presentation: { print: {} },
           },
+          {
+            id: 'notice:md_notice_2026',
+            category: 'notice',
+            route: 'archive/notice/md_notice_2026.html',
+            title: '마크다운 공지 테스트',
+            summary: '마크다운 원본에서 HTML로 빌드되는 공지 테스트 문서입니다.',
+            dates: {
+              publishedOn: '2026-05-22',
+              modifiedOn: '2026-05-22',
+              reviewedOn: '2026-05-22',
+            },
+            workflow: { status: 'final', visibility: 'public' },
+            topicIds: ['working-conditions'],
+            evidence: {
+              count: 1,
+              note: '마크다운 테스트',
+              noteVisibility: 'public',
+              sourceIds: [],
+              complete: true,
+            },
+            relatedDocumentIds: [],
+            displayOrder: 30,
+            presentation: { print: {} },
+          },
         ],
       },
       null,
@@ -225,6 +249,11 @@ presentation:
     `<!DOCTYPE html>
 <html lang="ko"><head><meta charset="utf-8"><title>미등재 안내 테스트</title></head>
 <body><main class="archive-container document-article" data-skip-auto-toc="true"><header class="document-header"><h1 class="document-title">미등재 안내 테스트</h1></header><p class="body-text">미등재 본문입니다.</p></main></body></html>`,
+    'utf8',
+  );
+  await fs.writeFile(
+    path.join(tmpDir, '_source', 'notice', 'md_notice_2026.md'),
+    `# 마크다운 공지 테스트\n\n## 1. 주요 안내\n- **2026.05.22.** 마크다운 원본에서 HTML을 생성하며 **'강조'**의 구문도 변환합니다.\n`,
     'utf8',
   );
 
@@ -424,11 +453,19 @@ test('buildSite, validateSite(--ci), 프라이버시 누출 차단 및 generateR
       projectRoot: tmpDir,
       currentYm: '2026-05',
     });
-    assert.equal(buildRes.docsPublished, 2);
+    assert.equal(buildRes.docsPublished, 3);
     assert.equal(buildRes.docsUnlisted, 1);
     assert.equal(buildRes.docsSkippedInternal, 1);
 
     const siteDir = path.join(tmpDir, '_site');
+    const mdNoticeHtml = await fs.readFile(
+      path.join(siteDir, 'archive', 'notice', 'md_notice_2026.html'),
+      'utf8',
+    );
+    assert.match(mdNoticeHtml, /마크다운 원본에서 HTML을 생성하며/);
+    await assert.rejects(() =>
+      fs.stat(path.join(siteDir, 'archive', 'notice', 'md_notice_2026.md')),
+    );
     const momHtml = await fs.readFile(path.join(siteDir, 'archive', 'mom', '202605.html'), 'utf8');
     assert.match(momHtml, /data-privacy-zone="finance"/);
     assert.match(momHtml, /HQ-2026-902/);

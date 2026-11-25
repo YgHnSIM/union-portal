@@ -18,6 +18,7 @@ import type {
   DocumentRecordV3,
   LedgerEntry,
 } from '../../domain/types.js';
+import { renderHistoryFeaturePage } from '../history-renderer.js';
 import { findMarkdownSyntaxResidues, renderMomMarkdown, type TocItem } from '../mom-renderer.js';
 import {
   type AssetManifest,
@@ -417,12 +418,12 @@ export function buildArchiveDetailPages(
   let unlisted = 0;
   let skippedInternal = 0;
 
-  // Copy non-HTML sibling assets (images/pdfs) from _source/knowledge and _source/notice
+  // Copy non-HTML, non-Markdown sibling assets (images/pdfs) from _source/knowledge and _source/notice
   for (const cat of ['knowledge', 'notice'] as const) {
     const srcDir = path.join(projectRoot, '_source', cat);
     if (!fs.existsSync(srcDir)) continue;
     for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
-      if (!entry.isFile() || entry.name.endsWith('.html')) continue;
+      if (!entry.isFile() || entry.name.endsWith('.html') || entry.name.endsWith('.md')) continue;
       const dest = path.join(outDir, 'archive', cat, entry.name);
       fs.mkdirSync(path.dirname(dest), { recursive: true });
       fs.copyFileSync(path.join(srcDir, entry.name), dest);
@@ -655,12 +656,97 @@ export function buildArchiveDetailPages(
       continue;
     }
 
-    // knowledge & notice (extract <style> from head and <main> inner content)
+    // knowledge & notice (supports .md feature/markdown sources and .html fragments)
     const srcPath = graph.sourcePathsById.get(doc.id);
     if (!srcPath || !fs.existsSync(srcPath)) {
-      throw new Error(`문서 원본 HTML이 없습니다: ${doc.id}`);
+      throw new Error(`문서 원본 파일이 없습니다: ${doc.id}`);
     }
-    const rawHtml = fs.readFileSync(srcPath, 'utf8').replace(/^\uFEFF/, '');
+    const rawSource = fs.readFileSync(srcPath, 'utf8').replace(/^\uFEFF/, '');
+
+    if (srcPath.endsWith('.md')) {
+      const residues = findMarkdownSyntaxResidues(rawSource);
+      if (residues.length > 0) {
+        throw new Error(
+          `${srcPath}:${residues[0]!.line}:${residues[0]!.column} ${residues[0]!.message}`,
+        );
+      }
+
+      if (doc.id === 'notice:logistics-union-9-years') {
+        const bodyHtml = renderHistoryFeaturePage({
+          markdown: rawSource,
+          doc,
+          graph,
+          prefix,
+          linkedLedgerHtml,
+          relatedHtml,
+        });
+        const htmlOut = renderPageShell({
+          title: doc.title,
+          description: doc.summary,
+          activeNav: 'archive',
+          route: doc.route,
+          prefix,
+          baseUrl,
+          assets,
+          robots,
+          ogType: 'article',
+          publishedTime: doc.dates.publishedOn,
+          modifiedTime: doc.dates.modifiedOn,
+          keywords: topicLabels,
+          extraHeadHtml: `<link rel="stylesheet" href="${escapeAttr(assetHref(prefix, 'history.css', assets))}">`,
+          bodyHtml,
+          extraScriptsHtml: `<script src="${escapeAttr(assetHref(prefix, 'document-tools.js', assets))}" defer></script>`,
+        });
+        writeOutFile(outDir, doc.route, htmlOut);
+        continue;
+      }
+
+      const parsed = renderMomMarkdown(rawSource, doc.title);
+      const catLabel = CATEGORY_BY_ID.get(doc.category)?.label ?? doc.category;
+      const catDir = CATEGORY_BY_ID.get(doc.category)?.directory ?? `archive/${doc.category}`;
+      const bodyHtml = `
+  <article class="archive-container document-article" data-document-category="${escapeAttr(catLabel)}">
+    <header class="document-header">
+      <nav class="document-breadcrumb no-print" aria-label="현재 위치">
+        <ol>
+          <li><a href="${escapeAttr(`${prefix}archive/index.html`)}">공개 자료실</a></li>
+          <li><a href="${escapeAttr(`${prefix}${catDir}/index.html`)}">${escapeHtml(catLabel)}</a></li>
+          <li aria-current="page">${escapeHtml(primaryDateOf(doc) || doc.id)}</li>
+        </ol>
+      </nav>
+      <h1 class="document-title">${escapeHtml(doc.title)}</h1>
+      ${doc.summary ? `<p class="document-summary">${escapeHtml(doc.summary)}</p>` : ''}
+    </header>
+    ${renderDocumentToc(parsed.toc)}
+    <div class="mom-body" data-copy-body>
+      ${parsed.contentHtml}
+    </div>
+    ${linkedLedgerHtml}
+    ${relatedHtml}
+  </article>
+  ${renderDocumentToolsWidget()}`;
+
+      const htmlOut = renderPageShell({
+        title: doc.title,
+        description: doc.summary,
+        activeNav: 'archive',
+        route: doc.route,
+        prefix,
+        baseUrl,
+        assets,
+        robots,
+        ogType: 'article',
+        publishedTime: doc.dates.publishedOn,
+        modifiedTime: doc.dates.modifiedOn,
+        keywords: topicLabels,
+        bodyHtml,
+        extraScriptsHtml: `<script src="${escapeAttr(assetHref(prefix, 'document-tools.js', assets))}" defer></script>`,
+      });
+      writeOutFile(outDir, doc.route, htmlOut);
+      continue;
+    }
+
+    const rawHtml = rawSource;
     const headMatch = rawHtml.match(/<head\b[^>]*>([\s\S]*?)<\/head>/i);
     const headRaw = headMatch?.[1] ?? '';
     const inlineStyles = [...headRaw.matchAll(/<style\b[^>]*>[\s\S]*?<\/style>/gi)]

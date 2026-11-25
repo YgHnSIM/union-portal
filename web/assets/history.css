@@ -449,7 +449,106 @@
   font-weight: 600;
 }
 
-/* 5. 2장 — 3대 승부처 스토리 카드 */
+/* 공통 마크다운 본문 타이포그래피 (.history-prose) */
+.history-prose {
+  font-size: calc(var(--text-body) * var(--font-scale));
+  line-height: 1.76;
+  color: var(--color-ink-2);
+}
+
+.history-prose--lead {
+  max-inline-size: 65ch;
+  margin-block-end: 1.5rem;
+}
+
+.history-prose p {
+  max-inline-size: 65ch;
+  margin: 0;
+  word-break: keep-all;
+}
+
+.history-prose p + p,
+.history-prose p + ul,
+.history-prose p + ol,
+.history-prose ul + p,
+.history-prose ol + p {
+  margin-block-start: 0.75rem;
+}
+
+.history-prose ul,
+.history-prose ol {
+  max-inline-size: 65ch;
+  margin: 0;
+  padding-inline-start: 1.25rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.history-prose li {
+  word-break: keep-all;
+}
+
+.history-prose li > ul,
+.history-prose li > ol {
+  margin-block-start: 0.45rem;
+}
+
+.history-prose strong {
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+.history-prose code {
+  font-family: inherit;
+  font-weight: 700;
+  background-color: var(--color-well);
+  color: var(--color-ink);
+  padding: 0.08rem 0.38rem;
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-sharp);
+}
+
+.timeline-text.history-prose ul {
+  margin-block-start: 0.45rem;
+  font-size: calc(var(--text-sm) * var(--font-scale));
+  color: var(--color-muted);
+}
+
+/* 2장 — 3대 투쟁 방식 전략 카드 */
+.strategy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.2rem;
+}
+
+.strategy-card {
+  background-color: var(--color-sheet);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-block-start: 3px solid var(--color-accent);
+  padding: 1.35rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-inline-size: 0;
+}
+
+.strategy-index {
+  font-size: calc(1.2rem * var(--heading-scale));
+  font-weight: 800;
+  font-variant-numeric: tabular-nums lining-nums;
+  line-height: 1;
+  color: var(--color-accent);
+}
+
+.strategy-card h3 {
+  font-size: calc(var(--text-heading) * var(--heading-scale));
+  font-weight: 800;
+  line-height: 1.32;
+  color: var(--color-ink);
+  word-break: keep-all;
+}
+
+/* 5. 3장 — 3단 스토리 카드 */
 .battle-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -462,82 +561,110 @@
   border-block-start: 3px solid var(--color-rule-strong);
   padding: 1.35rem 1.25rem;
   display: grid;
-  grid-template-rows: auto auto auto 1fr;
-  gap: 1rem;
+  grid-template-rows: auto 1fr;
+  gap: 0.95rem;
   min-inline-size: 0;
 }
 
-.battle-card-head {
-  padding-block-end: 0.85rem;
-  border-block-end: var(--rule-hair) solid var(--color-rule);
+.battle-card--crisis {
+  border-block-start-color: var(--color-expense);
 }
 
-.battle-metric {
-  display: block;
-  font-size: clamp(calc(1.2rem * var(--heading-scale)), 1rem + 0.7vw, calc(1.5rem * var(--heading-scale)));
-  font-weight: 800;
-  font-variant-numeric: tabular-nums lining-nums;
-  letter-spacing: -0.02em;
-  color: var(--color-accent);
-  margin-block-end: 0.35rem;
+.battle-card--action {
+  border-block-start-color: var(--color-accent);
 }
 
-.battle-card-head h3 {
+.battle-card--win {
+  border-block-start-color: var(--color-income);
+}
+
+.battle-card h3 {
   font-size: calc(var(--text-heading) * var(--heading-scale));
   font-weight: 800;
   line-height: 1.32;
   color: var(--color-ink);
+  padding-block-end: 0.75rem;
+  border-block-end: var(--rule-hair) solid var(--color-rule);
   word-break: keep-all;
 }
 
-.battle-stage {
+/* 7·9장 — 2열 균형 에디토리얼 그리드 */
+.chapter-grid--2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.chapter-card {
+  background-color: var(--color-sheet);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-block-start: 3px solid var(--color-accent);
+  padding: 1.35rem 1.3rem;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 0.9rem;
   min-inline-size: 0;
-  padding-inline-start: 0.85rem;
-  border-inline-start: 3px solid var(--color-rule);
 }
 
-.battle-stage--crisis {
-  border-inline-start-color: var(--color-expense);
-}
-
-.battle-stage--action {
-  border-inline-start-color: var(--color-accent);
-}
-
-.battle-stage--win {
-  border-inline-start-color: var(--color-income);
-  background-color: var(--color-income-soft);
-  padding: 0.85rem 0.95rem;
-}
-
-.battle-stage h4 {
-  font-size: calc(var(--text-sm) * var(--font-scale));
+.chapter-card h3 {
+  font-size: calc(var(--text-heading) * var(--heading-scale));
   font-weight: 800;
-  line-height: 1.3;
-  margin-block-end: 0.35rem;
-}
-
-.battle-stage--crisis h4 {
-  color: var(--color-expense);
-}
-
-.battle-stage--action h4 {
-  color: var(--color-accent);
-}
-
-.battle-stage--win h4 {
-  color: var(--color-income);
-}
-
-.battle-stage p {
-  font-size: calc(var(--text-sm) * var(--font-scale));
-  line-height: 1.65;
-  color: var(--color-ink-2);
+  line-height: 1.32;
+  color: var(--color-ink);
+  padding-block-end: 0.75rem;
+  border-block-end: var(--rule-hair) solid var(--color-rule);
   word-break: keep-all;
 }
 
-.battle-stage--win p {
+/* 4·5·6·8장 — 비대칭 스플릿 패널 (좌측 소제목 + 우측 상세) */
+.chapter-entries {
+  display: grid;
+  gap: 1.35rem;
+}
+
+.chapter-entry {
+  background-color: var(--color-sheet);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-block-start: 2px solid var(--color-rule-strong);
+  padding: clamp(1.2rem, 2.5vw, 1.75rem);
+  display: grid;
+  grid-template-columns: minmax(210px, 0.3fr) minmax(0, 0.7fr);
+  gap: 1rem clamp(1.5rem, 3vw, 2.5rem);
+  align-items: start;
+}
+
+.chapter-entry-head h3 {
+  position: sticky;
+  inset-block-start: 5.5rem;
+  font-size: calc(var(--text-heading) * var(--heading-scale));
+  font-weight: 800;
+  line-height: 1.35;
   color: var(--color-ink);
+  word-break: keep-all;
+}
+
+.chapter-entry-body {
+  min-inline-size: 0;
+  display: grid;
+  gap: 1.1rem;
+}
+
+.chapter-phase {
+  padding-block-start: 1rem;
+  border-block-start: var(--rule-hair) solid var(--color-rule);
+}
+
+.chapter-phase:first-child {
+  padding-block-start: 0;
+  border-block-start: 0;
+}
+
+.chapter-phase h4 {
+  font-size: calc(var(--text-body) * var(--font-scale));
+  font-weight: 800;
+  color: var(--color-accent);
+  margin-block-end: 0.6rem;
+  word-break: keep-all;
 }
 
 /* 6. 3장 — 차별 철폐 Before/After 비교 매트릭스 */
@@ -844,6 +971,25 @@
   word-break: keep-all;
 }
 
+.history-finale-copy ul {
+  margin: 0.25rem 0;
+  padding-inline-start: 1.25rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.history-finale-copy li {
+  font-size: calc(var(--text-body) * var(--font-scale));
+  line-height: 1.74;
+  color: var(--finale-ink);
+  word-break: keep-all;
+}
+
+.history-finale-copy strong {
+  color: #ffffff;
+  font-weight: 800;
+}
+
 .history-share-bar {
   position: relative;
   z-index: 1;
@@ -856,29 +1002,30 @@
   gap: 0.75rem 1rem;
 }
 
-.btn-finale-primary {
+.history-finale .btn.btn-finale-primary {
   background-color: #fdfcf9;
   border-color: #fdfcf9;
   color: #0b051a;
   font-weight: 700;
 }
 
-.btn-finale-primary:hover:not(:disabled) {
+.history-finale .btn.btn-finale-primary:hover:not(:disabled) {
   background-color: #e4eaf8;
   border-color: #e4eaf8;
   filter: none;
 }
 
-.btn-finale-secondary {
-  background-color: transparent;
-  border-color: var(--finale-border);
-  color: var(--finale-ink);
-  font-weight: 600;
+.history-finale .btn.btn-finale-secondary {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(245, 243, 238, 0.65);
+  color: #fdfcf9;
+  font-weight: 700;
 }
 
-.btn-finale-secondary:hover:not(:disabled) {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-color: var(--finale-ink);
+.history-finale .btn.btn-finale-secondary:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.16);
+  border-color: #fdfcf9;
+  color: #ffffff;
   filter: none;
 }
 
@@ -984,7 +1131,12 @@
 @media (min-width: 960px) {
   @supports (grid-template-rows: subgrid) {
     .battle-card {
-      grid-row: span 4;
+      grid-row: span 2;
+      grid-template-rows: subgrid;
+    }
+
+    .chapter-card {
+      grid-row: span 2;
       grid-template-rows: subgrid;
     }
 
@@ -1004,17 +1156,20 @@
     grid-column: 1 / -1;
   }
 
+  .strategy-grid,
   .battle-grid {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 860px) {
-  .history-split-timeline {
+  .history-split-timeline,
+  .chapter-entry {
     grid-template-columns: 1fr;
   }
 
-  .split-intro {
+  .split-intro,
+  .chapter-entry-head h3 {
     position: static;
   }
 
@@ -1022,6 +1177,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .chapter-grid--2,
   .compare-grid,
   .safety-grid,
   .trust-hub-grid {
@@ -1085,7 +1241,10 @@
   .history-impact-cell,
   .roadmap-step,
   .timeline-row,
+  .strategy-card,
   .battle-card,
+  .chapter-card,
+  .chapter-entry,
   .compare-card,
   .wage-item,
   .safety-item {
@@ -1100,10 +1259,14 @@
   .roadmap-step h3,
   .history-section-head h2,
   .split-intro h2,
-  .battle-card-head h3,
+  .strategy-card h3,
+  .battle-card h3,
+  .chapter-card h3,
+  .chapter-entry-head h3,
   .compare-card h3,
   .wage-item h3,
-  .safety-copy h3 {
+  .safety-copy h3,
+  .history-prose strong {
     color: #111111 !important;
   }
 
@@ -1111,6 +1274,8 @@
   .roadmap-range,
   .roadmap-year,
   .timeline-date,
+  .strategy-index,
+  .chapter-phase h4,
   .battle-metric {
     color: #0f3899 !important;
   }
@@ -1128,11 +1293,16 @@
   }
 
   .history-finale h2,
-  .history-finale-copy p {
+  .history-finale-copy p,
+  .history-finale-copy li,
+  .history-finale-copy strong {
     color: #111111 !important;
   }
 
+  .strategy-card,
   .battle-card,
+  .chapter-card,
+  .chapter-phase,
   .compare-card,
   .timeline-row,
   .wage-item,

@@ -189,6 +189,20 @@ export function sourceRelativePathForDocument(
   return `_source/${document.category}/${rel}`;
 }
 
+export function markdownSourceRelativePathForDocument(
+  document: DocumentRecordV3,
+): string | undefined {
+  if (document.category !== 'notice' && document.category !== 'knowledge') {
+    return undefined;
+  }
+  const catPrefix = `archive/${document.category}/`;
+  const rel = document.route.startsWith(catPrefix)
+    ? document.route.slice(catPrefix.length)
+    : document.route.split('/').slice(1).join('/');
+  if (!rel.endsWith('.html')) return undefined;
+  return `_source/${document.category}/${rel.slice(0, -'.html'.length)}.md`;
+}
+
 export function validateRoute(
   route: unknown,
   category: DocCategory,
@@ -435,7 +449,14 @@ export function buildContentGraphFromSnapshot(
       routes.set(routeKey, entry.label);
     }
 
-    const relSourcePath = sourceRelativePathForDocument(record);
+    const mdRelSourcePath = markdownSourceRelativePathForDocument(record);
+    const htmlRelSourcePath = sourceRelativePathForDocument(record);
+    const relSourcePath =
+      entry.kind === 'manual' &&
+      mdRelSourcePath &&
+      snapshot.hasManualSourceFile(record, mdRelSourcePath)
+        ? mdRelSourcePath
+        : htmlRelSourcePath;
     const sourcePath = relSourcePath
       ? snapshot.resolveManualSourcePath(record, relSourcePath)
       : undefined;
