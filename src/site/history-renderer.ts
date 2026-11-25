@@ -262,13 +262,21 @@ function splitLeadingStrong(
 
   const inlineTok = cloned[firstInlineIdx]!;
   const children = inlineTok.children ?? [];
-  if (children[0]?.type !== 'strong_open') {
+  let startIdx = 0;
+  while (
+    startIdx < children.length &&
+    children[startIdx]?.type === 'text' &&
+    !children[startIdx]!.content.trim()
+  ) {
+    startIdx += 1;
+  }
+  if (children[startIdx]?.type !== 'strong_open') {
     return { leadingTitle: '', bodyTokens: cloned };
   }
 
   let strongDepth = 0;
   let closeIdx = -1;
-  for (let i = 0; i < children.length; i += 1) {
+  for (let i = startIdx; i < children.length; i += 1) {
     if (children[i]!.type === 'strong_open') strongDepth += 1;
     else if (children[i]!.type === 'strong_close') {
       strongDepth -= 1;
@@ -283,7 +291,7 @@ function splitLeadingStrong(
   }
 
   const leadingTitle = children
-    .slice(1, closeIdx)
+    .slice(startIdx + 1, closeIdx)
     .map((c) => c.content || '')
     .join('')
     .trim();
@@ -311,14 +319,14 @@ function renderTimelineChapter(
   const introHtml =
     beforeTokens.length > 0
       ? renderTokens(beforeTokens, env)
-      : '<p>2017년 서서울물류 지회 설립부터 독자 기업별 노조 출범, 통합 공개 포털 운영과 2026년 중앙노동위원회 승소까지 물류노동조합이 걸어온 발자취입니다.</p>';
+      : '<p>2017년 서서울물류 지회 설립부터 독자 기업별 노조 출범, 통합 공개 포털 운영과 2026년 중앙노동위원회 재심 인용·인천지방노동위원회 원청 교섭참여 인정 결정까지 물류노동조합이 걸어온 발자취입니다.</p>';
 
   const rowsHtml = items
     .map((item) => {
       const { leadingTitle, bodyTokens } = splitLeadingStrong(item);
       const bodyHtml = renderTokens(bodyTokens, env);
       const isMilestone =
-        /독자 노선|공식 출범|중앙노동위원회 재심 승소/.test(leadingTitle + bodyHtml);
+        /독자 노선|공식 출범|중앙노동위원회 재심 인용|교섭참여 노동조합 인정 결정/.test(leadingTitle + bodyHtml);
       return `<div class="timeline-row${isMilestone ? ' is-milestone' : ''}">
           <div class="timeline-date">${escapeHtml(leadingTitle)}</div>
           <div class="timeline-text history-prose">${bodyHtml}</div>
@@ -428,7 +436,7 @@ function renderSubSectionChapter(
   );
 
   const leadHtml =
-    chapter.leadTokens.length > 0
+    chapter.subSections.length > 0 && chapter.leadTokens.length > 0
       ? `<div class="history-section-lead history-prose">${renderTokens(chapter.leadTokens, env)}</div>`
       : '';
 
@@ -626,12 +634,12 @@ export function renderHistoryFeaturePage(params: {
             <span>기간제 전원 계약 연장 및 공무직 전환</span>
           </div>
           <div class="history-impact-cell" data-tone="solidarity">
-            <strong>중노위 승소</strong>
+            <strong>중노위 인용</strong>
             <span>단시간 유급병가 차별 시정 판정 수용 확정</span>
           </div>
           <div class="history-impact-cell">
-            <strong>원청 직접 교섭</strong>
-            <span>우정사업본부 교섭 및 시정 신청 제기</span>
+            <strong>원청 교섭 인정</strong>
+            <span>2026.11.23. 인천지노위 우정사업본부 교섭참여 인정</span>
           </div>
         </div>
       </header>
@@ -654,7 +662,7 @@ export function renderHistoryFeaturePage(params: {
             <div class="roadmap-step-top">
               <span class="roadmap-year">2021-2023</span>
               <h3>독자 출범·고용승계</h3>
-              <p>물류노조를 공식 출범하고 115명 계약 연장·약 100여 명 공무직 전환과 서서울 폐국 전원 고용승계를 관철했습니다.</p>
+              <p>물류노조를 공식 출범하고 115명 계약 연장·100여 명 공무직 전환과 서서울 폐국 전원 고용승계를 관철했습니다.</p>
             </div>
             <span class="roadmap-jump no-print">해당 기록 보기 →</span>
           </a>
@@ -669,16 +677,16 @@ export function renderHistoryFeaturePage(params: {
           <a class="roadmap-step" href="${escapeAttr(safeAnchor('sec-5'))}">
             <div class="roadmap-step-top">
               <span class="roadmap-year">2026</span>
-              <h3>중노위 승소·대법 판결</h3>
-              <p>단시간 유급병가 축소 합의를 중노위 재심 승소로 뒤집고, 퇴직 연차수당 부당 삭감 환수에 나섰습니다.</p>
+              <h3>중노위 인용·대법 판결</h3>
+              <p>단시간 유급병가 축소 합의를 중노위 재심 인용으로 뒤집고, 퇴직 연차수당 부당 삭감 환수에 나섰습니다.</p>
             </div>
             <span class="roadmap-jump no-print">해당 기록 보기 →</span>
           </a>
           <a class="roadmap-step" href="${escapeAttr(safeAnchor('sec-9'))}">
             <div class="roadmap-step-top">
               <span class="roadmap-year">2026-2030</span>
-              <h3>원청 직접 교섭 돌입</h3>
-              <p>우정사업본부를 상대로 직접 교섭·시정 신청을 제기하며 2030 통합 개국 100% 총고용 승계를 준비합니다.</p>
+              <h3>원청 직접 교섭 인정</h3>
+              <p>2026년 11월 23일 인천지노위 인정 결정으로 우정사업본부 직접 교섭의 문을 열고 2030 총고용 승계를 준비합니다.</p>
             </div>
             <span class="roadmap-jump no-print">해당 기록 보기 →</span>
           </a>

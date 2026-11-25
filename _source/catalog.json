@@ -366,7 +366,7 @@
       "category": "notice",
       "route": "archive/notice/logistics-union-9-years.html",
       "title": "왜 물류노동조합인가 — 9년의 투쟁과 역사",
-      "summary": "2017년부터 2026년까지 교섭의 한계를 돌파하며 고용안정·차별 철폐·중앙노동위원회 재심 승소·원청 직접 교섭으로 이어온 우체국물류지원단 물류노동조합의 투쟁과 역사입니다.",
+      "summary": "2017년부터 2026년까지 교섭의 한계를 돌파하며 고용안정·차별 철폐·중앙노동위원회 재심 인용·인천지방노동위원회 원청 교섭참여 인정 결정으로 이어온 우체국물류지원단 물류노동조합의 투쟁과 역사입니다.",
       "dates": {
         "publishedOn": "2026-07-06",
         "modifiedOn": "2026-11-25",
@@ -391,8 +391,8 @@
         "complete": false
       },
       "relatedDocumentIds": [
+        "statement:성명서_20261124",
         "statement:성명서_20260921",
-        "statement:성명서_202607",
         "knowledge:principal-employer-bargaining-video-analysis"
       ],
       "displayOrder": 10,
