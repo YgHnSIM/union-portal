@@ -64,6 +64,7 @@ interface LegendItem {
 
 interface FocusHint {
   defaultText: string;
+  labels: string[];
   zones: string[];
 }
 
@@ -1209,7 +1210,8 @@ function buildTheaterScenes(
       svgHtml: svgScene02How(),
       sourceHtml: renderChapterSourceHtml(ch2, env),
       focusHint: {
-        defaultText: '무대의 01·02·03 카드를 클릭해 각 실행 축의 역할을 살펴보세요.',
+        defaultText: '아래 버튼이나 도면의 01·02·03 카드를 눌러 각 실행 축의 역할을 살펴보세요.',
+        labels: ['01 법적 권리구제', '02 단체교섭 견인', '03 차별 합의 감시'],
         zones: [
           '01 법적·제도적 권리구제: 근로기준법·기간제법·노조법 위반 사안을 노동위원회·노동청에 직접 신청했습니다.',
           '02 차별 시정 교섭 견인: 수당·복지·병가·성과급 판정으로 교섭대표노조와 사측의 처우 개선 합의를 이끌었습니다.',
@@ -1442,7 +1444,8 @@ function buildTheaterScenes(
       svgHtml: svgScene09Workplace(),
       sourceHtml: renderChapterSourceHtml(ch7, env),
       focusHint: {
-        defaultText: '도면의 4개 현장 개선 구역을 클릭해 세부 내용을 확인하세요.',
+        defaultText: '아래 버튼이나 도면의 4개 현장 개선 구역을 눌러 세부 내용을 확인하세요.',
+        labels: ['7.1 기계 중단', '7.2 연차 저지', '7.3 분진 코팅', '7.4 냉방 덕트'],
         zones: [
           '7.1 기계 가동 중단: 오후 7시 이후 교대 휴게 관행을 폐지하고 전 사업소 동시 휴식을 정착시켰습니다.',
           '7.2 불법 연차 금지 저지: 2026.07.30 일방 통보를 다음 날 성명으로 반박해 노동자의 정당한 휴식권을 지켰습니다.',
@@ -1770,7 +1773,15 @@ export function buildUnionAboutHtml(
         )
         .join('');
       const focusBannerHtml = scene.focusHint
-        ? `<div class="about-focus-banner" data-focus-caption data-zones="${escapeAttr(JSON.stringify(scene.focusHint.zones))}">${escapeHtml(scene.focusHint.defaultText)}</div>`
+        ? `<div class="about-focus-controls no-print" role="group" aria-label="도면 핵심 구역 선택">
+            ${scene.focusHint.labels
+              .map(
+                (label, zIdx) =>
+                  `<button type="button" class="about-focus-pill" data-focus-trigger="${zIdx}" aria-pressed="${zIdx === 0 ? 'true' : 'false'}">${escapeHtml(label)}</button>`,
+              )
+              .join('')}
+          </div>
+          <div class="about-focus-banner" data-focus-caption data-zones="${escapeAttr(JSON.stringify(scene.focusHint.zones))}">${escapeHtml(scene.focusHint.defaultText)}</div>`
         : '';
 
       const navFooterHtml = scene.isFinale
@@ -1781,14 +1792,16 @@ export function buildUnionAboutHtml(
               <button type="button" class="btn secondary" data-inline-action="copy-link">링크 복사</button>
               <span class="history-inline-status" data-inline-status role="status" aria-live="polite" aria-atomic="true"></span>
             </div>
-            <p class="about-shortcut-hint">← → 장면 이동 · R 다시 보기 · Space 일시정지</p>
+            <p class="about-shortcut-hint about-shortcut-hint--keyboard">← → 장면 이동 · R 다시 보기 · Space 일시정지</p>
+            <p class="about-shortcut-hint about-shortcut-hint--touch">좌우로 밀거나 하단 버튼으로 장면을 넘기세요</p>
           </div>`
         : `<div class="about-card-nav no-print">
             <div class="about-card-nav-btns">
               <button type="button" class="btn secondary about-nav-prev" data-deck-prev${idx === 0 ? ' disabled' : ''}>← 이전</button>
               <button type="button" class="btn about-nav-next" data-deck-next>다음: ${escapeHtml(nextScene?.stepperLabel ?? '')} →</button>
             </div>
-            <p class="about-shortcut-hint">← → 장면 이동 · R 다시 보기 · Space 일시정지</p>
+            <p class="about-shortcut-hint about-shortcut-hint--keyboard">← → 장면 이동 · R 다시 보기 · Space 일시정지</p>
+            <p class="about-shortcut-hint about-shortcut-hint--touch">좌우로 밀거나 하단 버튼으로 장면을 넘기세요</p>
           </div>`;
 
       return `<section class="about-scene" id="scene-${escapeAttr(scene.slug)}" data-scene-index="${idx}" data-scene-slug="${escapeAttr(scene.slug)}" data-act-index="${scene.actIndex}" data-legacy-ids="${escapeAttr(scene.legacyIds.join(','))}" role="tabpanel" aria-labelledby="about-step-${idx}"${hiddenAttr}>
@@ -1800,9 +1813,10 @@ export function buildUnionAboutHtml(
                 <div class="about-stage-controls no-print">
                   <button type="button" class="about-hud-btn" data-deck-replay title="애니메이션 다시 보기 (R)">다시 보기</button>
                   <button type="button" class="about-hud-btn" data-deck-pause title="애니메이션 일시정지/재생 (Space)">일시정지</button>
+                  <button type="button" class="about-hud-btn about-zoom-btn" data-deck-zoom aria-pressed="false" title="도면 확대·화면 맞춤 전환">확대</button>
                 </div>
               </div>
-              <div class="about-stage-diagram">
+              <div class="about-stage-diagram" role="region" aria-label="${escapeAttr(`${scene.stepperLabel} 도면`)}" tabindex="0">
                 ${scene.svgHtml}
               </div>
               ${focusBannerHtml}
@@ -1897,6 +1911,15 @@ export function buildUnionAboutHtml(
           ${stepperHtml}
         </div>
       </nav>
+
+      <div class="about-mobile-dock no-print" role="region" aria-label="모바일 장면 이동">
+        <button type="button" class="btn secondary about-dock-btn" data-deck-prev disabled aria-label="이전 장면">← 이전</button>
+        <button type="button" class="about-dock-status" data-deck-open-stepper aria-label="전체 12개 장면 목록으로 이동">
+          <span class="about-dock-count" data-dock-count>1 / ${totalScenes}</span>
+          <span class="about-dock-label" data-dock-label>${escapeHtml(scenes[0]?.stepperLabel ?? '')}</span>
+        </button>
+        <button type="button" class="btn about-dock-btn about-dock-next" data-deck-next aria-label="다음 장면">다음 →</button>
+      </div>
     </div>
 
     ${fullArticleHtml}

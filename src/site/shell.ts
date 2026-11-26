@@ -227,7 +227,7 @@ export function renderPageShell(opts: RenderShellOptions): string {
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   ${FOUC_THEME_SCRIPT}
   <title>${escapeHtml(opts.title)} — 우체국물류지원단 물류노동조합</title>

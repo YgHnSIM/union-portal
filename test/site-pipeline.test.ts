@@ -525,11 +525,18 @@ test('buildSite, validateSite(--ci), 프라이버시 누출 차단 및 generateR
     const unionAboutPath = path.join(siteDir, 'union', 'about.html');
     const unionAboutHtml = await fs.readFile(unionAboutPath, 'utf8');
     assert.match(unionAboutHtml, /data-about-deck/);
+    assert.match(unionAboutHtml, /viewport-fit=cover/);
     assert.match(unionAboutHtml, /about-deck\.js/);
     assert.match(unionAboutHtml, /data-scene-slug="why"/);
     assert.match(unionAboutHtml, /data-scene-slug="together"/);
     assert.match(unionAboutHtml, /data-deck-replay/);
     assert.match(unionAboutHtml, /data-deck-pause/);
+    assert.match(unionAboutHtml, /data-deck-zoom/);
+    assert.match(unionAboutHtml, /about-stage-diagram" role="region" aria-label="[^"]+" tabindex="0"/);
+    assert.match(unionAboutHtml, /about-focus-controls/);
+    assert.match(unionAboutHtml, /data-focus-trigger="0"/);
+    assert.match(unionAboutHtml, /about-mobile-dock/);
+    assert.match(unionAboutHtml, /data-deck-open-stepper/);
     assert.match(unionAboutHtml, /about-stepper/);
     assert.match(unionAboutHtml, /about-diff-list/);
     assert.match(unionAboutHtml, /about-source-details/);

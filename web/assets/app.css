@@ -3618,8 +3618,25 @@
     border-block-end: var(--rule-hair) solid var(--color-rule);
     overflow-x: auto;
     scroll-snap-type: inline proximity;
+    scroll-padding-inline: 1.75rem;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .section-subnav {
+      --fade-size: 1.75rem;
+      --fade-dir: right;
+      --fade-start-pos: 0;
+      --fade-end-pos: 100%;
+      mask:
+        linear-gradient(black, black) no-clip subtract,
+        linear-gradient(to var(--fade-dir), black, transparent) var(--fade-start-pos) 0 / var(--fade-start) 100% no-repeat no-clip,
+        linear-gradient(to var(--fade-dir), transparent, black) var(--fade-end-pos) 0 / var(--fade-end) 100% no-repeat no-clip;
+      animation: reveal-fade-start linear both, hide-fade-end linear both;
+      animation-timeline: scroll(self inline);
+      animation-range: 0 var(--fade-size), calc(100% - var(--fade-size)) 100%;
+    }
   }
 
   .section-subnav::-webkit-scrollbar {
@@ -3631,7 +3648,7 @@
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
-    min-block-size: 36px;
+    min-block-size: max(36px, var(--target-size));
     padding-block: 0.3rem;
     padding-inline: 0.85rem;
     border: var(--rule-hair) solid var(--color-rule);
@@ -3643,6 +3660,7 @@
     text-decoration: none;
     white-space: nowrap;
     scroll-snap-align: start;
+    touch-action: manipulation;
   }
 
   .section-subnav a:hover,
@@ -4911,8 +4929,8 @@
 
   .document-tools-trigger {
     position: fixed;
-    right: 20px;
-    bottom: 20px;
+    right: max(16px, env(safe-area-inset-right, 0px));
+    bottom: max(16px, env(safe-area-inset-bottom, 0px));
     z-index: 40;
     min-block-size: 44px;
     min-inline-size: 104px;
@@ -4925,6 +4943,7 @@
     font-size: 0.85rem;
     font-weight: 700;
     cursor: pointer;
+    touch-action: manipulation;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
   }
 
@@ -4936,16 +4955,17 @@
 
   .document-tools-panel {
     position: fixed;
-    right: 20px;
-    bottom: 74px;
+    right: max(12px, env(safe-area-inset-right, 0px));
+    bottom: calc(70px + env(safe-area-inset-bottom, 0px));
     z-index: 42;
-    width: min(340px, calc(100vw - 24px));
+    width: min(340px, calc(100dvw - 24px));
+    max-block-size: calc(100dvh - 6rem);
+    overflow-y: auto;
     background-color: var(--color-sheet);
     color: var(--color-ink);
     border: var(--rule-hair) solid var(--color-rule-strong);
     border-radius: var(--radius-sheet);
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
-    overflow: hidden;
   }
 
   .document-tools-panel-header {
@@ -4962,7 +4982,7 @@
   }
 
   .document-tools-panel button {
-    min-block-size: 42px;
+    min-block-size: max(42px, var(--target-size));
     border: 0;
     background-color: var(--color-sheet);
     color: var(--color-ink);
@@ -4971,6 +4991,7 @@
     font-weight: 700;
     padding: 0.45rem 0.65rem;
     cursor: pointer;
+    touch-action: manipulation;
   }
 
   .document-tools-panel button:hover:not(:disabled) {
@@ -7994,6 +8015,7 @@
     }
 
     .frontpage-union-strip,
+    .frontpage-union-strip--3,
     .archive-older-document-list,
     .bylaws-callout-grid,
     .bylaws-dual-panel,

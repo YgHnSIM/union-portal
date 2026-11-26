@@ -10,9 +10,15 @@
   const nextButtons = Array.from(deck.querySelectorAll('[data-deck-next]'));
   const replayButtons = Array.from(deck.querySelectorAll('[data-deck-replay]'));
   const pauseButtons = Array.from(deck.querySelectorAll('[data-deck-pause]'));
+  const deckBar = deck.querySelector('.about-deck-bar');
+  const actTabsTrack = deck.querySelector('.about-deck-tabs');
+  const stepperEl = deck.querySelector('.about-stepper');
+  const stepperTrack = deck.querySelector('.about-stepper-track');
   const progressTrack = deck.querySelector('.about-deck-progress-track');
   const progressFill = deck.querySelector('.about-deck-progress-fill');
   const posEl = deck.querySelector('[data-deck-position]');
+  const dockCountEl = deck.querySelector('[data-dock-count]');
+  const dockLabelEl = deck.querySelector('[data-dock-label]');
   const theaterShell = deck.querySelector('.about-theater-shell');
   const fullArticle = deck.querySelector('.about-full-article');
 
@@ -28,6 +34,8 @@
       .map((s) => s.trim())
       .filter(Boolean),
     canvas: el.querySelector('.about-stage-canvas'),
+    diagram: el.querySelector('.about-stage-diagram'),
+    zoomBtn: el.querySelector('[data-deck-zoom]'),
     stepBtn: sceneTabs[idx] || null,
   }));
 
@@ -39,6 +47,28 @@
 
   const prefersReducedMotion = () =>
     window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function centerChildInTrack(track, child) {
+    if (!track || !child) return;
+    const targetLeft = child.offsetLeft - track.clientWidth / 2 + child.offsetWidth / 2;
+    track.scrollTo({
+      left: Math.max(0, targetLeft),
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+    });
+  }
+
+  function resetDiagramZoom(sceneIdx) {
+    const sm = sceneModels[sceneIdx];
+    if (!sm) return;
+    if (sm.diagram) {
+      sm.diagram.classList.remove('is-zoomed');
+      sm.diagram.scrollLeft = 0;
+    }
+    if (sm.zoomBtn) {
+      sm.zoomBtn.setAttribute('aria-pressed', 'false');
+      sm.zoomBtn.textContent = '확대';
+    }
+  }
 
   function parseHashTarget() {
     const raw = (window.location.hash || '').replace(/^#/, '');
@@ -151,6 +181,13 @@
     if (posEl) {
       posEl.textContent = `${activeIdx + 1} / ${total}`;
     }
+    if (dockCountEl) {
+      dockCountEl.textContent = `${activeIdx + 1} / ${total}`;
+    }
+    if (dockLabelEl) {
+      const labelNode = activeModel?.stepBtn?.querySelector('.about-step-label');
+      dockLabelEl.textContent = labelNode?.textContent || '';
+    }
 
     actTabs.forEach((tab) => {
       const isAct = Number(tab.dataset.actTab) === activeAct;
@@ -181,18 +218,9 @@
       btn.disabled = activeIdx >= total - 1;
     });
 
-    const activeStepBtn = activeModel && activeModel.stepBtn;
-    const stepperTrack = deck.querySelector('.about-stepper-track');
-    if (activeStepBtn && stepperTrack) {
-      const targetLeft =
-        activeStepBtn.offsetLeft -
-        stepperTrack.clientWidth / 2 +
-        activeStepBtn.offsetWidth / 2;
-      stepperTrack.scrollTo({
-        left: Math.max(0, targetLeft),
-        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-      });
-    }
+    const activeActTab = actTabs.find((t) => Number(t.dataset.actTab) === activeAct) || null;
+    centerChildInTrack(actTabsTrack, activeActTab);
+    centerChildInTrack(stepperTrack, activeModel && activeModel.stepBtn);
   }
 
   function replayCanvas(sceneIdx) {
@@ -206,6 +234,22 @@
     sm.canvas.classList.remove('is-animating');
     void sm.canvas.offsetWidth;
     sm.canvas.classList.add('is-animating');
+  }
+
+  function syncMobileViewportScroll(opts) {
+    if (opts && opts.scrollToStage === false) return;
+    if (!window.matchMedia || !window.matchMedia('(max-width: 768px)').matches) return;
+    if (!deckBar) return;
+    const header = document.querySelector('.site-header');
+    const headerH = header ? header.getBoundingClientRect().height : 56;
+    const rect = deckBar.getBoundingClientRect();
+    if (rect.top < headerH - 4 || rect.top > headerH + 140) {
+      const targetY = Math.max(0, window.scrollY + rect.top - headerH - 8);
+      window.scrollTo({
+        top: targetY,
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+      });
+    }
   }
 
   function goToScene(targetIdx, opts) {
@@ -222,8 +266,10 @@
     }
 
     const commit = () => {
+      resetDiagramZoom(activeIdx);
       applyDeckDomState();
       replayCanvas(activeIdx);
+      syncMobileViewportScroll(options);
     };
 
     if (
@@ -261,14 +307,18 @@
     }
   }
 
-  // Interactive SVG focus zones (Scene 2 & Scene 9)
-  function activateFocusZone(zoneEl) {
-    const canvas = zoneEl.closest('.about-stage-canvas');
+  // Interactive SVG focus zones & mobile trigger pills (Scene 2 & Scene 9)
+  function activateFocusZone(canvas, idxStr) {
     if (!canvas) return;
-    const idxStr = zoneEl.getAttribute('data-focus-zone') || '0';
     canvas.dataset.focusActive = idxStr;
     canvas.querySelectorAll('[data-focus-zone]').forEach((z) => {
-      z.classList.toggle('is-focused', z === zoneEl);
+      z.classList.toggle('is-focused', (z.getAttribute('data-focus-zone') || '0') === idxStr);
+    });
+    canvas.querySelectorAll('[data-focus-trigger]').forEach((btn) => {
+      btn.setAttribute(
+        'aria-pressed',
+        (btn.getAttribute('data-focus-trigger') || '0') === idxStr ? 'true' : 'false',
+      );
     });
     const captionEl = canvas.querySelector('[data-focus-caption]');
     if (captionEl) {
@@ -286,9 +336,50 @@
     const target = e.target;
     if (!(target instanceof Element)) return;
 
+    const triggerBtn = target.closest('[data-focus-trigger]');
+    if (triggerBtn) {
+      activateFocusZone(
+        triggerBtn.closest('.about-stage-canvas'),
+        triggerBtn.getAttribute('data-focus-trigger') || '0',
+      );
+      return;
+    }
+
     const zone = target.closest('[data-focus-zone]');
     if (zone) {
-      activateFocusZone(zone);
+      activateFocusZone(
+        zone.closest('.about-stage-canvas'),
+        zone.getAttribute('data-focus-zone') || '0',
+      );
+      return;
+    }
+
+    const zoomBtn = target.closest('[data-deck-zoom]');
+    if (zoomBtn) {
+      const canvas = zoomBtn.closest('.about-stage-canvas');
+      const diagram = canvas && canvas.querySelector('.about-stage-diagram');
+      if (diagram) {
+        const zoomed = diagram.classList.toggle('is-zoomed');
+        zoomBtn.setAttribute('aria-pressed', zoomed ? 'true' : 'false');
+        zoomBtn.textContent = zoomed ? '맞춤' : '확대';
+        if (!zoomed) {
+          diagram.scrollLeft = 0;
+        }
+      }
+      return;
+    }
+
+    if (target.closest('[data-deck-open-stepper]')) {
+      if (stepperEl) {
+        stepperEl.scrollIntoView({
+          block: 'center',
+          behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+        });
+      }
+      const activeStep = sceneModels[activeIdx] && sceneModels[activeIdx].stepBtn;
+      if (activeStep) {
+        activeStep.focus({ preventScroll: true });
+      }
       return;
     }
 
@@ -340,7 +431,10 @@
     const zone = target.closest('[data-focus-zone]');
     if (zone && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();
-      activateFocusZone(zone);
+      activateFocusZone(
+        zone.closest('.about-stage-canvas'),
+        zone.getAttribute('data-focus-zone') || '0',
+      );
     }
   });
 
@@ -435,7 +529,14 @@
       (e) => {
         if (currentView !== 'deck' || e.changedTouches.length !== 1) return;
         const target = e.target;
-        if (target instanceof Element && target.closest('.about-stepper-track')) return;
+        if (
+          target instanceof Element &&
+          target.closest(
+            '.about-stepper-track, .about-stage-diagram.is-zoomed, .about-source-body, .about-focus-controls',
+          )
+        ) {
+          return;
+        }
         const dx = e.changedTouches[0].clientX - touchStartX;
         const dy = e.changedTouches[0].clientY - touchStartY;
         if (Math.abs(dx) >= 54 && Math.abs(dx) > Math.abs(dy) * 1.5) {
@@ -453,8 +554,35 @@
       if (!sceneEl) return;
       const idx = Number(sceneEl.dataset.sceneIndex);
       if (Number.isFinite(idx)) {
-        goToScene(idx, { animate: false });
+        goToScene(idx, { animate: false, scrollToStage: false });
       }
+    });
+  }
+
+  // Fallback edge-fade state for horizontal scrollers when scroll-driven animations are unsupported
+  if (
+    typeof CSS !== 'undefined' &&
+    typeof CSS.supports === 'function' &&
+    !CSS.supports('animation-timeline', 'scroll()') &&
+    typeof IntersectionObserver === 'function'
+  ) {
+    [actTabsTrack, stepperTrack].forEach((scroller) => {
+      if (!scroller || !scroller.firstElementChild || !scroller.lastElementChild) return;
+      const first = scroller.firstElementChild;
+      const last = scroller.lastElementChild;
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            scroller.classList.toggle(
+              entry.target === first ? 'more-start' : 'more-end',
+              entry.intersectionRatio < 1,
+            );
+          });
+        },
+        { root: scroller, threshold: 1, rootMargin: '1px' },
+      );
+      observer.observe(first);
+      observer.observe(last);
     });
   }
 
@@ -470,6 +598,7 @@
       animate: true,
       updateUrl: false,
       force: true,
+      scrollToStage: false,
     });
   });
 
