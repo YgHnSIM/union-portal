@@ -631,7 +631,7 @@ export function renderHistoryFeaturePage(params: {
             <span>서서울·부평·안양 지회 설립 및 단위 노조 출범</span>
           </div>
           <div class="history-impact-cell" data-tone="win">
-            <strong>115명 · 100여 명</strong>
+            <strong>115명 · 100여&nbsp;명</strong>
             <span>기간제 노동자 전원 계약 연장 및 공무직 전환</span>
           </div>
           <div class="history-impact-cell" data-tone="solidarity">
