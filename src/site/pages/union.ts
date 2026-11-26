@@ -3,7 +3,10 @@ import {
   type OrgSummaryJson,
   type PublicOfficialsJson,
 } from '../../domain/public-projection.js';
-import type { DocumentRecordV3 } from '../../domain/types.js';
+import {
+  type UnionAboutDocument,
+  buildUnionAboutHtml,
+} from '../history-renderer.js';
 import {
   type BylawsDocument,
   buildBylawsFullHtml,
@@ -40,7 +43,7 @@ export function buildUnionPages(
   currentYm: string,
   assets: AssetManifest,
   baseUrl: string,
-  historyDoc: DocumentRecordV3 | null = null,
+  aboutDoc: UnionAboutDocument | null = null,
 ): number {
   let pages = 0;
   const route = 'union/index.html';
@@ -155,7 +158,7 @@ export function buildUnionPages(
   </section>`
     : '';
 
-  const historyFeatureHtml = historyDoc
+  const historyFeatureHtml = aboutDoc
     ? `
   <section class="section-band" aria-labelledby="sec-union-history">
     <div class="union-history-feature">
@@ -164,11 +167,11 @@ export function buildUnionPages(
         <span class="union-history-years">2017-2026</span>
       </div>
       <div class="union-history-copy">
-        <h2 id="sec-union-history">${escapeHtml(historyDoc.title)}</h2>
-        <p>${escapeHtml(historyDoc.summary)}</p>
+        <h2 id="sec-union-history">${escapeHtml(aboutDoc.meta.title)}</h2>
+        <p>${escapeHtml(aboutDoc.meta.summary)}</p>
       </div>
       <div class="portal-actions">
-        <a class="btn" href="${escapeAttr(`${prefix}${historyDoc.route}`)}">9년의 기록 읽기 →</a>
+        <a class="btn" href="about.html">조합 소개 읽기 →</a>
       </div>
     </div>
   </section>`
@@ -178,7 +181,7 @@ export function buildUnionPages(
   <header class="page-masthead">
     <div>
       <h1>노동조합 조직 및 임원 현황</h1>
-      <p class="lead">지부별 조합원 현황과 현 임기 임원, 조합 규약 안내입니다.</p>
+      <p class="lead">지부별 조합원 현황과 현 임기 임원, 조합 소개 및 규약 안내입니다.</p>
     </div>
     <div class="masthead-meta">
       <span class="data-stamp">기준월 ${escapeHtml(currentYm)}</span>
@@ -215,17 +218,26 @@ export function buildUnionPages(
     route,
     renderPageShell({
       title: '조합 조직·임원 현황',
-      description: '우체국물류지원단 물류노동조합 지부별 조합원 통계, 현 임기 임원 및 규약 안내',
+      description: '우체국물류지원단 물류노동조합 지부별 조합원 통계, 현 임기 임원, 조합 소개 및 규약 안내',
       activeNav: 'union',
       route,
       prefix,
       baseUrl,
       assets,
-      subnavHtml: bylawsDoc ? renderUnionSubnav('', 'org') : undefined,
+      subnavHtml: aboutDoc || bylawsDoc ? renderUnionSubnav('', 'org') : undefined,
       bodyHtml,
     }),
   );
   pages += 1;
+
+  if (aboutDoc) {
+    writeOutFile(
+      outDir,
+      'union/about.html',
+      buildUnionAboutHtml(aboutDoc, assets, baseUrl),
+    );
+    pages += 1;
+  }
 
   if (bylawsDoc) {
     writeOutFile(

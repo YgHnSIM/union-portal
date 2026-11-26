@@ -8,7 +8,7 @@ export const SITE_BASE_URL = 'https://yghnsim.github.io/union-portal';
 
 export type TopAxis = 'home' | 'archive' | 'accounting' | 'union';
 export type AccountingSection = 'dashboard' | 'ledger' | 'coa' | 'reports';
-export type UnionSection = 'org' | 'bylaws-guide' | 'bylaws';
+export type UnionSection = 'org' | 'about' | 'bylaws-guide' | 'bylaws';
 
 export interface AssetManifest {
   hashes: Map<string, string>;
@@ -349,6 +349,7 @@ export function renderUnionSubnav(
 ): string {
   const items: Array<{ key: UnionSection; label: string; href: string }> = [
     { key: 'org', label: '조직·임원 현황', href: `${prefixToUnion}index.html` },
+    { key: 'about', label: '조합 소개', href: `${prefixToUnion}about.html` },
     { key: 'bylaws-guide', label: '규약 한눈에 보기', href: `${prefixToUnion}bylaws-guide.html` },
     { key: 'bylaws', label: '규약 전문', href: `${prefixToUnion}bylaws.html` },
   ];

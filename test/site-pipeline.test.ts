@@ -505,10 +505,40 @@ test('buildSite, validateSite(--ci), 프라이버시 누출 차단 및 generateR
     const unionHtml = await fs.readFile(unionPath, 'utf8');
     assert.match(unionHtml, /홍길동/);
     assert.match(unionHtml, /안양지부/);
+    assert.match(unionHtml, /about\.html/);
     assert.match(unionHtml, /bylaws-guide\.html/);
     assert.match(unionHtml, /bylaws\.html/);
     assert.ok(!unionHtml.includes('이영희'));
     assert.ok(!unionHtml.includes('<span class="doc-cat-badge">HQ</span>'));
+
+    // Portal home 3-column union strip links to union/about.html
+    const homeHtml = await fs.readFile(path.join(siteDir, 'index.html'), 'utf8');
+    assert.match(homeHtml, /frontpage-union-strip--3/);
+    assert.match(homeHtml, /union\/about\.html/);
+
+    // Legacy archive notice path must not exist
+    await assert.rejects(() =>
+      fs.stat(path.join(siteDir, 'archive', 'notice', 'logistics-union-9-years.html')),
+    );
+
+    // /union/about.html is built as a 5-Act 12-Scene interactive theater, indexed in sitemap, and excludes archive colophon/related docs
+    const unionAboutPath = path.join(siteDir, 'union', 'about.html');
+    const unionAboutHtml = await fs.readFile(unionAboutPath, 'utf8');
+    assert.match(unionAboutHtml, /data-about-deck/);
+    assert.match(unionAboutHtml, /about-deck\.js/);
+    assert.match(unionAboutHtml, /data-scene-slug="why"/);
+    assert.match(unionAboutHtml, /data-scene-slug="together"/);
+    assert.match(unionAboutHtml, /data-deck-replay/);
+    assert.match(unionAboutHtml, /data-deck-pause/);
+    assert.match(unionAboutHtml, /about-stepper/);
+    assert.match(unionAboutHtml, /about-diff-list/);
+    assert.match(unionAboutHtml, /about-source-details/);
+    assert.match(unionAboutHtml, /about-full-article/);
+    assert.match(unionAboutHtml, /조합 안내/);
+    assert.match(unionAboutHtml, /history-trust-hub/);
+    assert.ok(!unionAboutHtml.includes('history-colophon'));
+    assert.ok(!unionAboutHtml.includes('related-documents'));
+    assert.ok(sitemap.includes('union/about.html'));
 
     // /union/bylaws-guide.html & /union/bylaws.html are built and indexed in sitemap
     const bylawsGuidePath = path.join(siteDir, 'union', 'bylaws-guide.html');
@@ -521,6 +551,8 @@ test('buildSite, validateSite(--ci), 프라이버시 누출 차단 및 generateR
     const bylawsLawHtml = await fs.readFile(bylawsLawPath, 'utf8');
     const bylawsRevDiffHtml = await fs.readFile(bylawsRevDiffPath, 'utf8');
     const bylawsRevFullHtml = await fs.readFile(bylawsRevFullPath, 'utf8');
+    assert.match(bylawsGuideHtml, /about\.html/);
+    assert.match(bylawsFullHtml, /about\.html/);
     assert.match(bylawsGuideHtml, /노동조합 규약 한눈에 보기/);
     assert.match(bylawsFullHtml, /id="art-37-2"/);
     assert.match(bylawsLawHtml, /noindex,follow/);
@@ -626,6 +658,22 @@ test('buildSite, validateSite(--ci), 프라이버시 누출 차단 및 generateR
       ),
     );
     await fs.writeFile(bylawsRevFullPath, bylawsRevFullHtml, 'utf8');
+
+    // Inject personal name into /union/about.html -> MUST fail CI check (strict Zero-PII)
+    await fs.writeFile(
+      unionAboutPath,
+      unionAboutHtml.replace('</main>', '<p>홍길동</p></main>'),
+      'utf8',
+    );
+    const ciFailAbout = await validateSite({
+      projectRoot: tmpDir,
+      ci: true,
+      salt: TEST_SALT,
+      currentYm: '2026-05',
+    });
+    assert.equal(ciFailAbout.ok, false);
+    assert.ok(ciFailAbout.errors.some((e) => e.includes('union/about.html') && e.includes('홍*동')));
+    await fs.writeFile(unionAboutPath, unionAboutHtml, 'utf8');
 
     // Inject personal name into /union/bylaws.html -> MUST fail CI check (strict Zero-PII)
     await fs.writeFile(

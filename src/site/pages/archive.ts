@@ -18,7 +18,6 @@ import type {
   DocumentRecordV3,
   LedgerEntry,
 } from '../../domain/types.js';
-import { renderHistoryFeaturePage } from '../history-renderer.js';
 import { findMarkdownSyntaxResidues, renderMomMarkdown, type TocItem } from '../mom-renderer.js';
 import {
   type AssetManifest,
@@ -671,36 +670,6 @@ export function buildArchiveDetailPages(
         );
       }
 
-      if (doc.id === 'notice:logistics-union-9-years') {
-        const bodyHtml = renderHistoryFeaturePage({
-          markdown: rawSource,
-          doc,
-          graph,
-          prefix,
-          linkedLedgerHtml,
-          relatedHtml,
-        });
-        const htmlOut = renderPageShell({
-          title: doc.title,
-          description: doc.summary,
-          activeNav: 'archive',
-          route: doc.route,
-          prefix,
-          baseUrl,
-          assets,
-          robots,
-          ogType: 'article',
-          publishedTime: doc.dates.publishedOn,
-          modifiedTime: doc.dates.modifiedOn,
-          keywords: topicLabels,
-          extraHeadHtml: `<link rel="stylesheet" href="${escapeAttr(assetHref(prefix, 'history.css', assets))}">`,
-          bodyHtml,
-          extraScriptsHtml: `<script src="${escapeAttr(assetHref(prefix, 'document-tools.js', assets))}" defer></script>`,
-        });
-        writeOutFile(outDir, doc.route, htmlOut);
-        continue;
-      }
-
       const parsed = renderMomMarkdown(rawSource, doc.title);
       const catLabel = CATEGORY_BY_ID.get(doc.category)?.label ?? doc.category;
       const catDir = CATEGORY_BY_ID.get(doc.category)?.directory ?? `archive/${doc.category}`;
@@ -769,12 +738,10 @@ export function buildArchiveDetailPages(
     const idAttr = origId ? ` id="${escapeAttr(origId)}"` : '';
     const skipAutoToc = mainEl.attrs.find((a) => a.name === 'data-skip-auto-toc')?.value;
     const skipAutoTocAttr = skipAutoToc ? ` data-skip-auto-toc="${escapeAttr(skipAutoToc)}"` : '';
-    const isHistoryFeature = origClasses.includes('history-feature');
     const usesLightWrapper =
-      !isHistoryFeature &&
-      (inlineStyles.length > 0 ||
-        origClasses.includes('archive-container') ||
-        origClasses.includes('history-container'));
+      inlineStyles.length > 0 ||
+      origClasses.includes('archive-container') ||
+      origClasses.includes('history-container');
     const articleClasses = usesLightWrapper
       ? `${origClasses} print-light-surface`
       : origClasses;
@@ -796,14 +763,7 @@ export function buildArchiveDetailPages(
       .filter(Boolean)
       .join('\n');
 
-    const extraHeadHtml = [
-      inlineStyles,
-      isHistoryFeature
-        ? `<link rel="stylesheet" href="${escapeAttr(assetHref(prefix, 'history.css', assets))}">`
-        : '',
-    ]
-      .filter(Boolean)
-      .join('\n');
+    const extraHeadHtml = inlineStyles;
 
     const htmlOut = renderPageShell({
       title: doc.title,

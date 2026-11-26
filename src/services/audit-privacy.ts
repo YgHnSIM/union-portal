@@ -185,6 +185,7 @@ export async function runPrivacyAudit(options: {
   // 4. Audit union bylaws & revision sources strictly (zero PII allowed)
   const zeroOfficialBundle = { ...bundle, roles: [] };
   const unionZeroPiiFiles: Array<{ rel: string; docId: string; visibility: string }> = [
+    { rel: '_source/union/about.md', docId: 'union:about', visibility: 'public' },
     { rel: '_source/union/bylaws.md', docId: 'union:bylaws', visibility: 'public' },
     { rel: '_source/union/bylaws-law.json', docId: 'union:bylaws-law', visibility: 'unlisted' },
     {

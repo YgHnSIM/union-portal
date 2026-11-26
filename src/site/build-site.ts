@@ -14,6 +14,7 @@ import { loadContentGraph } from '../storage/content-source.js';
 import { loadBylawsDocument } from './bylaws.js';
 import { loadBylawsLawDocument } from './bylaws-law.js';
 import { loadBylawsRevisionDocument } from './bylaws-revision.js';
+import { loadUnionAboutDocument } from './history-renderer.js';
 import { buildAccountingPages } from './pages/accounting.js';
 import { buildArchiveDetailPages, buildArchiveIndexPages } from './pages/archive.js';
 import { buildPortalHomeHtml } from './pages/home.js';
@@ -55,6 +56,7 @@ function buildSitemapXml(
   months: string[],
   years: number[],
   hasBylaws: boolean,
+  hasAbout: boolean,
 ): void {
   const routes = [
     'index.html',
@@ -68,6 +70,7 @@ function buildSitemapXml(
     ...months.map((m) => `accounting/reports/monthly/${m}.html`),
     ...years.map((y) => `accounting/reports/annual/${y}.html`),
     'union/index.html',
+    ...(hasAbout ? ['union/about.html'] : []),
     ...(hasBylaws ? ['union/bylaws-guide.html', 'union/bylaws.html'] : []),
   ];
 
@@ -145,6 +148,7 @@ export async function buildSite(options: BuildSiteOptions): Promise<BuildSiteRes
     linksByDoc.set(doc.id, arr);
   }
 
+  const aboutDoc = loadUnionAboutDocument(projectRoot);
   const bylawsDoc = loadBylawsDocument(projectRoot);
   const bylawsLawDoc = loadBylawsLawDocument(projectRoot);
   const bylawsRevisionDoc = loadBylawsRevisionDocument(projectRoot);
@@ -160,6 +164,7 @@ export async function buildSite(options: BuildSiteOptions): Promise<BuildSiteRes
       orgSummary,
       linksByDoc,
       Boolean(bylawsDoc),
+      Boolean(aboutDoc),
       assets,
       baseUrl,
     ),
@@ -193,11 +198,7 @@ export async function buildSite(options: BuildSiteOptions): Promise<BuildSiteRes
     baseUrl,
   );
 
-  const historyDoc = graph.documentsById.get('notice:logistics-union-9-years');
-  const publicHistoryDoc =
-    historyDoc && historyDoc.workflow.visibility === 'public' ? historyDoc : null;
-
-  // 4. Union Pages (Organization + Bylaws Guide + Bylaws Full Text + Unlisted Review Suite)
+  // 4. Union Pages (Organization + About + Bylaws Guide + Bylaws Full Text + Unlisted Review Suite)
   const unionPages = buildUnionPages(
     outDir,
     orgSummary,
@@ -208,7 +209,7 @@ export async function buildSite(options: BuildSiteOptions): Promise<BuildSiteRes
     currentYm,
     assets,
     baseUrl,
-    publicHistoryDoc,
+    aboutDoc,
   );
 
   // 5. Meta files (.nojekyll, robots.txt, sitemap.xml)
@@ -220,7 +221,15 @@ export async function buildSite(options: BuildSiteOptions): Promise<BuildSiteRes
     'robots.txt',
     `User-agent: *\nAllow: /\nSitemap: ${baseUrl}/sitemap.xml\n`,
   );
-  buildSitemapXml(outDir, baseUrl, graph.listedDocuments, months, years, Boolean(bylawsDoc));
+  buildSitemapXml(
+    outDir,
+    baseUrl,
+    graph.listedDocuments,
+    months,
+    years,
+    Boolean(bylawsDoc),
+    Boolean(aboutDoc),
+  );
 
   const pagesWritten =
     1 +

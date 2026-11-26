@@ -110,6 +110,13 @@
     return document.querySelector('.document-article');
   }
 
+  function extractDeckText(body) {
+    const clone = body.cloneNode(true);
+    clone.querySelectorAll('.no-print, svg').forEach((el) => el.remove());
+    clone.querySelectorAll('[hidden]').forEach((el) => el.removeAttribute('hidden'));
+    return normalizeText(clone.textContent || '');
+  }
+
   function copyDocumentText() {
     const article = documentArticle();
     if (!article) {
@@ -119,7 +126,10 @@
     const category = article.dataset.documentCategory || '문서';
     const title = normalizeText(article.querySelector('h1') && article.querySelector('h1').innerText);
     const body = article.querySelector('[data-copy-body]') || article;
-    const text = [`[${category}]`, title, normalizeText(body.innerText)].filter(Boolean).join('\n\n');
+    const rawBodyText = article.hasAttribute('data-about-deck')
+      ? extractDeckText(body)
+      : normalizeText(body.innerText);
+    const text = [`[${category}]`, title, rawBodyText].filter(Boolean).join('\n\n');
     copyText(text, '본문을 클립보드에 복사했습니다.', '복사하지 못했습니다. 내용을 직접 선택해 복사해주세요.');
   }
 

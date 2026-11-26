@@ -4051,6 +4051,10 @@
     border: var(--rule-hair) solid var(--color-rule);
   }
 
+  .frontpage-union-strip--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .frontpage-union-cell {
     background-color: var(--color-sheet);
     padding: 1.2rem 1.35rem;

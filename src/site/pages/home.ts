@@ -22,6 +22,7 @@ export function buildPortalHomeHtml(
   orgSummary: OrgSummaryJson,
   linksByDoc: Map<string, PublicLinkEntry[]>,
   hasBylaws: boolean,
+  hasAbout: boolean,
   assets: AssetManifest,
   baseUrl: string,
 ): string {
@@ -101,6 +102,18 @@ export function buildPortalHomeHtml(
     .filter((u) => u.status === 'active' && u.code !== 'HQ')
     .map((u) => `${u.officialName}(${u.shortName}) ${u.activeCount}명`)
     .join(' · ');
+
+  const aboutHomeCell = hasAbout
+    ? `<div class="frontpage-union-cell">
+        <h3>왜 물류노동조합인가 — 9년의 기록</h3>
+        <p>2017년 지회 설립부터 차별 철폐, 중앙노동위원회 재심 인용, 원청 직접 교섭 인정까지 9년의 발자취를 슬라이드와 전문으로 소개합니다.</p>
+        <a class="frontpage-inline-link" href="union/about.html">조합 소개 보기 →</a>
+      </div>`
+    : '';
+
+  const stripClass = hasAbout
+    ? 'frontpage-union-strip frontpage-union-strip--3'
+    : 'frontpage-union-strip';
 
   const bodyHtml = `
   <header class="broadsheet-header">
@@ -189,10 +202,11 @@ export function buildPortalHomeHtml(
 
   <section class="section-band" aria-labelledby="sec-union-solidarity">
     <div class="section-head">
-      <h2 id="sec-union-solidarity">조직 현황 및 노동조합 규약</h2>
+      <h2 id="sec-union-solidarity">조합 소개 · 조직 현황 · 규약</h2>
       <span class="section-sub">본조 · 안양지부 · 부평지부</span>
     </div>
-    <div class="frontpage-union-strip">
+    <div class="${stripClass}">
+      ${aboutHomeCell}
       <div class="frontpage-union-cell">
         <h3>지부별 조합원 구성 및 현 임기 임원 안내</h3>
         <p>${escapeHtml(activeBranchSummary ? `${activeBranchSummary} (합계 ${orgSummary.totalActive}명)` : `활동 조합원 ${orgSummary.totalActive}명`)}의 직종·근무형태별 비식별 통계와 공식 직무자 현황을 공개합니다.</p>

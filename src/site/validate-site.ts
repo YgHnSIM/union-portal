@@ -478,6 +478,19 @@ export async function validateSite(
     }
   }
 
+  const hasUnionAbout = fs.existsSync(
+    path.join(projectRoot, '_source', 'union', 'about.md'),
+  );
+  if (hasUnionAbout) {
+    const aboutBuilt = path.join(siteDir, 'union', 'about.html');
+    if (!fs.existsSync(aboutBuilt)) {
+      errors.push('조합 소개 HTML이 빌드되지 않았습니다: union/about.html');
+    }
+    if (!sitemapContent.includes('union/about.html')) {
+      errors.push('조합 소개 페이지가 sitemap.xml에 누락되었습니다: union/about.html');
+    }
+  }
+
   const hasBylawsLaw = fs.existsSync(
     path.join(projectRoot, '_source', 'union', 'bylaws-law.json'),
   );
