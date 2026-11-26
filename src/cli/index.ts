@@ -70,6 +70,23 @@ function printHelp(): void {
   union generate-redirects [--out <redirects>] [--base-url <url>]`);
 }
 
+function resolveSiteBaseUrl(flagUrl: string | undefined): string | undefined {
+  if (flagUrl?.trim()) return flagUrl.trim();
+  const envUrl = process.env.SITE_BASE_URL?.trim();
+  if (envUrl) return envUrl;
+  if (process.env.VERCEL === '1') {
+    const host =
+      process.env.VERCEL_ENV === 'production'
+        ? process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL
+        : process.env.VERCEL_URL;
+    if (host?.trim()) {
+      const trimmed = host.trim();
+      return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    }
+  }
+  return undefined;
+}
+
 async function main(): Promise<void> {
   const parsed = parseArgs(process.argv.slice(2));
   const [cmd, sub] = parsed.positionals;
@@ -84,7 +101,7 @@ async function main(): Promise<void> {
     const res = await buildSite({
       projectRoot: ROOT,
       outDir: flagOne(parsed, 'out'),
-      baseUrl: flagOne(parsed, 'base-url'),
+      baseUrl: resolveSiteBaseUrl(flagOne(parsed, 'base-url')),
     });
     console.log(
       `정적 사이트 빌드 완료: pages=${res.pagesWritten}, public=${res.docsPublished}, unlisted=${res.docsUnlisted}, skippedInternal=${res.docsSkippedInternal}, monthly=${res.monthlyReports}, annual=${res.annualReports}`,

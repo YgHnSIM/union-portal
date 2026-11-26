@@ -1,0 +1,11 @@
+data/local/
+_raw/
+directory/
+reports/
+redirects/
+_site/
+.env
+.env.*
+.vercel/
+node_modules/
+*.log
