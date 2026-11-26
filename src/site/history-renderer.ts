@@ -319,7 +319,7 @@ function renderTimelineChapter(
   const introHtml =
     beforeTokens.length > 0
       ? renderTokens(beforeTokens, env)
-      : '<p>2017년 서서울물류 지회 설립부터 독자 기업별 노조 출범, 통합 공개 포털 운영과 2026년 중앙노동위원회 재심 인용·인천지방노동위원회 원청 교섭참여 인정 결정까지 물류노동조합이 걸어온 발자취입니다.</p>';
+      : '<p>2017년 서서울물류 지회 설립부터 2021년 단위 노동조합 출범, 2026년 중앙노동위원회 재심 인용과 인천지방노동위원회 원청 교섭참여 인정 결정까지 물류노동조합의 주요 연혁입니다.</p>';
 
   const rowsHtml = items
     .map((item) => {
@@ -628,42 +628,42 @@ export function renderHistoryFeaturePage(params: {
         <div class="history-impact-band" aria-label="핵심 요약 성과">
           <div class="history-impact-cell">
             <strong>3개 사업소</strong>
-            <span>서서울·부평·안양 지회 및 독자 노조 출범</span>
+            <span>서서울·부평·안양 지회 설립 및 단위 노조 출범</span>
           </div>
           <div class="history-impact-cell" data-tone="win">
-            <strong>115명 · 100여명</strong>
-            <span>기간제 전원 계약 연장 및 공무직 전환</span>
+            <strong>115명 · 100여 명</strong>
+            <span>기간제 노동자 전원 계약 연장 및 공무직 전환</span>
           </div>
           <div class="history-impact-cell" data-tone="solidarity">
             <strong>중노위 인용</strong>
-            <span>단시간 유급병가 차별 시정·조정 권고 수용</span>
+            <span>단시간 노동자 유급병가 차별시정·조정안 수용</span>
           </div>
           <div class="history-impact-cell">
             <strong>원청 교섭 인정</strong>
-            <span>2026.11.23. 인천지노위 우정사업본부 교섭참여 인정</span>
+            <span>2026.11.23. 인천지방노동위원회 교섭참여 인정</span>
           </div>
         </div>
       </header>
 
       <section class="history-roadmap" id="roadmap" aria-labelledby="history-roadmap-title">
         <div class="roadmap-head">
-          <h2 id="history-roadmap-title">한눈에 보는 9년의 투쟁 로드맵</h2>
+          <h2 id="history-roadmap-title">한눈에 보는 9년의 주요 성과 로드맵</h2>
           <div class="roadmap-range">2017-2026</div>
         </div>
         <nav class="roadmap-grid" aria-label="9년 변화 로드맵">
           <a class="roadmap-step" href="${escapeAttr(safeAnchor('sec-3'))}">
             <div class="roadmap-step-top">
               <span class="roadmap-year">2017</span>
-              <h3>생존권 사수와 출발</h3>
-              <p>서서울 기간제 6명 기습 계약종료 통보에 맞서 전원 고용 연장과 8시간 일자리 보장을 이끌어냈습니다.</p>
+              <h3>고용 유지와 출발</h3>
+              <p>서서울물류사업소 기간제 노동자 6명의 계약 종료 통보에 맞서 전원 고용 연장과 8시간 전일제 일자리 보장을 이끌어냈습니다.</p>
             </div>
             <span class="roadmap-jump no-print">해당 기록 보기 →</span>
           </a>
           <a class="roadmap-step" href="${escapeAttr(safeAnchor('sec-6'))}">
             <div class="roadmap-step-top">
               <span class="roadmap-year">2021-2023</span>
-              <h3>독자 출범·고용승계</h3>
-              <p>물류노조를 공식 출범하고 115명 계약 연장·100여 명 공무직 전환과 서서울 폐국 전원 고용승계를 관철했습니다.</p>
+              <h3>단위 노조 출범·고용승계</h3>
+              <p>물류노동조합을 공식 출범하고, 115명 계약 연장·100여 명 공무직 전환과 서서울물류사업소 폐국 시 전원 고용승계를 관철했습니다.</p>
             </div>
             <span class="roadmap-jump no-print">해당 기록 보기 →</span>
           </a>
@@ -671,30 +671,30 @@ export function renderHistoryFeaturePage(params: {
             <div class="roadmap-step-top">
               <span class="roadmap-year">2018-2026</span>
               <h3>차별 철폐와 처우 개선</h3>
-              <p>직무·가족수당, 복지포인트, 유급병가, 성과급 차별을 노동위 제소와 교섭 견인으로 돌파했습니다.</p>
+              <p>직무·가족수당, 복지포인트, 유급병가, 성과급 차별을 노동위원회 차별시정 신청과 교섭 견인으로 바로잡았습니다.</p>
             </div>
             <span class="roadmap-jump no-print">해당 기록 보기 →</span>
           </a>
           <a class="roadmap-step" href="${escapeAttr(safeAnchor('sec-5'))}">
             <div class="roadmap-step-top">
               <span class="roadmap-year">2026</span>
-              <h3>중노위 인용·확정 판결</h3>
-              <p>단시간 유급병가 축소 합의를 중노위 재심 인용으로 뒤집고, 퇴직 연차수당 부당 삭감에 맞선 조합 주장의 정당성이 법원 확정 판결로 증명되었습니다.</p>
+              <h3>재심 인용·대법원 판결</h3>
+              <p>단시간 노동자 유급병가 축소 합의를 중앙노동위원회 재심 인용과 조정안 수용으로 바로잡고, 퇴직자 연차수당 부당 삭감 문제 제기의 정당성도 대법원 확정 판결로 증명했습니다.</p>
             </div>
             <span class="roadmap-jump no-print">해당 기록 보기 →</span>
           </a>
-          <a class="roadmap-step" href="${escapeAttr(safeAnchor('sec-9'))}">
+          <a class="roadmap-step" href="${escapeAttr(safeAnchor('sec-8'))}">
             <div class="roadmap-step-top">
               <span class="roadmap-year">2026-2030</span>
               <h3>원청 직접 교섭 인정</h3>
-              <p>2026년 11월 23일 인천지노위 인정 결정으로 우정사업본부 직접 교섭의 문을 열고 2030 총고용 승계를 준비합니다.</p>
+              <p>2026년 11월 23일 인천지방노동위원회 인정 결정으로 우정사업본부 직접 교섭 지위를 확보하고 2030년 물류망 재편에 대비합니다.</p>
             </div>
             <span class="roadmap-jump no-print">해당 기록 보기 →</span>
           </a>
         </nav>
         <div class="roadmap-outcome">
           <strong>핵심 원칙</strong>
-          <span>교섭권의 제약을 핑계로 침묵하지 않고, 법적 권리구제와 현장 연대로 교섭을 견인하며 현장의 권리를 지켜왔습니다.</span>
+          <span>교섭권의 제약을 이유로 침묵하지 않고, 법적 권리구제와 현장 연대로 교섭을 견인하며 노동자의 권리를 지켜 왔습니다.</span>
         </div>
       </section>
 
